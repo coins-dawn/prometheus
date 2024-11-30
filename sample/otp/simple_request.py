@@ -29,14 +29,11 @@ query ($from: InputCoordinates!, $to: InputCoordinates!) {
 # 変数: 出発地と目的地の座標
 variables = {
     "from": {"lat": 34.171138395609134, "lon": 134.5999975839498},
-    "to": {"lat": 34.1703296176689, "lon": 134.63137558440366}
+    "to": {"lat": 34.1703296176689, "lon": 134.63137558440366},
 }
 
 # GraphQL リクエストの送信
-response = requests.post(
-    OTP_GRAPHQL_URL,
-    json={"query": query, "variables": variables}
-)
+response = requests.post(OTP_GRAPHQL_URL, json={"query": query, "variables": variables})
 
 # 結果の確認
 if response.status_code == 200:

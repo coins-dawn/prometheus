@@ -56,10 +56,7 @@ query {
 """
 
 # GraphQL リクエストの送信
-response = requests.post(
-    OTP_GRAPHQL_URL,
-    json={"query": query}
-)
+response = requests.post(OTP_GRAPHQL_URL, json={"query": query})
 
 # 結果の確認
 if response.status_code == 200:

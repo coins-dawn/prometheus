@@ -22,3 +22,7 @@ run-prometheus-server:
 .PHONY: sample-request-to-prometheus
 sample-request-to-prometheus:
 	python sample/prometheus/car_request.py
+
+.PHONY: format
+format:
+	black .
