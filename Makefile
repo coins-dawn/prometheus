@@ -23,6 +23,12 @@ run-prometheus-server:
 sample-request-to-prometheus:
 	python sample/prometheus/car_request.py
 
+# pythonコードをフォーマットする
 .PHONY: format
 format:
 	black .
+
+# prometheusのテストを実行する
+.PHONY: test
+test:
+	pytest .
