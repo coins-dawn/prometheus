@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from request import Request
+from request import CarRequest
 from pydantic import ValidationError
 
 app = Flask(__name__)
@@ -14,7 +14,7 @@ def ping():
 def search_car():
     try:
         json_data = request.get_json()
-        data = Request(**json_data)
+        data = CarRequest(**json_data)
         return (
             jsonify(
                 {"message": "Validation succeeded", "data": data.dict(by_alias=True)}

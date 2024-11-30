@@ -3,7 +3,7 @@ from typing import Optional
 from coord import Coord
 
 
-class Request(BaseModel):
+class CarRequest(BaseModel):
     org: Coord
     dst: Coord
     vias: list[Coord]
