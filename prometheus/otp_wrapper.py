@@ -1,5 +1,4 @@
 import requests
-import pprint
 from request import CarRequest
 from response import CarResponse, CarSubRoute
 

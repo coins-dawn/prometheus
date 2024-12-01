@@ -1,0 +1,5 @@
+flask
+pydantic
+polyline
+pytest
+black
