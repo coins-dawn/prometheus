@@ -31,4 +31,4 @@ format:
 # prometheusのテストを実行する
 .PHONY: test
 test:
-	pytest .
+	pytest . -s
