@@ -1,10 +1,10 @@
 from pydantic import BaseModel
-from spot import Spot
+from bus_stop import Stop
 
 
 class CarSubRoute(BaseModel):
-    org: Spot
-    dst: Spot
+    org: Stop
+    dst: Stop
     duration: float
     distance: float
     polyline: str

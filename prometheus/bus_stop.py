@@ -2,6 +2,6 @@ from pydantic import BaseModel
 from coord import Coord
 
 
-class Spot(BaseModel):
+class Stop(BaseModel):
     coord: Coord
     name: str

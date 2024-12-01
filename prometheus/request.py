@@ -1,8 +1,6 @@
 from pydantic import BaseModel
-from spot import Spot
+from bus_stop import Stop
 
 
 class CarRequest(BaseModel):
-    org: Spot
-    dst: Spot
-    vias: list[Spot]
+    stops: list[Stop]
