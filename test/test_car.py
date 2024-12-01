@@ -27,8 +27,8 @@ def test_standard():
     response_data = response.json()
     assert response_data["status"] == "OK"
     result = response_data["result"]
-    assert result["distance"] == 0.0
-    assert result["duration"] == 0.0
+    assert result["distance"] == 4903.0
+    assert result["duration"] == 547.0
 
     # subroute 0
     subroute_0 = result["subroutes"][0]

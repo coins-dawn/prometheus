@@ -63,6 +63,8 @@ def search_car_route(car_request: CarRequest) -> CarResponse:
             )
         )
 
-    response = CarResponse(duration=0.0, distance=0.0, subroutes=subroutes)
+    duration = sum(subroute.duration for subroute in subroutes)
+    distance = sum(subroute.distance for subroute in subroutes)
+    response = CarResponse(duration=duration, distance=distance, subroutes=subroutes)
 
     return response
