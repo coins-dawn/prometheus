@@ -1,9 +1,8 @@
 from pydantic import BaseModel
-from typing import Optional
-from coord import Coord
+from spot import Spot
 
 
 class CarRequest(BaseModel):
-    org: Coord
-    dst: Coord
-    vias: list[Coord]
+    org: Spot
+    dst: Spot
+    vias: list[Spot]
