@@ -14,23 +14,18 @@ run-otp-server:
 	./script/run_otp_sever.sh
 
 # localhost:3000でprometheusサーバを起動
-.PHONY: up
-up:
-	docker compose up -d
-
-# prometheusサーバを終了
-.PHONY: down
-down:
-	docker compose down
+.PHONY: run-prometheus-server
+run-prometheus-server:
+	docker compose up --build
 
 # pythonコードをフォーマットする
-# note:ホスト側にblackがインストールされている必要あり
+# note:ホストにblackがインストールされている必要あり
 .PHONY: format
 format:
 	black .
 
 # prometheusのテストを実行する
-# hote:ホスト側にpytestがインストールされている必要あり
+# note:ホストにpytestがインストールされている必要あり
 .PHONY: test
 test:
 	pytest . -s

@@ -4,9 +4,6 @@
 
 ### 利用方法
 ```
-# 必要なモジュールをインストール
-make install
-
 # OSMとGTFSをダウンロード
 make download-data
 
