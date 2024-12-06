@@ -1,8 +1,3 @@
-# コンバータ・サーバで利用するモジュールをインストール
-.PHONY: install
-install:
-	pip install -r ./requirments.txt
-
 # otpで利用するネットワークの元データをダウンロード
 .PHONY: download-data
 download-data:
@@ -19,16 +14,23 @@ run-otp-server:
 	./script/run_otp_sever.sh
 
 # localhost:3000でprometheusサーバを起動
-.PHONY: run-prometheus-server
-run-prometheus-server:
-	python prometheus/app.py
+.PHONY: up
+up:
+	docker compose up -d
+
+# prometheusサーバを終了
+.PHONY: down
+down:
+	docker compose down
 
 # pythonコードをフォーマットする
+# note:ホスト側にblackがインストールされている必要あり
 .PHONY: format
 format:
 	black .
 
 # prometheusのテストを実行する
+# hote:ホスト側にpytestがインストールされている必要あり
 .PHONY: test
 test:
 	pytest . -s
