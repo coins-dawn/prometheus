@@ -3,7 +3,7 @@ from request import CarRequest, PtransRequest
 from response import CarResponse, CarSubRoute, PtransResponse
 from utility import generate_random_string
 
-OTP_GRAPHQL_URL = "http://localhost:8000/otp/routers/default/index/graphql"
+OTP_GRAPHQL_URL = "http://otp:8080/otp/routers/default/index/graphql"
 
 
 def search_car_route(car_request: CarRequest) -> CarResponse:

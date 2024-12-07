@@ -1,7 +1,7 @@
 import requests
 
 # OTP サーバのエンドポイント
-OTP_GRAPHQL_URL = "http://localhost:8000/otp/routers/default/index/graphql"
+OTP_GRAPHQL_URL = "http://localhost:8080/otp/routers/default/index/graphql"
 
 # GraphQL クエリ: 指定した出発地と目的地のルートを取得
 query = """

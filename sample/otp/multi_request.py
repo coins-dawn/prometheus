@@ -2,7 +2,7 @@ import requests
 import pprint
 
 # OTP サーバのエンドポイント
-OTP_GRAPHQL_URL = "http://localhost:8000/otp/routers/default/index/graphql"
+OTP_GRAPHQL_URL = "http://localhost:8080/otp/routers/default/index/graphql"
 
 # GraphQL クエリ: 複数のルートを取得するクエリ
 query = """
