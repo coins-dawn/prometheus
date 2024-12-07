@@ -17,7 +17,8 @@ class CarResponse(BaseModel):
     duration: float
     distance: float
     subroutes: list[CarSubRoute]
-    
+
+
 class PtransSubroute(BaseModel):
     pass
 
