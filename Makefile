@@ -16,8 +16,8 @@ run-otp-server:
 # localhost:3000でprometheusサーバを起動
 .PHONY: run-prometheus-server
 run-prometheus-server:
-	make clear-route-cache
-	docker compose up
+	# make clear-route-cache
+	docker compose up --build
 
 # prometheusサーバのrouteキャッシュを削除する
 .PHONY: clear-route-cache
