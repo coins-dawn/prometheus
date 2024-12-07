@@ -10,9 +10,10 @@ make download-data
 # otpサーバで利用するネットワークデータを作成
 make convert-network
 
-# localhost:8080でotpサーバを起動
-make run-otp-server
+# 8080ポートでotpサーバを起動
+# 3000ポートでprometheusサーバを起動
+make up
 
-# localhost:3000でprometheusサーバを起動
-make run-prometheus-server
+# サービスを終了
+make down
 ```
