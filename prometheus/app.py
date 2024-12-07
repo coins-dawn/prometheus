@@ -1,8 +1,8 @@
 from flask import Flask, request, jsonify
 from pydantic import ValidationError
 
-from request import CarRequest
-from otp_wrapper import search_car_route
+from request import CarRequest, PtransRequest
+from otp_wrapper import search_car_route, search_ptrans_route
 from utility import save_to_binary_file, load_from_binary_file
 
 app = Flask(__name__)
@@ -54,6 +54,20 @@ def route_cache():
         return jsonify({"status": "NG", "message": str(e)}), 500
 
     return jsonify({"status": "OK", "result": car_response.model_dump()})
+
+
+@app.route("/route/ptrans", methods=["POST"])
+def route_ptrans():
+    try:
+        json_data = request.get_json()
+        ptrans_request = PtransRequest(**json_data)
+        ptrans_response = search_ptrans_route(ptrans_request)
+    except ValidationError as e:
+        return jsonify({"status": "NG", "message": e.errors()}), 400
+    except Exception as e:
+        return jsonify({"status": "NG", "message": str(e)}), 500
+
+    return jsonify({"status": "OK", "result": ptrans_response.model_dump()})
 
 
 if __name__ == "__main__":
