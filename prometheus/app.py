@@ -3,6 +3,7 @@ from pydantic import ValidationError
 
 from request import CarRequest
 from otp_wrapper import search_car_route
+from utility import save_to_binary_file, load_from_binary_file
 
 app = Flask(__name__)
 
@@ -23,7 +24,9 @@ def search_car():
     except Exception as e:
         return jsonify({"status": "NG", "message": str(e)}), 500
 
-    return jsonify({"status": "OK", "result": car_response.model_dump()})
+    save_to_binary_file(car_response)
+
+    return jsonify({"status": "OK", "result": a.model_dump()})
 
 
 if __name__ == "__main__":

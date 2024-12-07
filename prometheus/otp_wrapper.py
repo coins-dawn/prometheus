@@ -1,6 +1,7 @@
 import requests
 from request import CarRequest
 from response import CarResponse, CarSubRoute
+from utility import generate_random_string
 
 OTP_GRAPHQL_URL = "http://localhost:8000/otp/routers/default/index/graphql"
 
@@ -62,8 +63,11 @@ def search_car_route(car_request: CarRequest) -> CarResponse:
             )
         )
 
+    route_id = generate_random_string()
     duration = sum(subroute.duration for subroute in subroutes)
     distance = sum(subroute.distance for subroute in subroutes)
-    response = CarResponse(duration=duration, distance=distance, subroutes=subroutes)
+    response = CarResponse(
+        route_id=route_id, duration=duration, distance=distance, subroutes=subroutes
+    )
 
     return response
