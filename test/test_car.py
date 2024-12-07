@@ -6,7 +6,7 @@ url = "http://localhost:3000/route/car"
 headers = {"Content-Type": "application/json"}
 
 
-def test_standard():
+def test_route_car():
     payload = {
         "stops": [
             {
