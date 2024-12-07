@@ -11,6 +11,7 @@ class CarSubRoute(BaseModel):
 
 
 class CarResponse(BaseModel):
+    route_id: str
     duration: float
     distance: float
     subroutes: list[CarSubRoute]

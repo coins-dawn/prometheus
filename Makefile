@@ -16,7 +16,11 @@ run-otp-server:
 # localhost:3000でprometheusサーバを起動
 .PHONY: run-prometheus-server
 run-prometheus-server:
-	docker compose up --build
+	docker compose up
+
+.PHONY: clear-route-cache
+clear-route-cache:
+	rm prometheus/routes/*
 
 # pythonコードをフォーマットする
 # note:ホストにblackがインストールされている必要あり
