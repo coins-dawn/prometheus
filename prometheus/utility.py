@@ -20,11 +20,13 @@ def save_to_json_file(obj: CarResponse):
     with open(path, "w", encoding="utf-8") as file:
         file.write(json_data)
 
+
 def save_to_binary_file(obj: CarResponse):
     """オブジェクトをバイナリ形式で保存する。"""
     path = f"./routes/{obj.route_id}"
     with open(path, "wb") as file:
         pickle.dump(obj.model_dump(), file)
+
 
 def load_from_binary_file(route_id: str):
     file_path = f"./routes/{route_id}"
