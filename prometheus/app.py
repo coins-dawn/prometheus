@@ -29,5 +29,32 @@ def search_car():
     return jsonify({"status": "OK", "result": car_response.model_dump()})
 
 
+@app.route("/route/cache", methods=["GET"])
+def route_cache():
+    route_id = request.args.get("route_id")
+    if not route_id:
+        return (
+            jsonify({"status": "NG", "message": "route_idが指定されていません。"}),
+            400,
+        )
+
+    try:
+        car_response = load_from_binary_file(route_id)
+    except FileNotFoundError as e:
+        return (
+            jsonify(
+                {
+                    "status": "NG",
+                    "message": f"ルートキャッシュ{route_id}が存在しません。",
+                }
+            ),
+            400,
+        )
+    except Exception as e:
+        return jsonify({"status": "NG", "message": str(e)}), 500
+
+    return jsonify({"status": "OK", "result": car_response.model_dump()})
+
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=3000)
