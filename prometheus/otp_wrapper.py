@@ -1,12 +1,13 @@
 import requests
-from request import CarRequest
-from response import CarResponse, CarSubRoute
+from request import CarRequest, PtransRequest
+from response import CarResponse, CarSubRoute, PtransResponse
 from utility import generate_random_string
 
 OTP_GRAPHQL_URL = "http://localhost:8000/otp/routers/default/index/graphql"
 
 
 def search_car_route(car_request: CarRequest) -> CarResponse:
+    """open trip plannerで車経路探索（経由地あり）を実行する。"""
     dst_stops = car_request.stops[1:] + [car_request.stops[0]]
     query_str = "query {"
     for i, (org_stop, dst_stop) in enumerate(zip(car_request.stops, dst_stops)):
@@ -70,4 +71,9 @@ def search_car_route(car_request: CarRequest) -> CarResponse:
         route_id=route_id, duration=duration, distance=distance, subroutes=subroutes
     )
 
+    return response
+
+
+def search_ptrans_route(ptrans_request: PtransRequest) -> PtransResponse:
+    response = PtransResponse()
     return response
