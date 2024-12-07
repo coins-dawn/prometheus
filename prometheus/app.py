@@ -26,7 +26,7 @@ def search_car():
 
     save_to_binary_file(car_response)
 
-    return jsonify({"status": "OK", "result": a.model_dump()})
+    return jsonify({"status": "OK", "result": car_response.model_dump()})
 
 
 if __name__ == "__main__":

@@ -18,6 +18,7 @@ run-otp-server:
 run-prometheus-server:
 	docker compose up
 
+# prometheusサーバのrouteキャッシュを削除する
 .PHONY: clear-route-cache
 clear-route-cache:
 	rm prometheus/routes/*
