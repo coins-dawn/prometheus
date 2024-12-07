@@ -3,4 +3,3 @@ pydantic
 polyline
 requests
 gunicorn
-pickle
