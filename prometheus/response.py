@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 from bus_stop import Stop
+from coord import Coord
+from datetime import datetime
 
 
 class CarSubRoute(BaseModel):
@@ -15,7 +17,15 @@ class CarResponse(BaseModel):
     duration: float
     distance: float
     subroutes: list[CarSubRoute]
+    
+class PtransSubroute(BaseModel):
+    pass
 
 
 class PtransResponse(BaseModel):
-    pass
+    org_coord: Coord
+    dst_coord: Coord
+    start_time: datetime
+    duration: float
+    distance: float
+    subroutes: list[PtransSubroute]
