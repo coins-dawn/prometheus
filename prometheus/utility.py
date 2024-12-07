@@ -1,8 +1,8 @@
 import random
 import string
 import time
-import json
 import pickle
+from pathlib import Path
 from response import CarResponse
 
 
@@ -13,14 +13,6 @@ def generate_random_string(length=12):
     return "".join(random.choices(characters, k=length))
 
 
-def save_to_json_file(obj: CarResponse):
-    """オブジェクトをJson型式で保存する。"""
-    path = f"./routes/{obj.route_id}.json"
-    json_data = json.dumps(obj.model_dump(), indent=4, ensure_ascii=False)
-    with open(path, "w", encoding="utf-8") as file:
-        file.write(json_data)
-
-
 def save_to_binary_file(obj: CarResponse):
     """オブジェクトをバイナリ形式で保存する。"""
     path = f"./routes/{obj.route_id}"
@@ -29,7 +21,10 @@ def save_to_binary_file(obj: CarResponse):
 
 
 def load_from_binary_file(route_id: str):
+    """指定されたroute_idのルートをキャッシュから読み取って返却する。"""
     file_path = f"./routes/{route_id}"
+    if not Path(file_path).is_file():
+        raise FileNotFoundError(f"{route_id}のルートキャッシュが存在しません。")
     with open(file_path, "rb") as file:
         data = pickle.load(file)
     return CarResponse(**data)
