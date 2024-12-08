@@ -26,7 +26,7 @@ class TimeTableElement(BaseModel):
     """ひとつのバス停の時刻表を表すクラス。"""
 
     stop_name: str
-    time_list: list[time]
+    time_list: list[str]
 
 
 class TimeTable(BaseModel):
@@ -41,18 +41,6 @@ class CarResponse(BaseModel):
     route_id: str
     route_info: RouteInfo
     time_table: TimeTable
-
-    def to_serializable(self) -> dict:
-        data = self.model_dump()
-        if self.time_table and hasattr(self.time_table, "time_table_elements"):
-            data["time_table"]["time_table_elements"] = [
-                {
-                    "stop_name": element.stop_name,
-                    "time_list": [t.strftime("%H:%M:%S") for t in element.time_list],
-                }
-                for element in self.time_table.time_table_elements
-            ]
-        return data
 
 
 class PtransSubroute(BaseModel):

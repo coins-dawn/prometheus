@@ -28,7 +28,7 @@ def search_car():
     if car_request.debug:
         save_car_route_as_kml(car_response)
 
-    return jsonify({"status": "OK", "result": car_response.to_serializable()})
+    return jsonify({"status": "OK", "result": car_response.model_dump()})
 
 
 @app.route("/route/cache", methods=["GET"])
@@ -55,7 +55,7 @@ def route_cache():
     except Exception as e:
         return jsonify({"status": "NG", "message": str(e)}), 500
 
-    return jsonify({"status": "OK", "result": car_response.to_serializable()})
+    return jsonify({"status": "OK", "result": car_response.model_dump()})
 
 
 @app.route("/route/ptrans", methods=["POST"])
