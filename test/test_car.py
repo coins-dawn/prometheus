@@ -18,7 +18,7 @@ def test_route_car():
         "debug": False,
     }
 
-    # 全体
+    # route全体
     response = requests.post(url, headers=headers, data=json.dumps(payload))
     assert response.status_code == 200
     response_data = response.json()
@@ -70,3 +70,15 @@ def test_route_car():
     )
     assert subroute_2["org"]["name"] == "stop4"
     assert subroute_2["dst"]["name"] == "stop1"
+
+    # 時刻表
+    time_table = response_data["result"]["time_table"]
+    assert len(time_table) == len(payload["stops"])
+    assert time_table[0]["stop_name"] == "stop1"
+    assert time_table[0]["time_list"] == ["10:00", "11:00", "13:00"]
+    assert time_table[1]["stop_name"] == "stop2"
+    assert time_table[1]["time_list"] == ["10:03", "11:03", "13:03"]
+    assert time_table[2]["stop_name"] == "stop3"
+    assert time_table[2]["time_list"] == ["10:06", "11:06", "13:06"]
+    assert time_table[3]["stop_name"] == "stop4"
+    assert time_table[3]["time_list"] == ["10:12", "11:12", "13:12"]
