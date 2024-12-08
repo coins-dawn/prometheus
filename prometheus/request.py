@@ -1,11 +1,12 @@
 from pydantic import BaseModel
 from bus_stop import Stop
 from coord import Coord
-from datetime import datetime
+from datetime import datetime, time
 
 
 class CarRequest(BaseModel):
     stops: list[Stop]
+    start_time_list: list[time]
     debug: bool
 
 
