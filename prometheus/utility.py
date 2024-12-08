@@ -3,15 +3,15 @@ import string
 import time
 import pickle
 import polyline
-import math
 from pathlib import Path
 from response import CarResponse
 from xml.etree.ElementTree import Element, SubElement, tostring
+from datetime import time, timedelta, datetime
 
 
 def generate_random_string(length=12):
     """指定された長さのランダム文字列を生成する。"""
-    random.seed(time.time())
+    random.seed(datetime.now().timestamp())
     characters = string.ascii_letters + string.digits
     return "".join(random.choices(characters, k=length))
 
@@ -20,7 +20,7 @@ def save_to_binary_file(obj: CarResponse):
     """オブジェクトをバイナリ形式で保存する。"""
     path = f"./routes/{obj.route_id}"
     with open(path, "wb") as file:
-        pickle.dump(obj.model_dump(), file)
+        pickle.dump(obj.to_serializable(), file)
 
 
 def load_from_binary_file(route_id: str):
@@ -43,7 +43,7 @@ def save_car_route_as_kml(car_response: CarResponse):
     color.text = "ff00ff00"
     width = SubElement(linestyle, "width")
     width.text = "4"
-    for subroute in car_response.subroutes:
+    for subroute in car_response.route_info.subroutes:
         placemark = SubElement(document, "Placemark")
         styleurl = SubElement(placemark, "styleUrl")
         styleurl.text = "#brightGreenLine"
@@ -58,7 +58,7 @@ def save_car_route_as_kml(car_response: CarResponse):
         coordinates = SubElement(line_string, "coordinates")
         decoded_polyline = polyline.decode(subroute.polyline)
         coordinates.text = " ".join(f"{lon},{lat},0" for lat, lon in decoded_polyline)
-    for subroute in car_response.subroutes:
+    for subroute in car_response.route_info.subroutes:
         stop = subroute.org
         placemark = SubElement(document, "Placemark")
         name = SubElement(placemark, "name")
@@ -69,3 +69,30 @@ def save_car_route_as_kml(car_response: CarResponse):
     kml_data = tostring(kml, encoding="utf-8", xml_declaration=True).decode("utf-8")
     with open("car_route.kml", "w", encoding="utf-8") as file:
         file.write(kml_data)
+
+
+def add_times(time1: time, time2: time) -> time:
+    """timeオブジェクトの和をとる。"""
+    delta1 = timedelta(hours=time1.hour, minutes=time1.minute, seconds=time1.second)
+    delta2 = timedelta(hours=time2.hour, minutes=time2.minute, seconds=time2.second)
+    result_delta = delta1 + delta2
+    total_seconds = result_delta.total_seconds()
+    hours = int(total_seconds // 3600) % 24
+    minutes = int((total_seconds % 3600) // 60)
+    seconds = int(total_seconds % 60)
+    return time(hour=hours, minute=minutes, second=seconds)
+
+
+def add_seconds_to_time(original_time: time, seconds_to_add: int) -> time:
+    """timeオブジェクトに秒数を足してtimeオブジェクトを返却する。"""
+    original_timedelta = timedelta(
+        hours=original_time.hour,
+        minutes=original_time.minute,
+        seconds=original_time.second,
+    )
+    result_timedelta = original_timedelta + timedelta(seconds=seconds_to_add)
+    total_seconds = result_timedelta.total_seconds()
+    hours = int(total_seconds // 3600) % 24
+    minutes = int((total_seconds % 3600) // 60)
+    seconds = int(total_seconds % 60)
+    return time(hour=hours, minute=minutes, second=seconds)
