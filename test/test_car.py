@@ -58,7 +58,7 @@ def test_route_car():
     )
     assert subroute_2["org"]["name"] == "stop3"
     assert subroute_2["dst"]["name"] == "stop4"
-    
+
     # subroute 3
     # subroute 2
     subroute_2 = result["subroutes"][3]
