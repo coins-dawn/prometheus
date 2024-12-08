@@ -20,7 +20,7 @@ def save_to_binary_file(obj: CarResponse):
     """オブジェクトをバイナリ形式で保存する。"""
     path = f"./routes/{obj.route_id}"
     with open(path, "wb") as file:
-        pickle.dump(obj.to_serializable(), file)
+        pickle.dump(obj.model_dump(), file)
 
 
 def load_from_binary_file(route_id: str):
@@ -71,16 +71,15 @@ def save_car_route_as_kml(car_response: CarResponse):
         file.write(kml_data)
 
 
-def add_times(time1: time, time2: time) -> time:
-    """timeオブジェクトの和をとる。"""
+def add_times(time1: time, time2: time) -> str:
+    """timeオブジェクトの和をとり、HH:MM形式の文字列を返す。"""
     delta1 = timedelta(hours=time1.hour, minutes=time1.minute, seconds=time1.second)
     delta2 = timedelta(hours=time2.hour, minutes=time2.minute, seconds=time2.second)
     result_delta = delta1 + delta2
-    total_seconds = result_delta.total_seconds()
+    total_seconds = round(result_delta.total_seconds())
     hours = int(total_seconds // 3600) % 24
     minutes = int((total_seconds % 3600) // 60)
-    seconds = int(total_seconds % 60)
-    return time(hour=hours, minute=minutes, second=seconds)
+    return f"{hours:02}:{minutes:02}"
 
 
 def add_seconds_to_time(original_time: time, seconds_to_add: int) -> time:
