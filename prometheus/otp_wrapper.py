@@ -5,7 +5,6 @@ from response import (
     CarResponse,
     CarSubRoute,
     RouteInfo,
-    TimeTable,
     TimeTableElement,
     PtransResponse,
 )
@@ -42,7 +41,9 @@ def create_route_info(car_request: CarRequest, result: dict) -> RouteInfo:
     return RouteInfo(duration=duration, distance=distance, subroutes=subroutes)
 
 
-def create_time_table(car_request: CarRequest, route_info: RouteInfo) -> TimeTable:
+def create_time_table(
+    car_request: CarRequest, route_info: RouteInfo
+) -> list[TimeTableElement]:
     """経路情報を元に時刻表を作成する。"""
     time_table_element_list: list[TimeTableElement] = []
     for stop in car_request.stops:
@@ -63,7 +64,7 @@ def create_time_table(car_request: CarRequest, route_info: RouteInfo) -> TimeTab
             current_duration_sum = add_seconds_to_time(
                 current_duration_sum, int(subroute.duration)
             )
-    return TimeTable(time_table_elements=time_table_element_list)
+    return time_table_element_list
 
 
 def search_car_route(car_request: CarRequest) -> CarResponse:
