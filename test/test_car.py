@@ -9,16 +9,12 @@ headers = {"Content-Type": "application/json"}
 def test_route_car():
     payload = {
         "stops": [
-            {
-                "coord": {"lat": 34.15646, "lon": 134.6144},
-                "name": "stop1",
-            },
-            {"coord": {"lat": 34.16906, "lon": 134.6155}, "name": "stop2"},
-            {
-                "coord": {"lat": 34.16423, "lon": 134.6277},
-                "name": "stop3",
-            },
+            {"coord": {"lat": 36.61095, "lon": 137.2509}, "name": "stop1"},
+            {"coord": {"lat": 36.61065, "lon": 137.2145}, "name": "stop2"},
+            {"coord": {"lat": 36.61303, "lon": 137.1858}, "name": "stop3"},
+            {"coord": {"lat": 36.63100, "lon": 137.2149}, "name": "stop4"},
         ],
+        "debug": False,
     }
 
     # 全体
@@ -27,38 +23,50 @@ def test_route_car():
     response_data = response.json()
     assert response_data["status"] == "OK"
     result = response_data["result"]
-    assert result["distance"] == 4903.0
-    assert result["duration"] == 547.0
+    assert result["distance"] == 15247.87
+    assert result["duration"] == 1091.0
 
     # subroute 0
     subroute_0 = result["subroutes"][0]
-    assert subroute_0["duration"] == 187.0
-    assert subroute_0["distance"] == 1721.72
+    assert subroute_0["duration"] == 212.0
+    assert subroute_0["distance"] == 3433.62
     assert (
         subroute_0["polyline"]
-        == "abnoE}~rtXa@c@s@k@gA}@iAtAyBjDm@z@wBfDeCnDIB[Mu@a@UKgGiB_@G_EQa@G_AvDg@UKE}BaAuD_BwGyCCAYMIEcAa@o@Sy@Qw@IkECO?m@Aw@AY?"
+        == "msm~EkxudY@BnA~LHz@`@zDRvARnA^zB?r@CdCKxEEpBAd@Ej@In@ABOl@Qd@]p@q@vA[bAYjBq@rESv@]v@Yn@Uj@SxAGdBExAShFUhEIjBMnBYjCi@xD_@vCCZF`@JTLPhAdALL`@ZrAfAh@j@^b@\\b@DFbB~BLNJFEtA_@hPObH?TAdAMxFItGB|AHdB`@hNN`GAhE?j@EhA"
     )
     assert subroute_0["org"]["name"] == "stop1"
     assert subroute_0["dst"]["name"] == "stop2"
 
     # subroute 1
     subroute_1 = result["subroutes"][1]
-    assert subroute_1["duration"] == 186.0
-    assert subroute_1["distance"] == 1494.84
+    assert subroute_1["duration"] == 201.0
+    assert subroute_1["distance"] == 2584.59
     assert (
         subroute_1["polyline"]
-        == "uspoEi}rtX}CCDmJBoAF{@Fm@He@Ja@Ja@\\}@`@y@nBgDZk@pAwBfB{ClAsBZg@xDwGn@eAjCyEm@c@a@[c@[DKrBaDnAuBp@aAJKUU"
+        == "upm~EwundYEnAKrCOjCCdDAvHEbGEpG[rFa@rIYfEaArNcApLU`B}@zKk@vGMzC?N@bDPdFArAMzAC^Eb@I`AWrE?HQtDElAKtFMvF"
     )
     assert subroute_1["org"]["name"] == "stop2"
     assert subroute_1["dst"]["name"] == "stop3"
 
     # subroute 2
     subroute_2 = result["subroutes"][2]
-    assert subroute_2["duration"] == 174.0
-    assert subroute_2["distance"] == 1686.44
+    assert subroute_2["duration"] == 361.0
+    assert subroute_2["distance"] == 4591.89
     assert (
         subroute_2["polyline"]
-        == "swooEwjutXTTKJq@`AoAtBsB`DEJb@Z`@Zl@b@XTVRjBhCxAhBnA~A|AlBh@p@PTP\\b@hABFl@rAr@hAzArBlAxAxA|Ah@`@vApAzBfBr@n@xAfAbCjBVPzCzBjAjAfA|@r@j@`@b@"
+        == "o`n~EkbidYLwFJuFDmAPuD?IVsEHaADc@B_@L{AeBJkC@eC?wFAk@C[E]IYI[MYMwEqCOI[M_@GUEYA]A_A@qBBcFFU@{B?m@Ay@EaCQQA[Cc@Ei@EiCSa@CyJ{@y@GQCwDYy@GaCQaEk@mAQEAoF}@s@M{@EcAAoBLUD?]?oC?aC?sB@qDBeAHqAb@yFHcADe@Dc@b@eGL}APwBJuAFuB?}AEaECmCKaKGgFAY?]A[AsAE}EBwCDwAJqBLiALyAT{BLkAVqB"
     )
     assert subroute_2["org"]["name"] == "stop3"
+    assert subroute_2["dst"]["name"] == "stop4"
+    
+    # subroute 3
+    # subroute 2
+    subroute_2 = result["subroutes"][3]
+    assert subroute_2["duration"] == 317.0
+    assert subroute_2["distance"] == 4637.77
+    assert (
+        subroute_2["polyline"]
+        == "ipq~EsxndYHq@^cDJcAV}BF{@@aACgAKeBE}@I_BMsB|@OpAKXAV?dAIbCQ^EjD]p@K`AOvAYpDq@v@OrAYxFiAhE{@hEcAD?hCw@\\IpA[|Ac@zBe@l@[n@o@vAmA|ByBp@g@rGcG`@_@f@e@f@iA~@oBJUnCqFPg@Nc@TqAx@qENa@Zy@`@i@d@o@HA`@I|@CVAJAB[^wCh@yDXkCLoBHkBTiERiFDyAFeBRyATk@Xo@\\w@Rw@p@sEXkBZcAp@wA\\q@Pe@Nm@@CHo@Dk@@e@DqBJyEBeC?s@_@{BSoASwAa@{DI{@oA_MAC"
+    )
+    assert subroute_2["org"]["name"] == "stop4"
     assert subroute_2["dst"]["name"] == "stop1"
