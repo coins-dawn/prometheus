@@ -29,18 +29,12 @@ class TimeTableElement(BaseModel):
     time_list: list[str]
 
 
-class TimeTable(BaseModel):
-    """コミュニティバスの時刻表を表すクラス。"""
-
-    time_table_elements: list[TimeTableElement]
-
-
 class CarResponse(BaseModel):
     """車経路探索の結果を表すクラス。"""
 
     route_id: str
     route_info: RouteInfo
-    time_table: TimeTable
+    time_table: list[TimeTableElement]
 
 
 class PtransSubroute(BaseModel):
