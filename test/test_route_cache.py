@@ -6,16 +6,12 @@ route_cache_url = "http://localhost:3000/route/cache"
 headers = {"Content-Type": "application/json"}
 payload = {
     "stops": [
-        {
-            "coord": {"lat": 34.15646, "lon": 134.6144},
-            "name": "stop1",
-        },
-        {"coord": {"lat": 34.16906, "lon": 134.6155}, "name": "stop2"},
-        {
-            "coord": {"lat": 34.16423, "lon": 134.6277},
-            "name": "stop3",
-        },
+        {"coord": {"lat": 36.61095, "lon": 137.2509}, "name": "stop1"},
+        {"coord": {"lat": 36.61065, "lon": 137.2145}, "name": "stop2"},
+        {"coord": {"lat": 36.61303, "lon": 137.1858}, "name": "stop3"},
+        {"coord": {"lat": 36.63100, "lon": 137.2149}, "name": "stop4"},
     ],
+    "debug": False,
 }
 
 

@@ -11,7 +11,7 @@ def test_route_ptrans():
         "dst_coord": {"lat": 34.18884, "lon": 134.5953},
         "start_time": "2024-12-07T15:10:00",
     }
-    
+
     response = requests.post(url, headers=headers, data=json.dumps(payload))
     assert response.status_code == 400
     # assert response.status_code == 200
