@@ -24,6 +24,7 @@ def test_route_cache():
     assert route_car_response.status_code == 200
     org_result = route_car_response.json()["result"]
     org_route_info = org_result["route_info"]
+    org_time_table = org_result["time_table"]
     route_id = org_result["route_id"]
 
     route_cache_response = requests.get(route_cache_url, params={"route_id": route_id})
@@ -31,9 +32,11 @@ def test_route_cache():
     response_data = route_cache_response.json()
     assert response_data["status"] == "OK"
     cache_route_info = response_data["result"]["route_info"]
+    cache_time_table = response_data["result"]["time_table"]
 
     assert org_route_info["distance"] == cache_route_info["distance"]
     assert org_route_info["duration"] == cache_route_info["duration"]
+    assert len(org_time_table) == len(cache_time_table)
 
 
 def test_not_specified_route_id():
