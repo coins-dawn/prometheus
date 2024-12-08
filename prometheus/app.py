@@ -3,7 +3,7 @@ from pydantic import ValidationError
 
 from request import CarRequest, PtransRequest
 from otp_wrapper import search_car_route, search_ptrans_route
-from utility import save_to_binary_file, load_from_binary_file
+from utility import save_to_binary_file, load_from_binary_file, save_car_route_as_kml
 
 app = Flask(__name__)
 
@@ -25,6 +25,8 @@ def search_car():
         return jsonify({"status": "NG", "message": str(e)}), 500
 
     save_to_binary_file(car_response)
+    if car_request.debug:
+        save_car_route_as_kml(car_response)
 
     return jsonify({"status": "OK", "result": car_response.model_dump()})
 

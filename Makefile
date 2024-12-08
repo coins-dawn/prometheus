@@ -19,6 +19,12 @@ up:
 down:
 	docker compose down
 
+# サービスをリロードする
+.PHONY: reload
+reload:
+	make down
+	make up
+
 # prometheusサーバのrouteキャッシュを削除する
 .PHONY: clear-route-cache
 clear-route-cache:

@@ -6,6 +6,7 @@ from datetime import datetime
 
 class CarRequest(BaseModel):
     stops: list[Stop]
+    debug: bool
 
 
 class PtransRequest(BaseModel):
