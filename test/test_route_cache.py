@@ -11,6 +11,7 @@ payload = {
         {"coord": {"lat": 36.61303, "lon": 137.1858}, "name": "stop3"},
         {"coord": {"lat": 36.63100, "lon": 137.2149}, "name": "stop4"},
     ],
+    "start_time_list": ["10:00", "11:00", "13:00"],
     "debug": False,
 }
 
