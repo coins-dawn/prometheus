@@ -21,18 +21,19 @@ def test_route_cache():
     route_car_response = requests.post(
         route_car_url, headers=headers, data=json.dumps(payload)
     )
-    route_org = route_car_response.json()["result"]
-    route_id = route_org["route_id"]
+    assert route_car_response.status_code == 200
+    org_result = route_car_response.json()["result"]
+    org_route_info = org_result["route_info"]
+    route_id = org_result["route_id"]
 
     route_cache_response = requests.get(route_cache_url, params={"route_id": route_id})
     assert route_cache_response.status_code == 200
     response_data = route_cache_response.json()
     assert response_data["status"] == "OK"
-    route_cache = response_data["result"]
+    cache_route_info = response_data["result"]["route_info"]
 
-    assert route_org["route_id"] == route_cache["route_id"]
-    assert route_org["distance"] == route_cache["distance"]
-    assert route_org["duration"] == route_cache["duration"]
+    assert org_route_info["distance"] == cache_route_info["distance"]
+    assert org_route_info["duration"] == cache_route_info["duration"]
 
 
 def test_not_specified_route_id():

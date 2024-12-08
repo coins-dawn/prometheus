@@ -23,12 +23,12 @@ def test_route_car():
     assert response.status_code == 200
     response_data = response.json()
     assert response_data["status"] == "OK"
-    result = response_data["result"]
-    assert result["distance"] == 15247.87
-    assert result["duration"] == 1091.0
+    route_info = response_data["result"]["route_info"]
+    assert route_info["distance"] == 15247.87
+    assert route_info["duration"] == 1091.0
 
     # subroute 0
-    subroute_0 = result["subroutes"][0]
+    subroute_0 = route_info["subroutes"][0]
     assert subroute_0["duration"] == 212.0
     assert subroute_0["distance"] == 3433.62
     assert (
@@ -39,7 +39,7 @@ def test_route_car():
     assert subroute_0["dst"]["name"] == "stop2"
 
     # subroute 1
-    subroute_1 = result["subroutes"][1]
+    subroute_1 = route_info["subroutes"][1]
     assert subroute_1["duration"] == 201.0
     assert subroute_1["distance"] == 2584.59
     assert (
@@ -50,7 +50,7 @@ def test_route_car():
     assert subroute_1["dst"]["name"] == "stop3"
 
     # subroute 2
-    subroute_2 = result["subroutes"][2]
+    subroute_2 = route_info["subroutes"][2]
     assert subroute_2["duration"] == 361.0
     assert subroute_2["distance"] == 4591.89
     assert (
@@ -61,7 +61,7 @@ def test_route_car():
     assert subroute_2["dst"]["name"] == "stop4"
 
     # subroute 3
-    subroute_2 = result["subroutes"][3]
+    subroute_2 = route_info["subroutes"][3]
     assert subroute_2["duration"] == 317.0
     assert subroute_2["distance"] == 4637.77
     assert (
