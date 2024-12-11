@@ -1,5 +1,7 @@
 # prometheus
 
+![prometheus](prometheus.jpg)
+
 コミュニティバスの経路をシミュレートするサービスのバックエンドリポジトリです。
 
 ### 利用方法
