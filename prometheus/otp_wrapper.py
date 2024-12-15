@@ -3,7 +3,7 @@ import itertools
 import heapq
 from datetime import time
 from bus_stop import Stop
-from request import CarRequest, PtransRequest, CombinedRequest
+from request import CarRequest, PtransRequest
 from response import (
     CarResponse,
     CarSubRoute,
@@ -190,27 +190,27 @@ def search_ptrans_route(ptrans_request: PtransRequest) -> PtransResponse:
     return create_ptrans_response(ptrans_request, fastest_route)
 
 
-def search_combined_route(
-    combined_request: CombinedResponse, car_response: CarResponse
-) -> CombinedResponse:
-    stops = {
-        stop
-        for subroute in car_response.route_info.subroutes
-        for stop in (subroute.org, subroute.dst)
-    }
-    debug_str = ""
-    stop_pairs_list = []
-    for org_stop, dst_stop in itertools.permutations(stops, 2):
-        start_to_org_stop = calculate_distance(
-            combined_request.org_coord, org_stop.coord
-        )
-        dst_stop_to_goal = calculate_distance(
-            dst_stop.coord, combined_request.dst_coord
-        )
-        distance_sum = start_to_org_stop + dst_stop_to_goal
-        heapq.heappush(stop_pairs_list, (distance_sum, (org_stop, dst_stop)))
-    best_pair = heapq.heappop(stop_pairs_list)
-    debug_str += f"{best_pair}"
+# def search_combined_route(
+#     combined_request: CombinedResponse, car_response: CarResponse
+# ) -> CombinedResponse:
+#     stops = {
+#         stop
+#         for subroute in car_response.route_info.subroutes
+#         for stop in (subroute.org, subroute.dst)
+#     }
+#     debug_str = ""
+#     stop_pairs_list = []
+#     for org_stop, dst_stop in itertools.permutations(stops, 2):
+#         start_to_org_stop = calculate_distance(
+#             combined_request.org_coord, org_stop.coord
+#         )
+#         dst_stop_to_goal = calculate_distance(
+#             dst_stop.coord, combined_request.dst_coord
+#         )
+#         distance_sum = start_to_org_stop + dst_stop_to_goal
+#         heapq.heappush(stop_pairs_list, (distance_sum, (org_stop, dst_stop)))
+#     best_pair = heapq.heappop(stop_pairs_list)
+#     debug_str += f"{best_pair}"
 
-    response = PtransResponse(debug_str=debug_str)
-    return response
+#     response = PtransResponse(debug_str=debug_str)
+#     return response
