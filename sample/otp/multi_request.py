@@ -9,20 +9,31 @@ query = """
 query {
   route1: plan(
     from: {
-      lat: 34.17984991363257, 
-      lon: 134.6182768573242
+      lat: 36.69656, 
+      lon: 137.1366
     }, 
     to: {
-      lat: 34.17563182715784, 
-      lon: 134.60562299824946
+      lat: 36.68804, 
+      lon: 137.2109
     },
-    transportModes: [{mode: CAR}]
+    date: "2024-12-14",
+    time: "10:31:00",
+    locale: "ja"
   ) 
   {
     itineraries {
       duration
+      endTime
+      startTime
       legs {
         mode
+        endTime
+        startTime
+        route {
+          shortName
+          longName
+        }
+        agency { name }
         from { name }
         to { name }
         distance
