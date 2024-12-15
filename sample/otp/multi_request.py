@@ -24,6 +24,7 @@ query {
     itineraries {
       duration
       endTime
+      startTime
       legs {
         mode
         route {

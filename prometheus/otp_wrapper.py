@@ -127,7 +127,7 @@ def create_ptrans_response(request: PtransRequest, route: dict) -> PtransRespons
     return PtransResponse(
         org_coord=request.org_coord,
         dst_coord=request.dst_coord,
-        start_time=request.start_time,
+        start_time=unix_to_datetime_string(route["startTime"]),
         goal_time=unix_to_datetime_string(route["endTime"]),
         duration=route["duration"],
         subroutes=[],
@@ -155,6 +155,7 @@ def search_ptrans_route(ptrans_request: PtransRequest) -> PtransResponse:
     {{
         itineraries {{
             duration
+            startTime
             endTime
             legs {{
                 mode
