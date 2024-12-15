@@ -44,7 +44,12 @@ class PtransSubroute(BaseModel):
 class PtransResponse(BaseModel):
     org_coord: Coord
     dst_coord: Coord
-    start_time: datetime
+    start_time: str
+    goal_time: str
     duration: float
-    distance: float
     subroutes: list[PtransSubroute]
+    debug_str: str
+
+
+class CombinedResponse(BaseModel):
+    pass

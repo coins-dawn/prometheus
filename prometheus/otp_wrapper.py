@@ -1,19 +1,30 @@
 import requests
+import itertools
+import heapq
 from datetime import time
-from request import CarRequest, PtransRequest
+from bus_stop import Stop
+from request import CarRequest, PtransRequest, CombinedRequest
 from response import (
     CarResponse,
     CarSubRoute,
     RouteInfo,
     TimeTableElement,
     PtransResponse,
+    CombinedResponse,
 )
-from utility import generate_random_string, add_times, add_seconds_to_time
+from utility import (
+    generate_random_string,
+    add_times,
+    add_seconds_to_time,
+    calculate_distance,
+    unix_to_datetime_string,
+)
+
 
 OTP_GRAPHQL_URL = "http://otp:8080/otp/routers/default/index/graphql"
 
 
-def create_route_info(car_request: CarRequest, result: dict) -> RouteInfo:
+def create_car_route_info(car_request: CarRequest, result: dict) -> RouteInfo:
     """open trip plannerの返却値を元にルート情報を作成する。"""
     subroutes: list[CarSubRoute] = []
     for i, route_name in enumerate(result["data"]):
@@ -103,7 +114,7 @@ def search_car_route(car_request: CarRequest) -> CarResponse:
 
     result = otp_response.json()
     route_id = generate_random_string()
-    route_info = create_route_info(car_request, result)
+    route_info = create_car_route_info(car_request, result)
     time_table = create_time_table(car_request, route_info)
     response = CarResponse(
         route_id=route_id, route_info=route_info, time_table=time_table
@@ -112,6 +123,93 @@ def search_car_route(car_request: CarRequest) -> CarResponse:
     return response
 
 
+def create_ptrans_response(request: PtransRequest, route: dict) -> PtransResponse:
+    return PtransResponse(
+        org_coord=request.org_coord,
+        dst_coord=request.dst_coord,
+        start_time=request.start_time,
+        goal_time=unix_to_datetime_string(route["endTime"]),
+        duration=route["duration"],
+        subroutes=[],
+        debug_str="",
+    )
+
+
 def search_ptrans_route(ptrans_request: PtransRequest) -> PtransResponse:
-    response = PtransResponse()
+    """open trip plannerで徒歩＋公共交通の探索を行う。"""
+    query_str = "query {"
+    query_str += f"""
+    route: plan(
+        from: {{
+            lat: {ptrans_request.org_coord.lat},
+            lon: {ptrans_request.org_coord.lon}
+        }},
+        to: {{
+            lat: {ptrans_request.dst_coord.lat},
+            lon: {ptrans_request.dst_coord.lon}
+        }},
+        date: "{ptrans_request.start_time.split(" ")[0]}",
+        time: "{ptrans_request.start_time.split(" ")[1]}",
+        locale: "ja"
+    )
+    {{
+        itineraries {{
+            duration
+            endTime
+            legs {{
+                mode
+                route {{
+                    shortName
+                    longName
+                }}
+                distance
+                duration
+                agency {{ name }}
+                from {{ name }}
+                to {{ name }}
+                legGeometry {{ points }}
+            }}
+        }}
+    }}
+    """
+    query_str += "}"
+
+    otp_response = requests.post(OTP_GRAPHQL_URL, json={"query": query_str})
+
+    if otp_response.status_code != 200:
+        raise Exception("otpサーバへの通信に失敗しました。")
+
+    result = otp_response.json()
+
+    # 最も早く目的地に到着する経路を選択
+    routes = result["data"]["route"]["itineraries"]
+    sorted_routes = sorted(routes, key=lambda x: x["endTime"])
+    fastest_route = sorted_routes[0]
+
+    return create_ptrans_response(ptrans_request, fastest_route)
+
+
+def search_combined_route(
+    combined_request: CombinedResponse, car_response: CarResponse
+) -> CombinedResponse:
+    stops = {
+        stop
+        for subroute in car_response.route_info.subroutes
+        for stop in (subroute.org, subroute.dst)
+    }
+    debug_str = ""
+    stop_pairs_list = []
+    for org_stop, dst_stop in itertools.permutations(stops, 2):
+        start_to_org_stop = calculate_distance(
+            combined_request.org_coord, org_stop.coord
+        )
+        dst_stop_to_goal = calculate_distance(
+            dst_stop.coord, combined_request.dst_coord
+        )
+        distance_sum = start_to_org_stop + dst_stop_to_goal
+        heapq.heappush(stop_pairs_list, (distance_sum, (org_stop, dst_stop)))
+    best_pair = heapq.heappop(stop_pairs_list)
+    debug_str += f"{best_pair}"
+
+    response = PtransResponse(debug_str=debug_str)
     return response
