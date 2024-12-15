@@ -38,13 +38,17 @@ class CarResponse(BaseModel):
 
 
 class BusInfo(BaseModel):
+    """バス経路の情報を表すクラス。"""
+
     agency: str
-    line_name: str | None
+    line_name: str
     org_stop_name: str
     dst_stop_name: str
 
 
 class PtransSubroute(BaseModel):
+    """徒歩＋公共交通の個別経路を表すクラス。"""
+
     mode: str
     start_time: str
     goal_time: str
@@ -55,6 +59,8 @@ class PtransSubroute(BaseModel):
 
 
 class PtransResponse(BaseModel):
+    """徒歩＋公共交通の経路情報を表すクラス。"""
+
     org_coord: Coord
     dst_coord: Coord
     start_time: str
