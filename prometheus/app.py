@@ -1,8 +1,7 @@
 from flask import Flask, request, jsonify
 from pydantic import ValidationError
-
-from request import CarRequest, PtransRequest
-from otp_wrapper import search_car_route, search_ptrans_route
+from request import CarRequest, PtransRequest, CombinedRequest
+from otp_wrapper import search_car_route, search_ptrans_route, search_combined_route
 from utility import save_to_binary_file, load_from_binary_file, save_car_route_as_kml
 
 app = Flask(__name__)
@@ -63,13 +62,51 @@ def route_ptrans():
     try:
         json_data = request.get_json()
         ptrans_request = PtransRequest(**json_data)
-        ptrans_response = search_ptrans_route(ptrans_request)
     except ValidationError as e:
         return jsonify({"status": "NG", "message": e.errors()}), 400
     except Exception as e:
         return jsonify({"status": "NG", "message": str(e)}), 500
 
+    try:
+        ptrans_response = search_ptrans_route(ptrans_request)
+    except Exception as e:
+        return jsonify({"status": "NG", "message": str(e)}), 500
+
     return jsonify({"status": "OK", "result": ptrans_response.model_dump()})
+
+
+@app.route("/route/combined", methods=["POST"])
+def route_combined():
+    try:
+        json_data = request.get_json()
+        combined_request = CombinedRequest(**json_data)
+    except ValidationError as e:
+        return jsonify({"status": "NG", "message": e.errors()}), 400
+    except Exception as e:
+        return jsonify({"status": "NG", "message": str(e)}), 500
+
+    use_route_id = combined_request.use_route_id
+    try:
+        use_route = load_from_binary_file(use_route_id)
+    except FileNotFoundError as e:
+        return (
+            jsonify(
+                {
+                    "status": "NG",
+                    "message": f"ルートキャッシュ{use_route_id}が存在しません。",
+                }
+            ),
+            400,
+        )
+    except Exception as e:
+        return jsonify({"status": "NG", "message": str(e)}), 500
+
+    try:
+        combined_response = search_combined_route(combined_request, use_route)
+    except Exception as e:
+        return jsonify({"status": "NG", "message": str(e)}), 500
+
+    return jsonify({"status": "OK", "result": combined_response.model_dump()})
 
 
 if __name__ == "__main__":
