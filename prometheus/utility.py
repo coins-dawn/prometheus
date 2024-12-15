@@ -3,10 +3,12 @@ import string
 import time
 import pickle
 import polyline
+import math
+from coord import Coord
 from pathlib import Path
 from response import CarResponse
 from xml.etree.ElementTree import Element, SubElement, tostring
-from datetime import time, timedelta, datetime
+from datetime import time, timedelta, datetime, timezone
 
 
 def generate_random_string(length=12):
@@ -95,3 +97,38 @@ def add_seconds_to_time(original_time: time, seconds_to_add: int) -> time:
     minutes = int((total_seconds % 3600) // 60)
     seconds = int(total_seconds % 60)
     return time(hour=hours, minute=minutes, second=seconds)
+
+
+def calculate_distance(coord1: Coord, coord2: Coord) -> float:
+    """
+    2点の緯度経度から直線距離を計算する（単位: メートル）
+    計算時間を優先した簡略化した計算
+    """
+    EARTH_RADIUS = 6371
+    lat1_rad = math.radians(coord1.lat)
+    lon1_rad = math.radians(coord1.lon)
+    lat2_rad = math.radians(coord2.lat)
+    lon2_rad = math.radians(coord2.lon)
+    delta_lat = lat2_rad - lat1_rad
+    delta_lon = lon2_rad - lon1_rad
+    avg_lat = (lat1_rad + lat2_rad) / 2
+    x = delta_lon * math.cos(avg_lat)
+    y = delta_lat
+    distance = math.sqrt(x**2 + y**2) * EARTH_RADIUS * 1000  # 距離をメートルに変換
+    return distance
+
+
+def unix_to_datetime_string(unix_time_ms):
+    """
+    ミリ秒単位のUNIXタイムスタンプをJSTの日時文字列に変換する関数。
+
+    Parameters:
+        unix_time_ms (int): ミリ秒単位のUNIXタイムスタンプ（UTC）。
+
+    Returns:
+        str: 'YYYY-MM-DD HH:MM:SS'形式の日時文字列（JST）。
+    """
+    dt_utc = datetime.fromtimestamp(unix_time_ms / 1000, tz=timezone.utc)
+    jst = timezone(timedelta(hours=9))
+    dt_jst = dt_utc.astimezone(jst)
+    return dt_jst.strftime("%Y-%m-%d %H:%M:%S")

@@ -37,14 +37,31 @@ class CarResponse(BaseModel):
     time_table: list[TimeTableElement]
 
 
+class BusInfo(BaseModel):
+    agency: str
+    line_name: str | None
+    org_stop_name: str
+    dst_stop_name: str
+
+
 class PtransSubroute(BaseModel):
-    pass
+    mode: str
+    start_time: str
+    goal_time: str
+    distance: float
+    duration: float
+    polyline: str
+    bus_info: BusInfo | None
 
 
 class PtransResponse(BaseModel):
     org_coord: Coord
     dst_coord: Coord
-    start_time: datetime
+    start_time: str
+    goal_time: str
     duration: float
-    distance: float
     subroutes: list[PtransSubroute]
+
+
+# class CombinedResponse(BaseModel):
+#     pass
