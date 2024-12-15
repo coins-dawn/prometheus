@@ -5,3 +5,6 @@ from coord import Coord
 class Stop(BaseModel):
     coord: Coord
     name: str
+
+    class Config:
+        frozen = True
