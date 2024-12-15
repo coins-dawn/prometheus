@@ -27,6 +27,8 @@ query {
       startTime
       legs {
         mode
+        endTime
+        startTime
         route {
           shortName
           longName

@@ -10,7 +10,8 @@ from response import (
     RouteInfo,
     TimeTableElement,
     PtransResponse,
-    CombinedResponse,
+    PtransSubroute,
+    BusInfo,
 )
 from utility import (
     generate_random_string,
@@ -124,14 +125,40 @@ def search_car_route(car_request: CarRequest) -> CarResponse:
 
 
 def create_ptrans_response(request: PtransRequest, route: dict) -> PtransResponse:
+    """open trip plannerの返却値を元に公共交通レスポンスを構築する。"""
+    subroutes: list[PtransSubroute] = []
+    for leg in route["legs"]:
+        if leg["mode"] == "BUS":
+            short_name = leg["route"]["shortName"]
+            org_stop_name = leg["from"]["name"]
+            dst_stop_name = leg["to"]["name"]
+            bus_info = BusInfo(
+                agency=leg["agency"]["name"],
+                line_name=short_name,  # longNameが必要なことはある？
+                org_stop_name=org_stop_name,
+                dst_stop_name=dst_stop_name,
+            )
+        else:
+            bus_info = None
+        subroutes.append(
+            PtransSubroute(
+                mode=leg["mode"],
+                start_time=unix_to_datetime_string(leg["startTime"]),
+                goal_time=unix_to_datetime_string(leg["endTime"]),
+                distance=leg["distance"],
+                duration=leg["duration"],
+                polyline=leg["legGeometry"]["points"],
+                bus_info=bus_info,
+            )
+        )
+
     return PtransResponse(
         org_coord=request.org_coord,
         dst_coord=request.dst_coord,
         start_time=unix_to_datetime_string(route["startTime"]),
         goal_time=unix_to_datetime_string(route["endTime"]),
         duration=route["duration"],
-        subroutes=[],
-        debug_str="",
+        subroutes=subroutes,
     )
 
 
@@ -163,6 +190,8 @@ def search_ptrans_route(ptrans_request: PtransRequest) -> PtransResponse:
                     shortName
                     longName
                 }}
+                endTime
+                startTime
                 distance
                 duration
                 agency {{ name }}

@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from pydantic import ValidationError
-from request import CarRequest, PtransRequest, CombinedRequest
-from otp_wrapper import search_car_route, search_ptrans_route, search_combined_route
+from request import CarRequest, PtransRequest
+from otp_wrapper import search_car_route, search_ptrans_route
 from utility import save_to_binary_file, load_from_binary_file, save_car_route_as_kml
 
 app = Flask(__name__)
