@@ -16,8 +16,8 @@ class PtransRequest(BaseModel):
     start_time: str = Field(..., pattern=r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$")
 
 
-class CombinedRequest(BaseModel):
-    org_coord: Coord
-    dst_coord: Coord
-    start_time: str
-    use_route_id: str
+# class CombinedRequest(BaseModel):
+#     org_coord: Coord
+#     dst_coord: Coord
+#     start_time: str
+#     use_route_id: str

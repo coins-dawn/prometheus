@@ -75,38 +75,38 @@ def route_ptrans():
     return jsonify({"status": "OK", "result": ptrans_response.model_dump()})
 
 
-@app.route("/route/combined", methods=["POST"])
-def route_combined():
-    try:
-        json_data = request.get_json()
-        combined_request = CombinedRequest(**json_data)
-    except ValidationError as e:
-        return jsonify({"status": "NG", "message": e.errors()}), 400
-    except Exception as e:
-        return jsonify({"status": "NG", "message": str(e)}), 500
+# @app.route("/route/combined", methods=["POST"])
+# def route_combined():
+#     try:
+#         json_data = request.get_json()
+#         combined_request = CombinedRequest(**json_data)
+#     except ValidationError as e:
+#         return jsonify({"status": "NG", "message": e.errors()}), 400
+#     except Exception as e:
+#         return jsonify({"status": "NG", "message": str(e)}), 500
 
-    use_route_id = combined_request.use_route_id
-    try:
-        use_route = load_from_binary_file(use_route_id)
-    except FileNotFoundError as e:
-        return (
-            jsonify(
-                {
-                    "status": "NG",
-                    "message": f"ルートキャッシュ{use_route_id}が存在しません。",
-                }
-            ),
-            400,
-        )
-    except Exception as e:
-        return jsonify({"status": "NG", "message": str(e)}), 500
+#     use_route_id = combined_request.use_route_id
+#     try:
+#         use_route = load_from_binary_file(use_route_id)
+#     except FileNotFoundError as e:
+#         return (
+#             jsonify(
+#                 {
+#                     "status": "NG",
+#                     "message": f"ルートキャッシュ{use_route_id}が存在しません。",
+#                 }
+#             ),
+#             400,
+#         )
+#     except Exception as e:
+#         return jsonify({"status": "NG", "message": str(e)}), 500
 
-    try:
-        combined_response = search_combined_route(combined_request, use_route)
-    except Exception as e:
-        return jsonify({"status": "NG", "message": str(e)}), 500
+#     try:
+#         combined_response = search_combined_route(combined_request, use_route)
+#     except Exception as e:
+#         return jsonify({"status": "NG", "message": str(e)}), 500
 
-    return jsonify({"status": "OK", "result": combined_response.model_dump()})
+#     return jsonify({"status": "OK", "result": combined_response.model_dump()})
 
 
 if __name__ == "__main__":
