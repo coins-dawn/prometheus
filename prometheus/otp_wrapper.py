@@ -3,7 +3,8 @@ import itertools
 import heapq
 from datetime import time
 from bus_stop import Stop
-from request import CarRequest, PtransRequest
+from coord import Coord
+from request import CarRequest, PtransRequest, CombinedRequest
 from response import (
     CarResponse,
     CarSubRoute,
@@ -12,6 +13,7 @@ from response import (
     PtransResponse,
     PtransSubroute,
     BusInfo,
+    CombinedResponse
 )
 from utility import (
     generate_random_string,
@@ -162,21 +164,20 @@ def create_ptrans_response(request: PtransRequest, route: dict) -> PtransRespons
     )
 
 
-def search_ptrans_route(ptrans_request: PtransRequest) -> PtransResponse:
-    """open trip plannerで徒歩＋公共交通の探索を行う。"""
+def search_ptrans_route_by_otp(org_coord: Coord, dst_coord: Coord, start_time: str) -> dict:
     query_str = "query {"
     query_str += f"""
     route: plan(
         from: {{
-            lat: {ptrans_request.org_coord.lat},
-            lon: {ptrans_request.org_coord.lon}
+            lat: {org_coord.lat},
+            lon: {org_coord.lon}
         }},
         to: {{
-            lat: {ptrans_request.dst_coord.lat},
-            lon: {ptrans_request.dst_coord.lon}
+            lat: {dst_coord.lat},
+            lon: {dst_coord.lon}
         }},
-        date: "{ptrans_request.start_time.split(" ")[0]}",
-        time: "{ptrans_request.start_time.split(" ")[1]}",
+        date: "{start_time.split(" ")[0]}",
+        time: "{start_time.split(" ")[1]}",
         locale: "ja"
     )
     {{
@@ -215,31 +216,45 @@ def search_ptrans_route(ptrans_request: PtransRequest) -> PtransResponse:
     routes = result["data"]["route"]["itineraries"]
     sorted_routes = sorted(routes, key=lambda x: x["endTime"])
     fastest_route = sorted_routes[0]
+    
+    return fastest_route
 
+
+def search_ptrans_route(ptrans_request: PtransRequest) -> PtransResponse:
+    """open trip plannerで徒歩＋公共交通の探索を行う。"""
+    fastest_route = search_ptrans_route_by_otp(
+        ptrans_request.org_coord,
+        ptrans_request.dst_coord,
+        ptrans_request.start_time
+    )
     return create_ptrans_response(ptrans_request, fastest_route)
 
 
-# def search_combined_route(
-#     combined_request: CombinedResponse, car_response: CarResponse
-# ) -> CombinedResponse:
-#     stops = {
-#         stop
-#         for subroute in car_response.route_info.subroutes
-#         for stop in (subroute.org, subroute.dst)
-#     }
-#     debug_str = ""
-#     stop_pairs_list = []
-#     for org_stop, dst_stop in itertools.permutations(stops, 2):
-#         start_to_org_stop = calculate_distance(
-#             combined_request.org_coord, org_stop.coord
-#         )
-#         dst_stop_to_goal = calculate_distance(
-#             dst_stop.coord, combined_request.dst_coord
-#         )
-#         distance_sum = start_to_org_stop + dst_stop_to_goal
-#         heapq.heappush(stop_pairs_list, (distance_sum, (org_stop, dst_stop)))
-#     best_pair = heapq.heappop(stop_pairs_list)
-#     debug_str += f"{best_pair}"
+def search_combined_route(
+    combined_request: CombinedRequest, car_response: CarResponse
+) -> CombinedResponse:
+    stops: list[Stop] = [
+        stop
+        for subroute in car_response.route_info.subroutes
+        for stop in (subroute.org, subroute.dst)
+    ]
+    stop_pairs_list = []
+    for org_stop, dst_stop in itertools.permutations(stops, 2):
+        start_to_org_stop = calculate_distance(
+            combined_request.org_coord, org_stop.coord
+        )
+        dst_stop_to_goal = calculate_distance(
+            dst_stop.coord, combined_request.dst_coord
+        )
+        distance_sum = start_to_org_stop + dst_stop_to_goal
+        heapq.heappush(stop_pairs_list, (distance_sum, (org_stop, dst_stop)))
+    best_stops_pair = heapq.heappop(stop_pairs_list)
+    
+    # 出発地 -> 乗りバス停
+    
+    # 乗りバス停 -> 降りバス停
+    
+    # 降りバス停 -> 目的地
 
-#     response = PtransResponse(debug_str=debug_str)
-#     return response
+    response = CombinedResponse()
+    return response
