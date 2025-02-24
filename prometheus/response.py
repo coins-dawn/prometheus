@@ -71,4 +71,5 @@ class PtransResponse(BaseModel):
 
 class CombinedResponse(PtransResponse):
     """徒歩＋公共交通＋コミュニティバスの経路情報を表すクラス。"""
+
     pass
