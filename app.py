@@ -11,6 +11,11 @@ G, nodes_df = load_graph(f'{base_path}/car_nodes.csv', f'{base_path}/car_ways.cs
 mesh_dict = create_mesh_dict(nodes_df)
 print("<<<< ネットワークのロードが完了しました。")
 
+@app.route('/', methods=['GET', 'POST'])
+def ping():
+    return "Prometheus is running!"
+
+
 @app.route('/shortest_paths', methods=['POST'])
 def shortest_paths():
     try:
