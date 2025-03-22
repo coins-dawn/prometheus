@@ -1,6 +1,0 @@
-flask
-pydantic
-polyline
-requests
-gunicorn
-simplekml
