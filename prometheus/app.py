@@ -1,55 +1,34 @@
 from flask import Flask, request, jsonify
-from search import find_nearest_node, find_shortest_path, generate_kml, load_graph, create_mesh_dict
+from car_searcher import CarSearcher
 
 app = Flask(__name__)
+searcher = CarSearcher()
 
-# ネットワークのロード
-base_path = "data/osm"
-print(">>>> ネットワークをロードしています。")
-G, nodes_df = load_graph(f'{base_path}/car_nodes.csv', f'{base_path}/car_ways.csv')
-mesh_dict = create_mesh_dict(nodes_df)
-print("<<<< ネットワークのロードが完了しました。")
+@app.route("/shortest_paths", methods=["POST"])
+def generate_route():
+    data = request.get_json()
 
-@app.route('/', methods=['GET', 'POST'])
-def ping():
-    return "Prometheus is running!"
+    if "stops" not in data or not isinstance(data["stops"], list):
+        return jsonify({"error": "Invalid input format"}), 400
 
-
-@app.route('/shortest_paths', methods=['POST'])
-def shortest_paths():
     try:
-        data = request.get_json()
-        requests = data.get("requests", [])
-        
-        if not requests:
-            return jsonify({"error": "No requests provided"}), 400
-        
-        results = []
-        for i, req in enumerate(requests):
-            start_lat = float(req["start_lat"])
-            start_lon = float(req["start_lon"])
-            end_lat = float(req["end_lat"])
-            end_lon = float(req["end_lon"])
+        # coord を取り出して lat, lon に変換
+        coords = []
+        for stop in data["stops"]:
+            lat_str, lon_str = stop["coord"].split(",")
+            coords.append((float(lat_str.strip()), float(lon_str.strip())))
 
-            print(f">>>> {i+1} 件目の地点登録を実行しています。")    
-            start_node = find_nearest_node(start_lat, start_lon, nodes_df, mesh_dict)
-            end_node = find_nearest_node(end_lat, end_lon, nodes_df, mesh_dict)
-            print("<<<< 地点登録が完了しました。")
-            
-            print(f">>>> {i+1} 件目の経路探索を実行しています。")
-            path, length = find_shortest_path(G, start_node, end_node)
-            print("<<<< 経路探索が完了しました。")
-            print(f"経路長: {length} m")
-            
-            if i == 0:
-                generate_kml(nodes_df, path)
-                print("route.kml を出力しました。")
-            
-            results.append({"route_length": length})
+        # ノード列を取得して巡回ルートを形成
+        node_sequence = [searcher.find_nearest_node(lat, lon) for lat, lon in coords]
+        node_sequence.append(node_sequence[0])  # 最後にスタート地点に戻る
+
+        route = searcher.find_route_through_nodes(node_sequence)
         
-        return jsonify({"results": results})
+        searcher.export_kml(route, node_sequence)
+        return jsonify({"status": "OK"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000)
