@@ -69,5 +69,7 @@ class PtransResponse(BaseModel):
     subroutes: list[PtransSubroute]
 
 
-# class CombinedResponse(BaseModel):
-#     pass
+class CombinedResponse(PtransResponse):
+    """徒歩＋公共交通＋コミュニティバスの経路情報を表すクラス。"""
+
+    pass

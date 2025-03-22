@@ -1,4 +1,2 @@
-network/
-__pycache__
-prometheus/routes/
-prometheus/car_route.kml
+convert/input/
+__pycache__/
