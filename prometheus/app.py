@@ -1,11 +1,10 @@
-import networkx as nx
 from flask import Flask, request, jsonify
 from search import find_nearest_node, find_shortest_path, generate_kml, load_graph, create_mesh_dict
 
 app = Flask(__name__)
 
 # ネットワークのロード
-base_path = "convert/output"
+base_path = "data/osm"
 print(">>>> ネットワークをロードしています。")
 G, nodes_df = load_graph(f'{base_path}/car_nodes.csv', f'{base_path}/car_ways.csv')
 mesh_dict = create_mesh_dict(nodes_df)
@@ -42,9 +41,9 @@ def shortest_paths():
             print("<<<< 経路探索が完了しました。")
             print(f"経路長: {length} m")
             
-            # if i == 0:
-            #     generate_kml(nodes_df, path)
-            #     print("route.kml を出力しました。")
+            if i == 0:
+                generate_kml(nodes_df, path)
+                print("route.kml を出力しました。")
             
             results.append({"route_length": length})
         
