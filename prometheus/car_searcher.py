@@ -5,7 +5,13 @@ from collections import defaultdict
 from coord import Coord
 from geo_utility import latlon_to_mesh, haversine
 from input import SearchInput
-from output import SearchOutout, get_sample_output
+from output import (
+    SearchOutout,
+    OutputRoute,
+    OutputSection,
+    OutputStop,
+    get_sample_output,
+)
 
 
 CAR_WAY_FILE_PATH = "data/osm/car_ways.csv"
@@ -14,14 +20,15 @@ CAR_NODE_FILE_PATH = "data/osm/car_nodes.csv"
 
 class CarSearcher:
     def __init__(self):
-        self.link_dict = self._load_links(CAR_WAY_FILE_PATH)
+        self.out_link_dict: dict[int, list[tuple[int, float]]] = defaultdict(list)
+        self.link_distance_dict: dict[tuple[int, int], int] = {}
+        self._load_links(CAR_WAY_FILE_PATH)
         self.node_dict = self._load_nodes(CAR_NODE_FILE_PATH)
         self.mesh_dict = self._create_mesh_dict()
         print(">>> グラフのロードが完了しました。")
 
-    def _load_links(self, file_path: str) -> dict[int, list[tuple[int, float]]]:
+    def _load_links(self, file_path: str) -> None:
         """リンクをロードする。"""
-        link_dict: dict[int, list[tuple[int, float]]] = defaultdict(list)
         with open(file_path, newline="") as csvfile:
             reader = csv.reader(csvfile)
             next(reader)  # ヘッダーをスキップ
@@ -29,10 +36,11 @@ class CarSearcher:
                 from_node = int(from_node)
                 to_node = int(to_node)
                 distance = float(distance)
-                link_dict[from_node].append((to_node, distance))
-        return link_dict
+                self.out_link_dict[from_node].append((to_node, distance))
+                self.link_distance_dict[(from_node, to_node)] = distance
 
     def _load_nodes(self, file_path: str) -> dict[int, tuple[Coord, int]]:
+        """ノードをロードする。"""
         node_dict: dict[int, tuple[Coord, int]] = defaultdict(tuple)
         with open(file_path, newline="") as csvfile:
             reader = csv.reader(csvfile)
@@ -79,13 +87,13 @@ class CarSearcher:
             if node in visited_local:
                 continue
             visited_local.add(node)
-            for neighbor, weight in self.link_dict[node]:
+            for neighbor, weight in self.out_link_dict[node]:
                 if neighbor in visited_global:
                     continue  # 折り返し禁止（訪問済ノードは使わない）
                 heapq.heappush(queue, (cost + weight, neighbor, path + [neighbor]))
         return None
 
-    def find_route_through_nodes(self, node_sequence) -> list[int]:
+    def _find_route_through_nodes(self, node_sequence) -> list[int]:
         """指定ノード列を順番にめぐる経路を構築"""
         full_path = []
         visited_nodes = []
@@ -103,6 +111,15 @@ class CarSearcher:
             full_path.extend(path[1:] if i > 0 else path)
             visited_nodes.extend(path[1:])
         return full_path
+
+    # def _trace(self, route_node_sequence: list[int]):
+    #     for next_index in range(1, len(route_node_sequence)):
+    #         prev_idex = next_index - 1
+    #         prev_nodeid = route_node_sequence[prev_idex]
+    #         next_nodeid = route_node_sequence[next_index]
+    #         link_distance = self.link_distance_dict[prev_nodeid, next_nodeid]
+    #         prev_coord, _ = self.node_dict[prev_nodeid]
+    #         next_coord, _ = self.node_dict[next_nodeid]
 
     def export_kml(self, route_nodes, node_sequence, output_file="route.kml"):
         kml = simplekml.Kml()
@@ -138,10 +155,12 @@ class CarSearcher:
 
     def search(self, search_input: SearchInput) -> SearchOutout:
         coord_sequence = [stop.coord for stop in search_input.stops]
-        node_sequence = [self._find_nearest_node(coord) for coord in coord_sequence]
-        node_sequence.append(node_sequence[0])  # 最後にスタート地点に戻る
-        route = self.find_route_through_nodes(node_sequence)
-        self.export_kml(route, node_sequence)
-        return route
+        stop_node_sequence = [
+            self._find_nearest_node(coord) for coord in coord_sequence
+        ]
+        stop_node_sequence.append(stop_node_sequence[0])  # 最後にスタート地点に戻る
+        route_node_sequence = self._find_route_through_nodes(stop_node_sequence)
+        self.export_kml(route_node_sequence, stop_node_sequence)
+        return route_node_sequence
 
         # return get_sample_output()
