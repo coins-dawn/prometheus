@@ -22,7 +22,9 @@ def generate_route():
     except Exception as e:
         return jsonify({"status": "NG", "message": str(e)}), 500
 
-    generate_kml(search_output)
+    # クエリパラメータ debug=1 が指定されたときだけKMLを出力
+    if request.args.get("debug") == "1":
+        generate_kml(search_output)
 
     return (
         jsonify(
