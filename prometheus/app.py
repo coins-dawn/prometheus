@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from car_searcher import CarSearcher
+from prometheus.car_searcher import CarSearcher
 from input import SearchInput
 from utility import convert_for_json
 from visualize import generate_kml
