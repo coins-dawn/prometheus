@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+import math
 
 
 def convert_for_json(obj):
@@ -12,3 +13,8 @@ def convert_for_json(obj):
         return {k: convert_for_json(getattr(obj, k)) for k in obj.__dataclass_fields__}
     else:
         return obj
+
+
+def round_half_up(value: float) -> int:
+    """floatを四捨五入して整数にする。"""
+    return int(math.floor(value + 0.5))
