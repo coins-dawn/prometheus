@@ -12,8 +12,6 @@ class OutputStop:
 
 @dataclass
 class OutputSection:
-    org_stop_index: int
-    dst_stop_index: int
     distance: float
     duration: int
     shape: str
@@ -47,8 +45,6 @@ def get_sample_output():
             ],
             sections=[
                 OutputSection(
-                    org_stop_index=1,
-                    dst_stop_index=2,
                     distance=100,
                     duration=100,
                     shape="AAAAAAAAAAAAAAAAAAAAAa",
