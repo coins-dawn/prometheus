@@ -153,13 +153,17 @@ class CarSearcher:
         ]
         stop_node_sequence.append(stop_node_sequence[0])  # 最後にスタート地点に戻る
         output_section_list = self._find_route_through_nodes(stop_node_sequence)
-        return OutputRoute(
-            distance=reduce(lambda acc, x: acc + x.distance, output_section_list, 0),
-            duration=reduce(lambda acc, x: acc + x.duration, output_section_list, 0)
-            + len(search_input.stops) * STAYTIME_PER_STOP,
-            stops=[
-                OutputStop(stop=stop, stay_time=STAYTIME_PER_STOP)
-                for stop in search_input.stops
-            ],
-            sections=output_section_list,
+        return SearchOutout(
+            route=OutputRoute(
+                distance=reduce(
+                    lambda acc, x: acc + x.distance, output_section_list, 0
+                ),
+                duration=reduce(lambda acc, x: acc + x.duration, output_section_list, 0)
+                + len(search_input.stops) * STAYTIME_PER_STOP,
+                stops=[
+                    OutputStop(stop=stop, stay_time=STAYTIME_PER_STOP)
+                    for stop in search_input.stops
+                ],
+                sections=output_section_list,
+            )
         )
