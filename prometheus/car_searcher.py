@@ -2,20 +2,20 @@ import csv
 import heapq
 import simplekml
 from collections import defaultdict
+from functools import reduce
+from polyline import encode
 from coord import Coord
 from geo_utility import latlon_to_mesh, haversine
+from utility import round_half_up
 from input import SearchInput
-from output import (
-    SearchOutout,
-    OutputRoute,
-    OutputSection,
-    OutputStop,
-    get_sample_output,
-)
+from output import SearchOutout, OutputRoute, OutputSection, OutputStop
 
 
 CAR_WAY_FILE_PATH = "data/osm/car_ways.csv"
 CAR_NODE_FILE_PATH = "data/osm/car_nodes.csv"
+
+STAYTIME_PER_STOP = 1  # バス停ごとの停車時間[分]
+BUS_SPEED_KM_PER_HOUR = 40  # バスのスピード[km/h]
 
 
 class CarSearcher:
@@ -76,14 +76,17 @@ class CarSearcher:
                 min_nodeid = nodeid
         return min_nodeid
 
-    def _dijkstra(self, start, goal, visited_global) -> list[int]:
+    def _dijkstra(self, start, goal, visited_global) -> tuple[OutputSection, list[int]]:
         """Dijkstraを実行しノード列を得る。"""
+        # search
         queue = [(0, start, [start])]
         visited_local = set()
+        route_node_sequence = None
         while queue:
             cost, node, path = heapq.heappop(queue)
             if node == goal:
-                return path
+                route_node_sequence = path
+                break
             if node in visited_local:
                 continue
             visited_local.add(node)
@@ -91,67 +94,57 @@ class CarSearcher:
                 if neighbor in visited_global:
                     continue  # 折り返し禁止（訪問済ノードは使わない）
                 heapq.heappush(queue, (cost + weight, neighbor, path + [neighbor]))
-        return None
 
-    def _find_route_through_nodes(self, node_sequence) -> list[int]:
+        if not route_node_sequence:
+            return None, None
+
+        # trace
+        distance_m = 0
+        coord_list: list[Coord] = []
+        for next_index in range(1, len(route_node_sequence)):
+            prev_idex = next_index - 1
+            prev_nodeid = route_node_sequence[prev_idex]
+            next_nodeid = route_node_sequence[next_index]
+            link_distance = self.link_distance_dict[prev_nodeid, next_nodeid]
+            distance_m += link_distance
+            prev_coord, _ = self.node_dict[prev_nodeid]
+            next_coord, _ = self.node_dict[next_nodeid]
+            coord_list.append(prev_coord)
+            if next_index == len(route_node_sequence) - 1:
+                coord_list.append(next_coord)
+        encoded_shape = encode([(coord.lat, coord.lon) for coord in coord_list])
+        bus_speed_meter_per_minute = BUS_SPEED_KM_PER_HOUR * 1000 / 60
+        duration_m = round_half_up(distance_m / bus_speed_meter_per_minute)
+
+        return (
+            OutputSection(
+                distance=round_half_up(distance_m),
+                duration=duration_m,
+                shape=encoded_shape,
+            ),
+            route_node_sequence,
+        )
+
+    def _find_route_through_nodes(self, node_sequence) -> list[OutputSection]:
         """指定ノード列を順番にめぐる経路を構築"""
-        full_path = []
         visited_nodes = []
+        output_section_list: list[OutputSection] = []
         for i in range(len(node_sequence) - 1):
             start = node_sequence[i]
             goal = node_sequence[i + 1]
-            path = self._dijkstra(start, goal, visited_nodes)
-            if path is None:
+            route, route_node_sequence = self._dijkstra(start, goal, visited_nodes)
+            if route is None:
                 # 行き止まりなどで折り返さざるを得ない場合のケア
                 # 出発地から20ノードだけ重複を許容する
-                path = self._dijkstra(start, goal, visited_nodes[0:-20])
-                if path is None:
+                route, route_node_sequence = self._dijkstra(
+                    start, goal, visited_nodes[0:-20]
+                )
+                if route is None:
                     raise ValueError(f"経路が見つかりません: {start} → {goal}")
             # 前のゴールと重複しないようにする
-            full_path.extend(path[1:] if i > 0 else path)
-            visited_nodes.extend(path[1:])
-        return full_path
-
-    # def _trace(self, route_node_sequence: list[int]):
-    #     for next_index in range(1, len(route_node_sequence)):
-    #         prev_idex = next_index - 1
-    #         prev_nodeid = route_node_sequence[prev_idex]
-    #         next_nodeid = route_node_sequence[next_index]
-    #         link_distance = self.link_distance_dict[prev_nodeid, next_nodeid]
-    #         prev_coord, _ = self.node_dict[prev_nodeid]
-    #         next_coord, _ = self.node_dict[next_nodeid]
-
-    def export_kml(self, route_nodes, node_sequence, output_file="route.kml"):
-        kml = simplekml.Kml()
-
-        # 経路のライン
-        line_coords = []
-        for node_id in route_nodes:
-            coord, _ = self.node_dict[node_id]
-            lat = coord.lat
-            lon = coord.lon
-            line_coords.append((lon, lat))
-
-        # 赤の太いライン
-        linestring = kml.newlinestring(name="経路")
-        linestring.coords = line_coords
-        linestring.style.linestyle.color = simplekml.Color.red
-        linestring.style.linestyle.width = 5  # 太さ
-
-        # ピンの追加（訪問ノードのみ）
-        for idx, node_id in enumerate(node_sequence):
-            coord, _ = self.node_dict[node_id]
-            lat = coord.lat
-            lon = coord.lon
-            pnt = kml.newpoint(name=f"目的地 {idx+1}", coords=[(lon, lat)])
-            pnt.style.labelstyle.scale = 1.2
-            pnt.style.iconstyle.icon.href = (
-                "http://maps.google.com/mapfiles/kml/paddle/red-circle.png"
-            )
-
-        # ファイル保存
-        kml.save(output_file)
-        print(f">>> KMLファイルを出力しました: {output_file}")
+            visited_nodes.extend(route_node_sequence[1:])
+            output_section_list.append(route)
+        return output_section_list
 
     def search(self, search_input: SearchInput) -> SearchOutout:
         coord_sequence = [stop.coord for stop in search_input.stops]
@@ -159,8 +152,14 @@ class CarSearcher:
             self._find_nearest_node(coord) for coord in coord_sequence
         ]
         stop_node_sequence.append(stop_node_sequence[0])  # 最後にスタート地点に戻る
-        route_node_sequence = self._find_route_through_nodes(stop_node_sequence)
-        self.export_kml(route_node_sequence, stop_node_sequence)
-        return route_node_sequence
-
-        # return get_sample_output()
+        output_section_list = self._find_route_through_nodes(stop_node_sequence)
+        return OutputRoute(
+            distance=reduce(lambda acc, x: acc + x.distance, output_section_list, 0),
+            duration=reduce(lambda acc, x: acc + x.duration, output_section_list, 0)
+            + len(search_input.stops) * STAYTIME_PER_STOP,
+            stops=[
+                OutputStop(stop=stop, stay_time=STAYTIME_PER_STOP)
+                for stop in search_input.stops
+            ],
+            sections=output_section_list,
+        )
