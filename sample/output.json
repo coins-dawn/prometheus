@@ -4,32 +4,38 @@
         "duration": 30,
         "stops": [
             {
-                "name": "バス停1",
-                "coord": "36.65742, 137.17421",
-                "stopping-time": 1
+                "stop": {
+                    "name": "バス停1",
+                    "coord": "36.65742, 137.17421"
+                },
+                "stay-time": 1
             },
             {
-                "name": "バス停2",
-                "coord": "36.65742, 137.17421",
-                "stopping-time": 1
+                "stop": {
+                    "name": "バス停2",
+                    "coord": "36.65742, 137.17421"
+                },
+                "stay-time": 1
             },
             {
-                "name": "バス停3",
-                "coord": "36.65742, 137.17421",
-                "stopping-time": 1
+                "stop": {
+                    "name": "バス停3",
+                    "coord": "36.65742, 137.17421"
+                },
+                "stay-time": 1
             }
         ],
-        "route": [
+        "section": [
             {
-                "org-stop": "バス停1",
-                "dst-stop": "バス停2",
+                "org-stop-index": 0,
+                "dst-stop-index": 1,
                 "distance": 3,
                 "duration": 10,
                 "shape": "AAEWWEXCEWAGWE"
             },
             {
-                "org-stop": "バス停2",
-                "dst-stop": "バス停3",
+                "org-stop-index": 1,
+                "dst-stop-index": 2,
                 "distance": 3,
                 "duration": 10,
                 "shape": "AAEWWEXCEWAGWE"
