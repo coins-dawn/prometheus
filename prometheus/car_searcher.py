@@ -1,4 +1,3 @@
-import pandas as pd
 import csv
 import heapq
 import simplekml
@@ -16,7 +15,6 @@ CAR_NODE_FILE_PATH = "data/osm/car_nodes.csv"
 class CarSearcher:
     def __init__(self):
         self.link_dict = self._load_links(CAR_WAY_FILE_PATH)
-        self.nodes_df = pd.read_csv(CAR_NODE_FILE_PATH)
         self.node_dict = self._load_nodes(CAR_NODE_FILE_PATH)
         self.mesh_dict = self._create_mesh_dict()
         print(">>> グラフのロードが完了しました。")
@@ -47,35 +45,28 @@ class CarSearcher:
                 node_dict[nodeid] = (Coord(lat=lat, lon=lon), meshid)
         return node_dict
 
-    def _create_mesh_dict(self) -> dict[int, list[int]]:
+    def _create_mesh_dict(self) -> dict[int, list[tuple[int, Coord]]]:
         """メッシュIDから、そこに属するノード一覧を作成する。"""
         mesh_dict: dict[int, list[int]] = defaultdict(list)
         for nodeid, value in self.node_dict.items():
-            meshid = value[1]
+            coord, meshid = value
             if meshid not in mesh_dict:
                 mesh_dict[meshid] = []
-            mesh_dict[meshid].append(nodeid)
+            mesh_dict[meshid].append((nodeid, coord))
         return mesh_dict
 
-    def _find_nearest_node(self, coord: Coord) -> int:
+    def _find_nearest_node(self, target_coord: Coord) -> int:
         """緯度経度から最寄りノードを検索する（地点登録）"""
-        mesh_id = latlon_to_mesh(coord)
-        candidates = self.nodes_df[
-            self.nodes_df["ノード番号"].isin(self.mesh_dict.get(mesh_id, []))
-        ]
-        if candidates.empty:
-            candidates = self.nodes_df  # メッシュ内にない場合は全体から探す
-        return int(
-            candidates.loc[
-                candidates.apply(
-                    lambda row: haversine(
-                        coord, Coord(lat=row["緯度"], lon=row["経度"])
-                    ),
-                    axis=1,
-                ).idxmin(),
-                "ノード番号",
-            ]
-        )
+        mesh_id = latlon_to_mesh(target_coord)
+        candidates = self.mesh_dict[mesh_id]
+        min_distance = 1 << 29
+        min_nodeid = None
+        for nodeid, coord in candidates:
+            distance = haversine(target_coord, coord)
+            if distance < min_distance:
+                min_distance = distance
+                min_nodeid = nodeid
+        return min_nodeid
 
     def _dijkstra(self, start, goal, visited_global) -> list[int]:
         """Dijkstraを実行しノード列を得る。"""
@@ -119,11 +110,9 @@ class CarSearcher:
         # 経路のライン
         line_coords = []
         for node_id in route_nodes:
-            node = self.nodes_df[self.nodes_df["ノード番号"] == node_id]
-            if node.empty:
-                continue
-            lat = node["緯度"].values[0]
-            lon = node["経度"].values[0]
+            coord, _ = self.node_dict[node_id]
+            lat = coord.lat
+            lon = coord.lon
             line_coords.append((lon, lat))
 
         # 赤の太いライン
@@ -134,11 +123,9 @@ class CarSearcher:
 
         # ピンの追加（訪問ノードのみ）
         for idx, node_id in enumerate(node_sequence):
-            node = self.nodes_df[self.nodes_df["ノード番号"] == node_id]
-            if node.empty:
-                continue
-            lat = node["緯度"].values[0]
-            lon = node["経度"].values[0]
+            coord, _ = self.node_dict[node_id]
+            lat = coord.lat
+            lon = coord.lon
             pnt = kml.newpoint(name=f"目的地 {idx+1}", coords=[(lon, lat)])
             pnt.style.labelstyle.scale = 1.2
             pnt.style.iconstyle.icon.href = (
