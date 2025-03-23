@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
-from datetime import time
-from stop import Stop
+from prometheus.stop import Stop
 
 
 class SearchInput(BaseModel):

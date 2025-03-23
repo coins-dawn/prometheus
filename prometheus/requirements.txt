@@ -1,8 +1,0 @@
-flask
-gunicorn
-networkx
-flask
-pandas
-simplekml
-pydantic
-polyline
