@@ -1,6 +1,6 @@
 from math import floor
 import math
-from coord import Coord
+from prometheus.coord import Coord
 
 
 def latlon_to_mesh(coord: Coord) -> int:

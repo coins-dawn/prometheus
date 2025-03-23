@@ -1,6 +1,6 @@
-from output import SearchOutout
 import simplekml
 import polyline
+from prometheus.output import SearchOutout
 
 
 def generate_kml(search_output: SearchOutout, output_path="route.kml"):

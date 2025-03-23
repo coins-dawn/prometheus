@@ -1,6 +1,5 @@
 from pydantic import BaseModel
-
-from coord import Coord
+from prometheus.coord import Coord
 
 
 class Stop(BaseModel):

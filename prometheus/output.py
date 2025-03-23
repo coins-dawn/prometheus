@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-
-from stop import Stop
+from prometheus.stop import Stop
 
 
 @dataclass

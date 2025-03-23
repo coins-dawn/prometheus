@@ -4,7 +4,7 @@ format:
 
 .PHONY: run-server
 run-server:
-	python prometheus/app.py
+	PYTHONPATH=. python -m prometheus.app
 
 .PHONY: sample-request
 sample-request:
