@@ -102,7 +102,6 @@ class CarSearcher:
 
     def _dijkstra(self, start, goal, visited_global) -> tuple[OutputSection, list[int]]:
         """Dijkstraを実行し最短経路を得る。"""
-        # search
         queue = [(0, start, [start])]
         visited_local = set()
         route_node_sequence = None
