@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 from stop import Stop
-from coord import Coord
 
 
 @dataclass
