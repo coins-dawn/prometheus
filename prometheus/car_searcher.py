@@ -75,8 +75,33 @@ class CarSearcher:
                 min_nodeid = nodeid
         return min_nodeid
 
+    def _trace(self, route_node_sequence: list[int]) -> OutputSection:
+        """ノード列をトレースしセクションの情報を詰めて返す。"""
+        distance_m = 0
+        coord_list: list[Coord] = []
+        for next_index in range(1, len(route_node_sequence)):
+            prev_idex = next_index - 1
+            prev_nodeid = route_node_sequence[prev_idex]
+            next_nodeid = route_node_sequence[next_index]
+            link_distance = self.link_distance_dict[prev_nodeid, next_nodeid]
+            distance_m += link_distance
+            prev_coord, _ = self.node_dict[prev_nodeid]
+            next_coord, _ = self.node_dict[next_nodeid]
+            coord_list.append(prev_coord)
+            if next_index == len(route_node_sequence) - 1:
+                coord_list.append(next_coord)
+        encoded_shape = encode([(coord.lat, coord.lon) for coord in coord_list])
+        bus_speed_meter_per_minute = BUS_SPEED_KM_PER_HOUR * 1000 / 60
+        duration_m = round_half_up(distance_m / bus_speed_meter_per_minute)
+
+        return OutputSection(
+            distance=round_half_up(distance_m),
+            duration=duration_m,
+            shape=encoded_shape,
+        )
+
     def _dijkstra(self, start, goal, visited_global) -> tuple[OutputSection, list[int]]:
-        """Dijkstraを実行しノード列を得る。"""
+        """Dijkstraを実行し最短経路を得る。"""
         # search
         queue = [(0, start, [start])]
         visited_local = set()
@@ -97,32 +122,7 @@ class CarSearcher:
         if not route_node_sequence:
             return None, None
 
-        # trace
-        distance_m = 0
-        coord_list: list[Coord] = []
-        for next_index in range(1, len(route_node_sequence)):
-            prev_idex = next_index - 1
-            prev_nodeid = route_node_sequence[prev_idex]
-            next_nodeid = route_node_sequence[next_index]
-            link_distance = self.link_distance_dict[prev_nodeid, next_nodeid]
-            distance_m += link_distance
-            prev_coord, _ = self.node_dict[prev_nodeid]
-            next_coord, _ = self.node_dict[next_nodeid]
-            coord_list.append(prev_coord)
-            if next_index == len(route_node_sequence) - 1:
-                coord_list.append(next_coord)
-        encoded_shape = encode([(coord.lat, coord.lon) for coord in coord_list])
-        bus_speed_meter_per_minute = BUS_SPEED_KM_PER_HOUR * 1000 / 60
-        duration_m = round_half_up(distance_m / bus_speed_meter_per_minute)
-
-        return (
-            OutputSection(
-                distance=round_half_up(distance_m),
-                duration=duration_m,
-                shape=encoded_shape,
-            ),
-            route_node_sequence,
-        )
+        return self._trace(route_node_sequence), route_node_sequence
 
     def _find_route_through_nodes(self, node_sequence) -> list[OutputSection]:
         """指定ノード列を順番にめぐる経路を構築"""
