@@ -25,7 +25,10 @@ def haversine(lat1, lon1, lat2, lon2):
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
     dphi = math.radians(lat2 - lat1)
     dlambda = math.radians(lon2 - lon1)
-    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+    a = (
+        math.sin(dphi / 2) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+    )
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
@@ -36,7 +39,6 @@ class CarSearcher:
         self.nodes_df = pd.read_csv(CAR_NODE_FILE_PATH)
         self.mesh_dict = self.create_mesh_dict()
         print(">>> グラフのロードが完了しました。")
-        
 
     def load_graph(self, file_path: str) -> defaultdict:
         """グラフをロードする。"""
@@ -50,27 +52,33 @@ class CarSearcher:
                 dist = float(dist)
                 graph[from_node].append((to_node, dist))
         return graph
-    
+
     def create_mesh_dict(self):
         """メッシュIDから、そこに属するノード一覧を作成する。"""
         mesh_dict = {}
         for _, row in self.nodes_df.iterrows():
-            mesh_id = row['3次メッシュID']
+            mesh_id = row["3次メッシュID"]
             if mesh_id not in mesh_dict:
                 mesh_dict[mesh_id] = []
-            mesh_dict[mesh_id].append(row['ノード番号'])
+            mesh_dict[mesh_id].append(row["ノード番号"])
         return mesh_dict
-
 
     def find_nearest_node(self, lat, lon):
         """緯度経度から最寄りノードを検索する（地点登録）"""
         mesh_id = latlon_to_mesh(lat, lon)
-        candidates = self.nodes_df[self.nodes_df['ノード番号'].isin(self.mesh_dict.get(mesh_id, []))]
+        candidates = self.nodes_df[
+            self.nodes_df["ノード番号"].isin(self.mesh_dict.get(mesh_id, []))
+        ]
         if candidates.empty:
             candidates = self.nodes_df  # メッシュ内にない場合は全体から探す
-        return int(candidates.loc[candidates.apply(lambda row: haversine(lat, lon, row['緯度'], row['経度']), axis=1).idxmin(), 'ノード番号'])
-
-
+        return int(
+            candidates.loc[
+                candidates.apply(
+                    lambda row: haversine(lat, lon, row["緯度"], row["経度"]), axis=1
+                ).idxmin(),
+                "ノード番号",
+            ]
+        )
 
     def dijkstra(self, start, goal, visited_global):
         """Dijkstraを実行しノード列を得る。"""
@@ -88,7 +96,6 @@ class CarSearcher:
                     continue  # 折り返し禁止（訪問済ノードは使わない）
                 heapq.heappush(queue, (cost + weight, neighbor, path + [neighbor]))
         return None
-
 
     def find_route_through_nodes(self, node_sequence):
         """指定ノード列を順番にめぐる経路を構築"""
@@ -109,18 +116,17 @@ class CarSearcher:
             visited_nodes.extend(path[1:])
         return full_path
 
-
     def export_kml(self, route_nodes, node_sequence, output_file="route.kml"):
         kml = simplekml.Kml()
 
         # 経路のライン
         line_coords = []
         for node_id in route_nodes:
-            node = self.nodes_df[self.nodes_df['ノード番号'] == node_id]
+            node = self.nodes_df[self.nodes_df["ノード番号"] == node_id]
             if node.empty:
                 continue
-            lat = node['緯度'].values[0]
-            lon = node['経度'].values[0]
+            lat = node["緯度"].values[0]
+            lon = node["経度"].values[0]
             line_coords.append((lon, lat))
 
         # 赤の太いライン
@@ -131,19 +137,20 @@ class CarSearcher:
 
         # ピンの追加（訪問ノードのみ）
         for idx, node_id in enumerate(node_sequence):
-            node = self.nodes_df[self.nodes_df['ノード番号'] == node_id]
+            node = self.nodes_df[self.nodes_df["ノード番号"] == node_id]
             if node.empty:
                 continue
-            lat = node['緯度'].values[0]
-            lon = node['経度'].values[0]
+            lat = node["緯度"].values[0]
+            lon = node["経度"].values[0]
             pnt = kml.newpoint(name=f"目的地 {idx+1}", coords=[(lon, lat)])
             pnt.style.labelstyle.scale = 1.2
-            pnt.style.iconstyle.icon.href = "http://maps.google.com/mapfiles/kml/paddle/red-circle.png"
+            pnt.style.iconstyle.icon.href = (
+                "http://maps.google.com/mapfiles/kml/paddle/red-circle.png"
+            )
 
         # ファイル保存
         kml.save(output_file)
         print(f">>> KMLファイルを出力しました: {output_file}")
-
 
 
 if __name__ == "__main__":
@@ -153,7 +160,7 @@ if __name__ == "__main__":
         (36.68936, 137.18519),
         (36.67738, 137.23892),
         (36.65493, 137.24001),
-        (36.63964, 137.21958)
+        (36.63964, 137.21958),
     ]
     node_sequence = [
         car_searcher.find_nearest_node(coord[0], coord[1]) for coord in request_coords

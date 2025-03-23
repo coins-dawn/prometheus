@@ -1,3 +1,7 @@
+.PHONY: format
+format:
+	black prometheus
+
 .PHONY: run-server
 run-server:
 	python prometheus/app.py
