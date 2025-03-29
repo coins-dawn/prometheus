@@ -18,7 +18,7 @@ def generate_kml(search_output: SearchOutout, output_path="route.kml"):
         coords = polyline.decode(section.shape)  # [(lat, lon), ...]
         line = kml.newlinestring(coords=[(lon, lat) for lat, lon in coords])
         line.style.linestyle.color = simplekml.Color.lightgreen  # 緑
-        line.style.linestyle.width = 4  # 太め
+        line.style.linestyle.width = 8  # 太め
 
     # 書き出し
     kml.save(output_path)
