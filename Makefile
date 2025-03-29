@@ -1,3 +1,7 @@
+.PHONY: fetch
+fetch:
+	pip install -r requirements.txt
+
 .PHONY: format
 format:
 	black prometheus
@@ -8,6 +12,6 @@ run-server:
 
 .PHONY: sample-request
 sample-request:
-	curl -X POST http://localhost:8000/route \
+	curl -X POST http://localhost:8000/search/car \
 	-H "Content-Type: application/json" \
-	-d @sample/input.json --output route.kml
+	-d @sample/input.json
