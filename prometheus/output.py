@@ -6,6 +6,7 @@ from prometheus.stop import Stop
 class OutputStop:
     stop: Stop
     stay_time: int
+    departure_times: list[str]
 
 
 @dataclass
