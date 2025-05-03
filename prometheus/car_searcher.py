@@ -8,6 +8,7 @@ from prometheus.geo_utility import latlon_to_mesh, haversine
 from prometheus.utility import round_half_up
 from prometheus.input import SearchInput
 from prometheus.output import SearchOutout, OutputRoute, OutputSection, OutputStop
+from datetime import datetime, timedelta
 
 
 CAR_WAY_FILE_PATH = "data/osm/car_ways.csv"
@@ -15,6 +16,7 @@ CAR_NODE_FILE_PATH = "data/osm/car_nodes.csv"
 
 STAYTIME_PER_STOP = 1  # バス停ごとの停車時間[分]
 BUS_SPEED_KM_PER_HOUR = 40  # バスのスピード[km/h]
+BUS_CIRCLE_COUNT = 10  # バスが周回する数
 
 
 class CarSearcher:
@@ -144,6 +146,24 @@ class CarSearcher:
             output_section_list.append(route)
         return output_section_list
 
+    def _calculate_departure_time_matrix(
+        self, output_section_list: list[OutputSection], start_time: str
+    ) -> list[list[str]]:
+        start_time_obj = datetime.strptime(start_time, "%H:%M")
+        total_duration = sum(section.duration + STAYTIME_PER_STOP for section in output_section_list)
+        departure_times = []
+
+        for i in range(len(output_section_list)):
+            departure_times.append([])
+            current_time = start_time_obj
+            for j in range(BUS_CIRCLE_COUNT):
+                departure_times[i].append(current_time.strftime("%H:%M"))
+                current_time += timedelta(minutes=total_duration)
+            if i < len(output_section_list) - 1:
+                start_time_obj += timedelta(minutes=output_section_list[i].duration)
+
+        return departure_times
+
     def search(self, search_input: SearchInput) -> SearchOutout:
         coord_sequence = [stop.coord for stop in search_input.stops]
         stop_node_sequence = [
@@ -151,6 +171,9 @@ class CarSearcher:
         ]
         stop_node_sequence.append(stop_node_sequence[0])  # 最後にスタート地点に戻る
         output_section_list = self._find_route_through_nodes(stop_node_sequence)
+        departure_time_matrix = self._calculate_departure_time_matrix(
+            output_section_list, search_input.start_time
+        )
         return SearchOutout(
             route=OutputRoute(
                 distance=reduce(
@@ -159,8 +182,8 @@ class CarSearcher:
                 duration=reduce(lambda acc, x: acc + x.duration, output_section_list, 0)
                 + len(search_input.stops) * STAYTIME_PER_STOP,
                 stops=[
-                    OutputStop(stop=stop, stay_time=STAYTIME_PER_STOP)
-                    for stop in search_input.stops
+                    OutputStop(stop=stop, stay_time=STAYTIME_PER_STOP, departure_times=departure_time_matrix[i])
+                    for i, stop in enumerate(search_input.stops)
                 ],
                 sections=output_section_list,
             )
