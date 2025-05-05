@@ -1,4 +1,5 @@
 import csv
+import json
 import heapq
 from collections import defaultdict
 from functools import reduce
@@ -127,22 +128,24 @@ class CarSearcher:
 
     def _find_route_through_nodes(self, node_sequence) -> list[OutputSection]:
         """指定ノード列を順番にめぐる経路を構築"""
-        visited_nodes = []
+        visited_nodes_list = []
+        visited_nodes_set = set()
         output_section_list: list[OutputSection] = []
         for i in range(len(node_sequence) - 1):
             start = node_sequence[i]
             goal = node_sequence[i + 1]
-            route, route_node_sequence = self._dijkstra(start, goal, visited_nodes)
+            route, route_node_sequence = self._dijkstra(start, goal, visited_nodes_set)
             if route is None:
                 # 行き止まりなどで折り返さざるを得ない場合のケア
                 # 出発地から20ノードだけ重複を許容する
                 route, route_node_sequence = self._dijkstra(
-                    start, goal, visited_nodes[0:-20]
+                    start, goal, visited_nodes_list[0:-20]
                 )
                 if route is None:
                     raise ValueError(f"経路が見つかりません: {start} → {goal}")
             # 前のゴールと重複しないようにする
-            visited_nodes.extend(route_node_sequence[1:])
+            visited_nodes_list.extend(route_node_sequence[1:])
+            visited_nodes_set.update(route_node_sequence[1:])
             output_section_list.append(route)
         return output_section_list
 
@@ -188,3 +191,53 @@ class CarSearcher:
                 sections=output_section_list,
             )
         )
+
+if __name__ == "__main__":
+    searcher = CarSearcher()
+    # Example usage
+    input_str="""
+{
+    "route-name": "循環バス",
+    "start-time": "10:00",
+    "stops": [
+        {
+            "name": "バス停1",
+            "coord": {
+                "lat": 36.65742,
+                "lon": 137.17421
+            }
+        },
+        {
+            "name": "バス停2",
+            "coord": {
+                "lat": 36.68936,
+                "lon": 137.18519
+            }
+        },
+        {
+            "name": "バス停3",
+            "coord": {
+                "lat": 36.67738,
+                "lon": 137.23892
+            }
+        },
+        {
+            "name": "バス停4",
+            "coord": {
+                "lat": 36.65493,
+                "lon": 137.24001
+            }
+        },
+        {
+            "name": "バス停5",
+            "coord": {
+                "lat": 36.63964,
+                "lon": 137.21958
+            }
+        }
+    ]
+}
+"""
+    search_input = SearchInput(**json.loads(input_str))
+    result = searcher.search(search_input)
+    print(result)

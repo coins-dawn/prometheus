@@ -15,3 +15,7 @@ sample-request:
 	curl -X POST http://localhost:8000/search/car \
 	-H "Content-Type: application/json" \
 	-d @sample/input.json
+
+.PHONY: singleshot
+singleshot:
+	PYTHONPATH=$$PYTHONPATH:./prometheus python prometheus/car_searcher.py
