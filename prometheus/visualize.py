@@ -3,7 +3,7 @@ import polyline
 from prometheus.output import SearchOutout
 
 
-def generate_kml(search_output: SearchOutout, output_path="route.kml"):
+def generate_car_route_kml(search_output: SearchOutout, output_path="car_route.kml"):
     kml = simplekml.Kml()
 
     # ピンの作成（Stops）
