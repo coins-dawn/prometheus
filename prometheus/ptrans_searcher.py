@@ -2,8 +2,9 @@ import pandas as pd
 import itertools
 import math
 import heapq
-import json
+import random
 from prometheus.input import PtransSearchInput
+from prometheus.output import CarOutputRoute
 from prometheus.coord import Coord
 from typing import Dict, List, Tuple, Optional
 
@@ -161,7 +162,58 @@ class PtransSearcher:
                 graph.add_edge(stop2, stop1, walk_time, "walk")
         return graph
 
+    def _add_car_output_to_graph(
+        self, car_output: CarOutputRoute, graph: Graph
+    ) -> None:
+        """CarOutputRoute の経路をグラフに追加"""
+        previous_node = None
+
+        # stops の緯度経度を取得
+        stops_coords = [(output_stop.stop.coord.lat, output_stop.stop.coord.lon) for output_stop in car_output.stops]
+
+        for i, section in enumerate(car_output.sections):
+            # ランダムなノードIDを生成
+            new_node = f"A{random.randint(1000, 9999)}"
+
+            # セクションのスタートノードを stops[i] に対応付け
+            if i < len(stops_coords):
+                start_lat, start_lon = stops_coords[i]
+            else:
+                raise ValueError("セクションとストップの数が一致しません。")
+
+            # セクションのゴールノードを stops[i+1] または stops[0] に対応付け
+            if i + 1 < len(stops_coords):
+                goal_lat, goal_lon = stops_coords[i + 1]
+            else:
+                goal_lat, goal_lon = stops_coords[0]  # 最後のセクションのゴールは stops[0]
+
+            # セクションをエッジとして追加
+            if previous_node is not None:
+                graph.add_edge(previous_node, new_node, section.duration, "car")
+            previous_node = new_node
+
+            # 既存のノードとの徒歩エッジを追加
+            for stop_id, stop_coord in self.stops.items():
+                dist_to_start = haversine(stop_coord[0], stop_coord[1], start_lat, start_lon)
+                dist_to_goal = haversine(stop_coord[0], stop_coord[1], goal_lat, goal_lon)
+
+                walk_time_to_start = dist_to_start / WALK_SPEED
+                walk_time_to_goal = dist_to_goal / WALK_SPEED
+
+                if walk_time_to_start < 10:  # 最大10分以内の徒歩移動のみ追加
+                    graph.add_edge(stop_id, new_node, walk_time_to_start, "walk")
+                    graph.add_edge(new_node, stop_id, walk_time_to_start, "walk")
+
+                if walk_time_to_goal < 10:  # 最大10分以内の徒歩移動のみ追加
+                    graph.add_edge(stop_id, new_node, walk_time_to_goal, "walk")
+                    graph.add_edge(new_node, stop_id, walk_time_to_goal, "walk")
+
     def search(self, input: PtransSearchInput) -> Tuple[List[int], float]:
+        # CarOutputRoute をグラフに追加
+        if input.car_output:
+            self._add_car_output_to_graph(input.car_output.route, self.graph)
+
+        # 探索を実行
         start = input.start
         goal = input.goal
         start_candidates, start_distances = find_nearest_stops(self.stops, start)

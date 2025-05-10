@@ -1,9 +1,9 @@
 import simplekml
 import polyline
-from prometheus.output import SearchOutout
+from prometheus.output import CarSearchOutout
 
 
-def generate_car_route_kml(search_output: SearchOutout, output_path="car_route.kml"):
+def generate_car_route_kml(search_output: CarSearchOutout, output_path="car_route.kml"):
     kml = simplekml.Kml()
 
     # ピンの作成（Stops）

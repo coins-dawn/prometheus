@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from prometheus.stop import Stop
 from prometheus.coord import Coord
+from prometheus.output import CarOutputRoute, CarSearchOutout
 
 
 class CarSearchInput(BaseModel):
@@ -12,3 +13,4 @@ class CarSearchInput(BaseModel):
 class PtransSearchInput(BaseModel):
     start: Coord
     goal: Coord
+    car_output: CarSearchOutout = Field(alias="car-output")
