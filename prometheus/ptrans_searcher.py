@@ -4,7 +4,8 @@ import math
 import heapq
 import json
 from prometheus.input import PtransSearchInput
-from typing import Dict, List, Tuple
+from prometheus.coord import Coord
+from typing import Dict, List, Tuple, Optional
 
 STOP_FILE_PATH = "data/gtfs/stops.txt"
 TRAVEL_TIME_FILE_PATH = "data/gtfs/average_travel_times.csv"
@@ -28,48 +29,66 @@ def haversine(lat1, lon1, lat2, lon2):
     return R * c * 1000  # m に変換
 
 
-def find_nearest_stops(stops, lat, lon, k=10):
+def find_nearest_stops(stops, target_coord: Coord, k=10):
     """指定した地点に最も近いバス停をk件取得"""
     distances = {
-        stop_id: haversine(lat, lon, coord[0], coord[1])
+        stop_id: haversine(target_coord.lat, target_coord.lon, coord[0], coord[1])
         for stop_id, coord in stops.items()
     }
     return sorted(distances, key=distances.get)[:k], distances
 
+def trace_path(
+    prev_nodes: Dict[int, int], goal_node: int
+) -> List[int]:
+    """ゴールノードからスタートノードまでの経路をトレース"""
+    path = []
+    node = goal_node
+    while node in prev_nodes:
+        path.append(node)
+        node = prev_nodes[node]
+    path.append(node)  # スタートノードを追加
+    return path[::-1]  # 経路を逆順にして返す
 
-def dijkstra(graph, start_candidates, goal_candidates, start_distances, goal_distances):
+
+def dijkstra(
+    graph: Dict[int, List[Tuple[int, float, str]]],
+    start_candidates: List[int],
+    goal_candidates: List[int],
+    start_distances: Dict[int, float],
+    goal_distances: Dict[int, float],
+) -> Tuple[Optional[List[int]], float]:
     """Dijkstra法で最短経路を探索し、徒歩区間も考慮"""
 
-    def calc_additional_cost(prev_mode, next_mode):
+    def calc_additional_cost(prev_mode: str, next_mode: str) -> int:
         if prev_mode == "bus" and next_mode == "bus":
             return 10
         if prev_mode == "walk" and next_mode == "bus":
             return 10
         return 0
 
-    pq = []
-    costs = {}
-    prev_nodes = {}
-    prev_modes = {}
+    pq: List[Tuple[float, int, str]] = []
+    costs: Dict[int, float] = {}
+    prev_nodes: Dict[int, int] = {}
+    prev_modes: Dict[int, str] = {}
 
+    # スタート候補を優先度付きキューに追加
     for start in start_candidates:
         heapq.heappush(
             pq, (start_distances[start] / WALK_SPEED, start, "walk")
         )  # 徒歩時間加算
         costs[start] = start_distances[start] / WALK_SPEED
 
+    # 探索ループ
     while pq:
         curr_cost, node, prev_mode = heapq.heappop(pq)
 
+        # ゴール候補に到達した場合、経路をトレースして返す
         if node in goal_candidates:
             total_cost = curr_cost + goal_distances[node] / WALK_SPEED
-            path = []
-            while node in prev_nodes:
-                path.append(node)
-                node = prev_nodes[node]
-            path.append(node)
-            return path[::-1], total_cost
+            path = trace_path(prev_nodes, node)
+            return path, total_cost
 
+        # 隣接ノードを探索
         for neighbor, weight, mode in graph.get(node, []):
             new_cost = curr_cost + weight + calc_additional_cost(prev_mode, mode)
 
@@ -79,6 +98,7 @@ def dijkstra(graph, start_candidates, goal_candidates, start_distances, goal_dis
                 prev_modes[neighbor] = mode
                 heapq.heappush(pq, (new_cost, neighbor, mode))
 
+    # ゴールに到達できなかった場合
     return None, float("inf")
 
 
@@ -112,10 +132,15 @@ class PtransSearcher:
         stops_df = pd.read_csv(stops_file)
         stops: Dict[int, Tuple[float, float]] = {}
         for _, row in stops_df.iterrows():
-            stops[int(row["stop_id"])] = (float(row["stop_lat"]), float(row["stop_lon"]))
+            stops[int(row["stop_id"])] = (
+                float(row["stop_lat"]),
+                float(row["stop_lon"]),
+            )
         return stops
 
-    def _build_graph(self, stops: Dict[int, Tuple[float, float]], travel_times_file: str) -> Graph:
+    def _build_graph(
+        self, stops: Dict[int, Tuple[float, float]], travel_times_file: str
+    ) -> Graph:
         """バスと徒歩の移動を含むグラフを構築"""
         graph = Graph()
         travel_df = pd.read_csv(travel_times_file)
@@ -139,12 +164,8 @@ class PtransSearcher:
     def search(self, input: PtransSearchInput) -> Tuple[List[int], float]:
         start = input.start
         goal = input.goal
-        start_candidates, start_distances = find_nearest_stops(
-            self.stops, start.lat, start.lon
-        )
-        goal_candidates, goal_distances = find_nearest_stops(
-            self.stops, goal.lat, goal.lon
-        )
+        start_candidates, start_distances = find_nearest_stops(self.stops, start)
+        goal_candidates, goal_distances = find_nearest_stops(self.stops, goal)
         best_path, best_cost = dijkstra(
             self.graph.adjacency_list,
             start_candidates,
