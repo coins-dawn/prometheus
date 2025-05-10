@@ -7,7 +7,7 @@ from polyline import encode
 from prometheus.coord import Coord
 from prometheus.geo_utility import latlon_to_mesh, haversine
 from prometheus.utility import round_half_up
-from prometheus.input import SearchInput
+from prometheus.input import CarSearchInput
 from prometheus.output import SearchOutout, OutputRoute, OutputSection, OutputStop
 from datetime import datetime, timedelta
 
@@ -27,7 +27,7 @@ class CarSearcher:
         self._load_links(CAR_WAY_FILE_PATH)
         self.node_dict = self._load_nodes(CAR_NODE_FILE_PATH)
         self.mesh_dict = self._create_mesh_dict()
-        print(">>> グラフのロードが完了しました。")
+        print(">>> OSMグラフのロードが完了しました。")
 
     def _load_links(self, file_path: str) -> None:
         """リンクをロードする。"""
@@ -153,7 +153,9 @@ class CarSearcher:
         self, output_section_list: list[OutputSection], start_time: str
     ) -> list[list[str]]:
         start_time_obj = datetime.strptime(start_time, "%H:%M")
-        total_duration = sum(section.duration + STAYTIME_PER_STOP for section in output_section_list)
+        total_duration = sum(
+            section.duration + STAYTIME_PER_STOP for section in output_section_list
+        )
         departure_times = []
 
         for i in range(len(output_section_list)):
@@ -167,7 +169,7 @@ class CarSearcher:
 
         return departure_times
 
-    def search(self, search_input: SearchInput) -> SearchOutout:
+    def search(self, search_input: CarSearchInput) -> SearchOutout:
         coord_sequence = [stop.coord for stop in search_input.stops]
         stop_node_sequence = [
             self._find_nearest_node(coord) for coord in coord_sequence
@@ -185,17 +187,22 @@ class CarSearcher:
                 duration=reduce(lambda acc, x: acc + x.duration, output_section_list, 0)
                 + len(search_input.stops) * STAYTIME_PER_STOP,
                 stops=[
-                    OutputStop(stop=stop, stay_time=STAYTIME_PER_STOP, departure_times=departure_time_matrix[i])
+                    OutputStop(
+                        stop=stop,
+                        stay_time=STAYTIME_PER_STOP,
+                        departure_times=departure_time_matrix[i],
+                    )
                     for i, stop in enumerate(search_input.stops)
                 ],
                 sections=output_section_list,
             )
         )
 
+
 if __name__ == "__main__":
     searcher = CarSearcher()
     # Example usage
-    input_str="""
+    input_str = """
 {
     "route-name": "循環バス",
     "start-time": "10:00",
@@ -238,6 +245,6 @@ if __name__ == "__main__":
     ]
 }
 """
-    search_input = SearchInput(**json.loads(input_str))
+    search_input = CarSearchInput(**json.loads(input_str))
     result = searcher.search(search_input)
     print(result)
