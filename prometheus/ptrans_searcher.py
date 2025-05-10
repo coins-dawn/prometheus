@@ -3,9 +3,8 @@ import itertools
 import math
 import heapq
 import json
-import simplekml
 from prometheus.input import PtransSearchInput
-from prometheus.coord import Coord
+from typing import Dict, List, Tuple
 
 STOP_FILE_PATH = "data/gtfs/stops.txt"
 TRAVEL_TIME_FILE_PATH = "data/gtfs/average_travel_times.csv"
@@ -83,32 +82,49 @@ def dijkstra(graph, start_candidates, goal_candidates, start_distances, goal_dis
     return None, float("inf")
 
 
+class Graph:
+    def __init__(self) -> None:
+        self.adjacency_list: Dict[int, List[Tuple[int, float, str]]] = {}
+
+    def add_edge(self, from_node: int, to_node: int, weight: float, mode: str) -> None:
+        """エッジを追加する"""
+        if from_node not in self.adjacency_list:
+            self.adjacency_list[from_node] = []
+        self.adjacency_list[from_node].append((to_node, weight, mode))
+
+    def get_neighbors(self, node: int) -> List[Tuple[int, float, str]]:
+        """指定したノードの隣接ノードを取得する"""
+        return self.adjacency_list.get(node, [])
+
+    def __repr__(self) -> str:
+        """グラフの内容を文字列として表示"""
+        return str(self.adjacency_list)
+
+
 class PtransSearcher:
-    def __init__(self):
+    def __init__(self) -> None:
         self.stops = self._load_stops(STOP_FILE_PATH)
         self.graph = self._build_graph(self.stops, TRAVEL_TIME_FILE_PATH)
         print(">>> GTFSグラフのロードが完了しました。")
 
-    def _load_stops(self, stops_file):
+    def _load_stops(self, stops_file: str) -> Dict[int, Tuple[float, float]]:
         """stops.txt からバス停のIDと座標を取得"""
         stops_df = pd.read_csv(stops_file)
-        stops = {}
+        stops: Dict[int, Tuple[float, float]] = {}
         for _, row in stops_df.iterrows():
-            stops[row["stop_id"]] = (row["stop_lat"], row["stop_lon"])
+            stops[int(row["stop_id"])] = (float(row["stop_lat"]), float(row["stop_lon"]))
         return stops
 
-    def _load_shapes(self, shapes_file):
-        """バス経路の形状データを読み込む"""
-        with open(shapes_file, "r", encoding="utf-8") as f:
-            return json.load(f)
-
-    def _build_graph(self, stops, travel_times_file):
+    def _build_graph(self, stops: Dict[int, Tuple[float, float]], travel_times_file: str) -> Graph:
         """バスと徒歩の移動を含むグラフを構築"""
-        graph = {}
+        graph = Graph()
         travel_df = pd.read_csv(travel_times_file)
         for _, row in travel_df.iterrows():
-            graph.setdefault(row["stop_from"], []).append(
-                (row["stop_to"], row["average_travel_time"], "bus")
+            graph.add_edge(
+                int(row["stop_from"]),
+                int(row["stop_to"]),
+                float(row["average_travel_time"]),
+                "bus",
             )
         for stop1, stop2 in itertools.combinations(stops.keys(), 2):
             dist_m = haversine(
@@ -116,11 +132,11 @@ class PtransSearcher:
             )
             walk_time = dist_m / WALK_SPEED
             if walk_time < 10:  # 最大10分以内の徒歩移動のみ追加
-                graph.setdefault(stop1, []).append((stop2, walk_time, "walk"))
-                graph.setdefault(stop2, []).append((stop1, walk_time, "walk"))
+                graph.add_edge(stop1, stop2, walk_time, "walk")
+                graph.add_edge(stop2, stop1, walk_time, "walk")
         return graph
 
-    def search(self, input: PtransSearchInput):
+    def search(self, input: PtransSearchInput) -> Tuple[List[int], float]:
         start = input.start
         goal = input.goal
         start_candidates, start_distances = find_nearest_stops(
@@ -130,7 +146,7 @@ class PtransSearcher:
             self.stops, goal.lat, goal.lon
         )
         best_path, best_cost = dijkstra(
-            self.graph,
+            self.graph.adjacency_list,
             start_candidates,
             goal_candidates,
             start_distances,
