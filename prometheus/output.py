@@ -17,7 +17,7 @@ class OutputSection:
 
 
 @dataclass
-class OutputRoute:
+class CarOutputRoute:
     distance: float
     duration: int
     stops: list[OutputStop]
@@ -25,5 +25,5 @@ class OutputRoute:
 
 
 @dataclass
-class SearchOutout:
-    route: OutputRoute
+class CarSearchOutout:
+    route: CarOutputRoute

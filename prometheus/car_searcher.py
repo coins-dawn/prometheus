@@ -8,7 +8,7 @@ from prometheus.coord import Coord
 from prometheus.geo_utility import latlon_to_mesh, haversine
 from prometheus.utility import round_half_up
 from prometheus.input import CarSearchInput
-from prometheus.output import SearchOutout, OutputRoute, OutputSection, OutputStop
+from prometheus.output import CarSearchOutout, CarOutputRoute, OutputSection, OutputStop
 from datetime import datetime, timedelta
 
 
@@ -169,7 +169,7 @@ class CarSearcher:
 
         return departure_times
 
-    def search(self, search_input: CarSearchInput) -> SearchOutout:
+    def search(self, search_input: CarSearchInput) -> CarSearchOutout:
         coord_sequence = [stop.coord for stop in search_input.stops]
         stop_node_sequence = [
             self._find_nearest_node(coord) for coord in coord_sequence
@@ -179,8 +179,8 @@ class CarSearcher:
         departure_time_matrix = self._calculate_departure_time_matrix(
             output_section_list, search_input.start_time
         )
-        return SearchOutout(
-            route=OutputRoute(
+        return CarSearchOutout(
+            route=CarOutputRoute(
                 distance=reduce(
                     lambda acc, x: acc + x.distance, output_section_list, 0
                 ),
