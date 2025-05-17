@@ -167,47 +167,33 @@ class PtransSearcher:
         self, car_output: CarOutputRoute, graph: Graph
     ) -> None:
         """CarOutputRoute の経路をグラフに追加"""
-        previous_node = None
-
-        # stops の緯度経度を取得
-        stops_coords = [(output_stop.stop.coord.lat, output_stop.stop.coord.lon) for output_stop in car_output.stops]
-
+        # 新しいノードIDを採番
+        nodeid_list = []
+        for _ in car_output.stops:
+            new_nodeid = f"A{random.randint(1000, 9999)}"
+            nodeid_list.append(new_nodeid)
+                
+        # CarOutputRouteの経路をエッジとしてグラフに追加
         for i, section in enumerate(car_output.sections):
-            # ランダムなノードIDを生成
-            new_node = f"A{random.randint(1000, 9999)}"
-
-            # セクションのスタートノードを stops[i] に対応付け
-            if i < len(stops_coords):
-                start_lat, start_lon = stops_coords[i]
-            else:
-                raise ValueError("セクションとストップの数が一致しません。")
-
-            # セクションのゴールノードを stops[i+1] または stops[0] に対応付け
-            if i + 1 < len(stops_coords):
-                goal_lat, goal_lon = stops_coords[i + 1]
-            else:
-                goal_lat, goal_lon = stops_coords[0]  # 最後のセクションのゴールは stops[0]
-
-            # セクションをエッジとして追加
-            if previous_node is not None:
-                graph.add_edge(previous_node, new_node, section.duration, "car")
-            previous_node = new_node
-
-            # 既存のノードとの徒歩エッジを追加
-            for stop_id, stop_coord in self.stops.items():
-                dist_to_start = haversine(stop_coord[0], stop_coord[1], start_lat, start_lon)
-                dist_to_goal = haversine(stop_coord[0], stop_coord[1], goal_lat, goal_lon)
-
-                walk_time_to_start = dist_to_start / WALK_SPEED
-                walk_time_to_goal = dist_to_goal / WALK_SPEED
-
-                if walk_time_to_start < 10:  # 最大10分以内の徒歩移動のみ追加
-                    graph.add_edge(stop_id, new_node, walk_time_to_start, "walk")
-                    graph.add_edge(new_node, stop_id, walk_time_to_start, "walk")
-
-                if walk_time_to_goal < 10:  # 最大10分以内の徒歩移動のみ追加
-                    graph.add_edge(stop_id, new_node, walk_time_to_goal, "walk")
-                    graph.add_edge(new_node, stop_id, walk_time_to_goal, "walk")
+            org_nodeid = nodeid_list[i]
+            dst_nodeid = nodeid_list[i + 1] if i + 1 < len(nodeid_list) else nodeid_list[0]
+            weight = section.duration
+            graph.add_edge(org_nodeid, dst_nodeid, weight, "car")
+        
+        # CarOutputRouteのバス停と、グラフの既存バス停の間の徒歩エッジを追加
+        for i, output_stop in enumerate(car_output.stops):
+            add_node_coord = output_stop.stop.coord
+            add_node_id = nodeid_list[i]
+            self.stops[add_node_id] = (add_node_coord.lat, add_node_coord.lon)
+            for node_id, node_coord in self.stops.items():
+                dist_to_add_node = haversine(
+                    node_coord[0], node_coord[1], add_node_coord.lat, add_node_coord.lon
+                )
+                walk_time = dist_to_add_node / WALK_SPEED
+                if walk_time < 10:
+                    graph.add_edge(node_id, add_node_id, walk_time, "walk")
+                    graph.add_edge(add_node_id, node_id, walk_time, "walk")
+            
 
     def search(self, input: PtransSearchInput) -> Tuple[List[int], float]:
         # CarOutputRoute をグラフに追加
@@ -233,12 +219,12 @@ if __name__ == "__main__":
     input_str = r"""
 {
 	"start": {
-		"lat": 36.413101,
-		"lon": 137.104771
+		"lat": 36.689497,
+		"lon": 137.183761
 	},
 	"goal": {
-		"lat": 36.43276,
-		"lon": 137.155843
+		"lat": 36.709989,
+		"lon": 137.262297
 	},
 	"car-output": {
 		"route": {
