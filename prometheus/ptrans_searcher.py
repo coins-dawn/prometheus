@@ -4,6 +4,7 @@ import math
 import heapq
 import random
 import json
+import polyline
 from prometheus.input import PtransSearchInput
 from prometheus.output import CarOutputRoute
 from prometheus.coord import Coord
@@ -193,7 +194,10 @@ class PtransSearcher:
             dst_nodeid = nodeid_list[i + 1] if i + 1 < len(nodeid_list) else nodeid_list[0]
             weight = section.duration
             graph.add_edge(org_nodeid, dst_nodeid, weight, "car")
-        
+            # ★ shape_dictに緯度経度点列を追加
+            decoded = polyline.decode(section.shape)
+            self.shape_dict[(org_nodeid, dst_nodeid)] = [Coord(lat=lat, lon=lon) for lat, lon in decoded]
+
         # CarOutputRouteのバス停と、グラフの既存バス停の間の徒歩エッジを追加
         for i, output_stop in enumerate(car_output.stops):
             add_node_coord = output_stop.stop.coord
@@ -246,7 +250,7 @@ def export_ptrans_kml(
         elif idx == len(node_sequence) - 1:
             kml.newpoint(name="Goal", coords=[(lon, lat)])
         else:
-            kml.newpoint(name=f"Stop{idx}", coords=[(lon, lat)])
+            kml.newpoint(name=nodeid, coords=[(lon, lat)])
 
     # ★経路線
     for i in range(len(node_sequence) - 1):
@@ -262,7 +266,11 @@ def export_ptrans_kml(
             lat2, lon2 = stops_dict[n2]
             coords = [(lon1, lat1), (lon2, lat2)]
         line = kml.newlinestring(coords=coords)
-        line.style.linestyle.color = simplekml.Color.pink  # ピンク
+        # ★ n1とn2が両方"A"で始まる場合はlightgreen、それ以外はpink
+        if str(n1).startswith("A") and str(n2).startswith("A"):
+            line.style.linestyle.color = simplekml.Color.lightgreen
+        else:
+            line.style.linestyle.color = simplekml.Color.pink
         line.style.linestyle.width = 6  # 太め
 
     kml.save(output_path)
@@ -293,7 +301,7 @@ if __name__ == "__main__":
 				{
 					"distance": 6272,
 					"duration": 9,
-					"shape": "{||~Eg~hdYAd@CPMPWXa@d@g@t@GRoAfB{BmCgAaBw@mAGGEIDEdEaEJENMNOXPFBb@Nh@Ht@DlSHlFB?M?IhEBh@a@FsA@]jB]zAWfEw@r@MfB]FATmCRiCFo@LwAPqCTkCd@kG@_@@Y|Co^BOXeCLgBFgCFgDJcE@k@@g@BaCBqBFeEDqBBgC@_@?a@B_BBuBLiBPoCHiANoBBk@@MLkB?GBc@AK?{A?Q?]?WCoAAcAAi@@{@?QA]?K@_ABm@F_A@YPgBLuBB_@@OXsEX_F@W@OLgBBq@XyEFoABg@B[RcCZgDIE"
+					"shape": "{||~Eg~hdYAd@CPMPWXa@d@g@t@GRoAfB{BmCgAaBw@mAGGEIDEdEaEJENMNOXPFBb@Nh@Ht@DlSHlFB?M?IhEBh@a@FsA@]jB]zAWfEw@r@MfB]FATmCRiCFo@LwAPqCTkCd@kG@_@@Y|Co^BOXeCLgBFgCFgDJcE@k@@g@BaCBqBFeEDqBBgC@g@?W@aC@eA?yA?c@@e@@uDDuARcEHuAFkABi@@O?a@AcE@eDCwF?Q?K?E@eB?cA@kE@cB?q@@s@?[@I?E?O@SBy@@s@@YHmB?}@BsABcBDqBF_FBuC@_@?a@B_BBuBLiBPoCHiANoBBk@@MLkB?GBc@AK?{A?Q?]?WCoAAcAAi@@{@?QA]?K@_ABm@F_A@YPgBLuBB_@@OXsEX_F@W@OLgBBq@XyEFoABg@B[RcCZgDIE"
 				},
 				{
 					"distance": 3252,
