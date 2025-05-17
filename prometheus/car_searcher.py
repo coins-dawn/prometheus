@@ -201,7 +201,6 @@ class CarSearcher:
 
 if __name__ == "__main__":
     searcher = CarSearcher()
-    # Example usage
     input_str = """
 {
     "route-name": "循環バス",
