@@ -277,7 +277,6 @@ def export_ptrans_kml(
     for i in range(len(node_sequence) - 1):
         n1 = node_sequence[i]
         n2 = node_sequence[i + 1]
-        # shape_dictのキーは(str, str)型なのでstrに変換
         key = (n1, n2)
         if key in shape_dict:
             coords = [(c.lon, c.lat) for c in shape_dict[key]]
@@ -287,12 +286,11 @@ def export_ptrans_kml(
             lat2, lon2 = stops_dict[n2]
             coords = [(lon1, lat1), (lon2, lat2)]
         line = kml.newlinestring(coords=coords)
-        # ★ n1とn2が両方"A"で始まる場合はlightgreen、それ以外はpink
         if str(n1).startswith("A") and str(n2).startswith("A"):
             line.style.linestyle.color = simplekml.Color.lightgreen
         else:
             line.style.linestyle.color = simplekml.Color.pink
-        line.style.linestyle.width = 6  # 太め
+        line.style.linestyle.width = 12  # 太め
 
     kml.save(output_path)
 
@@ -302,12 +300,12 @@ if __name__ == "__main__":
     input_str = r"""
 {
 	"start": {
-		"lat": 36.689497,
-		"lon": 137.183761
+		"lat": 36.392491,
+		"lon": 137.143979
 	},
 	"goal": {
-		"lat": 36.709989,
-		"lon": 137.262297
+		"lat": 36.391553,
+		"lon": 137.9597
 	},
 	"car-output": {
 		"route": {
