@@ -8,6 +8,7 @@ from prometheus.input import PtransSearchInput
 from prometheus.output import CarOutputRoute
 from prometheus.coord import Coord
 from typing import Dict, List, Tuple, Optional
+import simplekml
 
 STOP_FILE_PATH = "data/gtfs/stops.txt"
 TRAVEL_TIME_FILE_PATH = "data/gtfs/average_travel_times.csv"
@@ -126,8 +127,21 @@ class Graph:
 class PtransSearcher:
     def __init__(self) -> None:
         self.stops = self._load_stops(STOP_FILE_PATH)
+        self.shape_dict = self._load_shape_dict(SHAPE_FILE_PATH)
         self.graph = self._build_graph(self.stops, TRAVEL_TIME_FILE_PATH)
         print(">>> GTFSグラフのロードが完了しました。")
+
+    def _load_shape_dict(self, shape_file_path: str) -> dict[tuple[str, str], list[Coord]]:
+        """shapes.jsonを読み込んで (from, to) -> [Coord, ...] のdictを返す"""
+        shape_dict: dict[tuple[str, str], list[Coord]] = {}
+        with open(shape_file_path, "r", encoding="utf-8") as f:
+            shapes = json.load(f)
+            for entry in shapes:
+                org = int(entry["stop_from"])
+                dst = int(entry["stop_to"])
+                coords = [Coord(lat=lat, lon=lon) for lat, lon in entry["shape"]]
+                shape_dict[(org, dst)] = coords
+        return shape_dict
 
     def _load_stops(self, stops_file: str) -> Dict[int, Tuple[float, float]]:
         """stops.txt からバス停のIDと座標を取得"""
@@ -214,6 +228,46 @@ class PtransSearcher:
         )
         return best_path, best_cost
 
+def export_ptrans_kml(
+    node_sequence: list,
+    stops_dict: dict,
+    shape_dict: dict,
+    output_path="ptrans_result.kml"
+):
+    kml = simplekml.Kml()
+
+    # ★バス停ピン
+    for idx, nodeid in enumerate(node_sequence):
+        if nodeid not in stops_dict:
+            continue
+        lat, lon = stops_dict[nodeid]
+        if idx == 0:
+            kml.newpoint(name="Start", coords=[(lon, lat)])
+        elif idx == len(node_sequence) - 1:
+            kml.newpoint(name="Goal", coords=[(lon, lat)])
+        else:
+            kml.newpoint(name=f"Stop{idx}", coords=[(lon, lat)])
+
+    # ★経路線
+    for i in range(len(node_sequence) - 1):
+        n1 = node_sequence[i]
+        n2 = node_sequence[i + 1]
+        # shape_dictのキーは(str, str)型なのでstrに変換
+        key = (n1, n2)
+        if key in shape_dict:
+            coords = [(c.lon, c.lat) for c in shape_dict[key]]
+        else:
+            # stops_dict[n1], stops_dict[n2]は(緯度, 経度)
+            lat1, lon1 = stops_dict[n1]
+            lat2, lon2 = stops_dict[n2]
+            coords = [(lon1, lat1), (lon2, lat2)]
+        line = kml.newlinestring(coords=coords)
+        line.style.linestyle.color = simplekml.Color.pink  # ピンク
+        line.style.linestyle.width = 6  # 太め
+
+    kml.save(output_path)
+
+
 if __name__ == "__main__":
     ptrans_searcher = PtransSearcher()
     input_str = r"""
@@ -239,7 +293,7 @@ if __name__ == "__main__":
 				{
 					"distance": 6272,
 					"duration": 9,
-					"shape": "{||~Eg~hdYAd@CPMPWXa@d@g@t@GRoAfB{BmCgAaBw@mAGGEIDEdEaEJENMNOXPFBb@Nh@Ht@DlSHlFB?M?IhEBh@a@FsA@]jB]zAWfEw@r@MfB]FATmCRiCFo@LwAPqCTkCd@kG@_@@Y|Co^BOXeCLgBFgCFgDJcE@k@@g@BaCBqBFeEDqBBgC@g@?W@aC@eA?yA?c@@e@@uDDuARcEHuAFkABi@@O?a@AcE@eDCwF?Q?K?E@eB?cA@kE@cB?q@@s@?[@I?E?O@SBy@@s@@YHmB?}@BsABcBDqBF_FBuC@_@?a@B_BBuBLiBPoCHiANoBBk@@MLkB?GBc@AK?{A?Q?]?WCoAAcAAi@@{@?QA]?K@_ABm@F_A@YPgBLuBB_@@OXsEX_F@W@OLgBBq@XyEFoABg@B[RcCZgDIE"
+					"shape": "{||~Eg~hdYAd@CPMPWXa@d@g@t@GRoAfB{BmCgAaBw@mAGGEIDEdEaEJENMNOXPFBb@Nh@Ht@DlSHlFB?M?IhEBh@a@FsA@]jB]zAWfEw@r@MfB]FATmCRiCFo@LwAPqCTkCd@kG@_@@Y|Co^BOXeCLgBFgCFgDJcE@k@@g@BaCBqBFeEDqBBgC@_@?a@B_BBuBLiBPoCHiANoBBk@@MLkB?GBc@AK?{A?Q?]?WCoAAcAAi@@{@?QA]?K@_ABm@F_A@YPgBLuBB_@@OXsEX_F@W@OLgBBq@XyEFoABg@B[RcCZgDIE"
 				},
 				{
 					"distance": 3252,
@@ -376,3 +430,11 @@ if __name__ == "__main__":
     search_input = PtransSearchInput(**json.loads(input_str))
     result = ptrans_searcher.search(search_input)
     print(result)
+    # 例: result, ptrans_searcher.stops, ptrans_searcher.shape_dict を使う場合
+    export_ptrans_kml(
+        node_sequence=result[0],
+        stops_dict=ptrans_searcher.stops,
+        shape_dict=ptrans_searcher.shape_dict,
+        output_path="ptrans_result.kml"
+    )
+    
