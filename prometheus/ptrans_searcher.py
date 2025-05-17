@@ -236,6 +236,8 @@ def export_ptrans_kml(
     node_sequence: list,
     stops_dict: dict,
     shape_dict: dict,
+    start_coord: tuple[float, float] = None,
+    goal_coord: tuple[float, float] = None,
     output_path="ptrans_result.kml"
 ):
     kml = simplekml.Kml()
@@ -245,12 +247,31 @@ def export_ptrans_kml(
         if nodeid not in stops_dict:
             continue
         lat, lon = stops_dict[nodeid]
-        if idx == 0:
-            kml.newpoint(name="Start", coords=[(lon, lat)])
-        elif idx == len(node_sequence) - 1:
-            kml.newpoint(name="Goal", coords=[(lon, lat)])
-        else:
-            kml.newpoint(name=nodeid, coords=[(lon, lat)])
+        kml.newpoint(name=nodeid, coords=[(lon, lat)])
+
+    # ★スタート・ゴールピン
+    if start_coord:
+        kml.newpoint(name="Start", coords=[(start_coord[1], start_coord[0])])
+    if goal_coord:
+        kml.newpoint(name="Goal", coords=[(goal_coord[1], goal_coord[0])])
+
+    # ★スタート→最初のバス停
+    if start_coord:
+        first_stop_id = node_sequence[0]
+        if first_stop_id in stops_dict:
+            lat, lon = stops_dict[first_stop_id]
+            kml.newlinestring(
+                coords=[(start_coord[1], start_coord[0]), (lon, lat)]
+            ).style.linestyle.color = simplekml.Color.red
+
+    # ★最後のバス停→ゴール
+    if goal_coord:
+        last_stop_id = node_sequence[-1]
+        if last_stop_id in stops_dict:
+            lat, lon = stops_dict[last_stop_id]
+            kml.newlinestring(
+                coords=[(lon, lat), (goal_coord[1], goal_coord[0])]
+            ).style.linestyle.color = simplekml.Color.red
 
     # ★経路線
     for i in range(len(node_sequence) - 1):
@@ -443,6 +464,8 @@ if __name__ == "__main__":
         node_sequence=result[0],
         stops_dict=ptrans_searcher.stops,
         shape_dict=ptrans_searcher.shape_dict,
+        start_coord=(search_input.start.lat, search_input.start.lon),
+        goal_coord=(search_input.goal.lat, search_input.goal.lon),
         output_path="ptrans_result.kml"
     )
     
