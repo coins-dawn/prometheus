@@ -3,7 +3,7 @@ from enum import Enum
 from dataclasses import dataclass
 
 
-class PtransSortType(str, Enum):
+class PtransOutputSpotType(str, Enum):
     BUS = "bus"
     WALK = "walk"
     COMBUS = "combus"
@@ -19,7 +19,7 @@ class PtransOutputSectionType(str, Enum):
 class PtransOutputSpot:
     name: str
     coord: Coord
-    type: PtransSortType
+    type: PtransOutputSpotType
     stay_time: int
 
 
@@ -39,7 +39,7 @@ class PtransOutputRoute:
     start_time: str
     goal_time: str
     duration: int
-    stops: list[PtransOutputSpot]
+    spots: list[PtransOutputSpot]
     sections: list[PtransOutputSection]
 
 
