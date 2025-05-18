@@ -8,7 +8,7 @@ from prometheus.coord import Coord
 from prometheus.geo_utility import latlon_to_mesh, haversine
 from prometheus.utility import round_half_up
 from prometheus.input import CarSearchInput
-from prometheus.output import CarSearchOutout, CarOutputRoute, OutputSection, OutputStop
+from prometheus.output import CarSearchOutout, CarOutputRoute, CarOutputSection, CarOutputStop
 from datetime import datetime, timedelta
 
 
@@ -78,7 +78,7 @@ class CarSearcher:
                 min_nodeid = nodeid
         return min_nodeid
 
-    def _trace(self, route_node_sequence: list[int]) -> OutputSection:
+    def _trace(self, route_node_sequence: list[int]) -> CarOutputSection:
         """ノード列をトレースしセクションの情報を詰めて返す。"""
         distance_m = 0
         coord_list: list[Coord] = []
@@ -97,13 +97,13 @@ class CarSearcher:
         bus_speed_meter_per_minute = BUS_SPEED_KM_PER_HOUR * 1000 / 60
         duration_m = round_half_up(distance_m / bus_speed_meter_per_minute)
 
-        return OutputSection(
+        return CarOutputSection(
             distance=round_half_up(distance_m),
             duration=duration_m,
             shape=encoded_shape,
         )
 
-    def _dijkstra(self, start, goal, visited_global) -> tuple[OutputSection, list[int]]:
+    def _dijkstra(self, start, goal, visited_global) -> tuple[CarOutputSection, list[int]]:
         """Dijkstraを実行し最短経路を得る。"""
         queue = [(0, start, [start])]
         visited_local = set()
@@ -126,11 +126,11 @@ class CarSearcher:
 
         return self._trace(route_node_sequence), route_node_sequence
 
-    def _find_route_through_nodes(self, node_sequence) -> list[OutputSection]:
+    def _find_route_through_nodes(self, node_sequence) -> list[CarOutputSection]:
         """指定ノード列を順番にめぐる経路を構築"""
         visited_nodes_list = []
         visited_nodes_set = set()
-        output_section_list: list[OutputSection] = []
+        output_section_list: list[CarOutputSection] = []
         for i in range(len(node_sequence) - 1):
             start = node_sequence[i]
             goal = node_sequence[i + 1]
@@ -150,7 +150,7 @@ class CarSearcher:
         return output_section_list
 
     def _calculate_departure_time_matrix(
-        self, output_section_list: list[OutputSection], start_time: str
+        self, output_section_list: list[CarOutputSection], start_time: str
     ) -> list[list[str]]:
         start_time_obj = datetime.strptime(start_time, "%H:%M")
         total_duration = sum(
@@ -187,7 +187,7 @@ class CarSearcher:
                 duration=reduce(lambda acc, x: acc + x.duration, output_section_list, 0)
                 + len(search_input.stops) * STAYTIME_PER_STOP,
                 stops=[
-                    OutputStop(
+                    CarOutputStop(
                         stop=stop,
                         stay_time=STAYTIME_PER_STOP,
                         departure_times=departure_time_matrix[i],
