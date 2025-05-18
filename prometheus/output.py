@@ -3,14 +3,14 @@ from prometheus.stop import Stop
 
 
 @dataclass
-class OutputStop:
+class CarOutputStop:
     stop: Stop
     stay_time: int
     departure_times: list[str]
 
 
 @dataclass
-class OutputSection:
+class CarOutputSection:
     distance: float
     duration: int
     shape: str
