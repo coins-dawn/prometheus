@@ -5,11 +5,11 @@ import heapq
 import random
 import json
 import polyline
-from prometheus.input import PtransSearchInput
-from prometheus.output import CarOutputRoute
+from prometheus.ptrans.ptrans_input import PtransSearchInput
+from prometheus.car.car_output import CarOutputRoute
 from prometheus.coord import Coord
 from typing import Dict, List, Tuple, Optional
-from prometheus.visualize import generate_ptrans_route_kml
+from prometheus.ptrans.ptrans_visualizer import generate_ptrans_route_kml
 
 STOP_FILE_PATH = "data/gtfs/stops.txt"
 TRAVEL_TIME_FILE_PATH = "data/gtfs/average_travel_times.csv"
@@ -399,7 +399,6 @@ if __name__ == "__main__":
     search_input = PtransSearchInput(**json.loads(input_str))
     result = ptrans_searcher.search(search_input)
     print(result)
-    # 例: result, ptrans_searcher.stops, ptrans_searcher.shape_dict を使う場合
     generate_ptrans_route_kml(
         node_sequence=result[0],
         stops_dict=ptrans_searcher.stops,
