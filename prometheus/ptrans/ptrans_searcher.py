@@ -7,6 +7,14 @@ import json
 import polyline
 from prometheus.ptrans.ptrans_input import PtransSearchInput
 from prometheus.car.car_output import CarOutputRoute
+from prometheus.ptrans.ptrans_output import (
+    PtransSearchOutput,
+    PtransOutputRoute,
+    PtransOutputSection,
+    PtransOutputSpot,
+    PtransOutputSectionType,
+    PtransOutputSpotType,
+)
 from prometheus.coord import Coord
 from typing import Dict, List, Tuple, Optional
 
@@ -216,7 +224,7 @@ class PtransSearcher:
                     graph.add_edge(node_id, add_node_id, walk_time, "walk")
                     graph.add_edge(add_node_id, node_id, walk_time, "walk")
 
-    def search(self, input: PtransSearchInput) -> Tuple[List[int], float]:
+    def search(self, input: PtransSearchInput) -> PtransSearchOutput:
         # CarOutputRoute をグラフに追加
         if input.car_output:
             self._add_car_output_to_graph(input.car_output.route, self.graph)
@@ -226,11 +234,38 @@ class PtransSearcher:
         goal = input.goal
         start_candidates, start_distances = find_nearest_stops(self.stops, start)
         goal_candidates, goal_distances = find_nearest_stops(self.stops, goal)
-        best_path, best_cost = dijkstra(
+        best_path, duration = dijkstra(
             self.graph.adjacency_list,
             start_candidates,
             goal_candidates,
             start_distances,
             goal_distances,
         )
-        return best_path, best_cost
+
+        # レスポンスを構築
+        return PtransSearchOutput(
+            route=PtransOutputRoute(
+                start_time="",
+                goal_time="",
+                duration=duration,
+                spots=[
+                    PtransOutputSpot(
+                        name="",
+                        coord=Coord(lat=0, lon=0),
+                        type=PtransOutputSpotType.BUS,
+                        stay_time=0,
+                    )
+                ],
+                sections=[
+                    PtransOutputSection(
+                        distance=0,
+                        duration=0,
+                        shape="",
+                        start_time="",
+                        goal_time="",
+                        type=PtransOutputSectionType.BUS,
+                        name="",
+                    )
+                ],
+            )
+        )
