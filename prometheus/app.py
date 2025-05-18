@@ -1,10 +1,13 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from prometheus.car_searcher import CarSearcher
 from prometheus.input import SearchInput
 from prometheus.utility import convert_for_json
 from prometheus.visualize import generate_kml
 
 app = Flask(__name__)
+CORS(app)
+
 searcher = CarSearcher()
 
 
