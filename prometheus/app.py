@@ -1,9 +1,10 @@
 from flask import Flask, request, jsonify
-from prometheus.car_searcher import CarSearcher
-from prometheus.ptrans_searcher import PtransSearcher
-from prometheus.input import CarSearchInput, PtransSearchInput
+from prometheus.car.car_searcher import CarSearcher
+from prometheus.ptrans.ptrans_searcher import PtransSearcher
+from prometheus.car.car_input import CarSearchInput
+from prometheus.ptrans.ptrans_input import PtransSearchInput
 from prometheus.utility import convert_for_json
-from prometheus.visualize import generate_car_route_kml
+from prometheus.car.car_visualizer import generate_car_route_kml
 
 app = Flask(__name__)
 car_searcher = CarSearcher()

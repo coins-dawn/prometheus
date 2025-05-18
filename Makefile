@@ -18,8 +18,8 @@ sample-request:
 
 .PHONY: car-singleshot
 car-singleshot:
-	PYTHONPATH=$$PYTHONPATH:./prometheus python prometheus/car_searcher.py
+	PYTHONPATH=$$PYTHONPATH:./prometheus python prometheus/car/car_searcher.py
 
 .PHONY: ptrans-singleshot
 ptrans-singleshot:
-	PYTHONPATH=$$PYTHONPATH:./prometheus python prometheus/ptrans_searcher.py
+	PYTHONPATH=$$PYTHONPATH:./prometheus python prometheus/ptrans/ptrans_searcher.py

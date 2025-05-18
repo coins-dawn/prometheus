@@ -7,8 +7,13 @@ from polyline import encode
 from prometheus.coord import Coord
 from prometheus.geo_utility import latlon_to_mesh, haversine
 from prometheus.utility import round_half_up
-from prometheus.input import CarSearchInput
-from prometheus.output import CarSearchOutout, CarOutputRoute, CarOutputSection, CarOutputStop
+from prometheus.car.car_input import CarSearchInput
+from prometheus.car.car_output import (
+    CarSearchOutput,
+    CarOutputRoute,
+    CarOutputSection,
+    CarOutputStop,
+)
 from datetime import datetime, timedelta
 
 
@@ -103,7 +108,9 @@ class CarSearcher:
             shape=encoded_shape,
         )
 
-    def _dijkstra(self, start, goal, visited_global) -> tuple[CarOutputSection, list[int]]:
+    def _dijkstra(
+        self, start, goal, visited_global
+    ) -> tuple[CarOutputSection, list[int]]:
         """Dijkstraを実行し最短経路を得る。"""
         queue = [(0, start, [start])]
         visited_local = set()
@@ -169,7 +176,7 @@ class CarSearcher:
 
         return departure_times
 
-    def search(self, search_input: CarSearchInput) -> CarSearchOutout:
+    def search(self, search_input: CarSearchInput) -> CarSearchOutput:
         coord_sequence = [stop.coord for stop in search_input.stops]
         stop_node_sequence = [
             self._find_nearest_node(coord) for coord in coord_sequence
@@ -179,7 +186,7 @@ class CarSearcher:
         departure_time_matrix = self._calculate_departure_time_matrix(
             output_section_list, search_input.start_time
         )
-        return CarSearchOutout(
+        return CarSearchOutput(
             route=CarOutputRoute(
                 distance=reduce(
                     lambda acc, x: acc + x.distance, output_section_list, 0
