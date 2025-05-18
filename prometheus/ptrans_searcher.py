@@ -9,7 +9,7 @@ from prometheus.input import PtransSearchInput
 from prometheus.output import CarOutputRoute
 from prometheus.coord import Coord
 from typing import Dict, List, Tuple, Optional
-import simplekml
+from prometheus.visualize import generate_ptrans_route_kml
 
 STOP_FILE_PATH = "data/gtfs/stops.txt"
 TRAVEL_TIME_FILE_PATH = "data/gtfs/average_travel_times.csv"
@@ -232,80 +232,18 @@ class PtransSearcher:
         )
         return best_path, best_cost
 
-def export_ptrans_kml(
-    node_sequence: list,
-    stops_dict: dict,
-    shape_dict: dict,
-    start_coord: tuple[float, float] = None,
-    goal_coord: tuple[float, float] = None,
-    output_path="ptrans_result.kml"
-):
-    kml = simplekml.Kml()
-
-    # ★バス停ピン
-    for idx, nodeid in enumerate(node_sequence):
-        if nodeid not in stops_dict:
-            continue
-        lat, lon = stops_dict[nodeid]
-        kml.newpoint(name=nodeid, coords=[(lon, lat)])
-
-    # ★スタート・ゴールピン
-    if start_coord:
-        kml.newpoint(name="Start", coords=[(start_coord[1], start_coord[0])])
-    if goal_coord:
-        kml.newpoint(name="Goal", coords=[(goal_coord[1], goal_coord[0])])
-
-    # ★スタート→最初のバス停
-    if start_coord:
-        first_stop_id = node_sequence[0]
-        if first_stop_id in stops_dict:
-            lat, lon = stops_dict[first_stop_id]
-            kml.newlinestring(
-                coords=[(start_coord[1], start_coord[0]), (lon, lat)]
-            ).style.linestyle.color = simplekml.Color.red
-
-    # ★最後のバス停→ゴール
-    if goal_coord:
-        last_stop_id = node_sequence[-1]
-        if last_stop_id in stops_dict:
-            lat, lon = stops_dict[last_stop_id]
-            kml.newlinestring(
-                coords=[(lon, lat), (goal_coord[1], goal_coord[0])]
-            ).style.linestyle.color = simplekml.Color.red
-
-    # ★経路線
-    for i in range(len(node_sequence) - 1):
-        n1 = node_sequence[i]
-        n2 = node_sequence[i + 1]
-        key = (n1, n2)
-        if key in shape_dict:
-            coords = [(c.lon, c.lat) for c in shape_dict[key]]
-        else:
-            # stops_dict[n1], stops_dict[n2]は(緯度, 経度)
-            lat1, lon1 = stops_dict[n1]
-            lat2, lon2 = stops_dict[n2]
-            coords = [(lon1, lat1), (lon2, lat2)]
-        line = kml.newlinestring(coords=coords)
-        if str(n1).startswith("A") and str(n2).startswith("A"):
-            line.style.linestyle.color = simplekml.Color.lightgreen
-        else:
-            line.style.linestyle.color = simplekml.Color.pink
-        line.style.linestyle.width = 12  # 太め
-
-    kml.save(output_path)
-
 
 if __name__ == "__main__":
     ptrans_searcher = PtransSearcher()
     input_str = r"""
 {
 	"start": {
-		"lat": 36.392491,
-		"lon": 137.143979
+		"lat": 36.617467,
+		"lon": 137.255175
 	},
 	"goal": {
-		"lat": 36.391553,
-		"lon": 137.9597
+		"lat": 36.623744,
+		"lon": 137.215489
 	},
 	"car-output": {
 		"route": {
@@ -458,7 +396,7 @@ if __name__ == "__main__":
     result = ptrans_searcher.search(search_input)
     print(result)
     # 例: result, ptrans_searcher.stops, ptrans_searcher.shape_dict を使う場合
-    export_ptrans_kml(
+    generate_ptrans_route_kml(
         node_sequence=result[0],
         stops_dict=ptrans_searcher.stops,
         shape_dict=ptrans_searcher.shape_dict,
