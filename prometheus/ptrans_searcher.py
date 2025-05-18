@@ -41,9 +41,8 @@ def find_nearest_stops(stops, target_coord: Coord, k=10):
     }
     return sorted(distances, key=distances.get)[:k], distances
 
-def trace_path(
-    prev_nodes: Dict[int, int], goal_node: int
-) -> List[int]:
+
+def trace_path(prev_nodes: Dict[int, int], goal_node: int) -> List[int]:
     """ゴールノードからスタートノードまでの経路をトレース"""
     path = []
     node = goal_node
@@ -132,7 +131,9 @@ class PtransSearcher:
         self.graph = self._build_graph(self.stops, TRAVEL_TIME_FILE_PATH)
         print(">>> GTFSグラフのロードが完了しました。")
 
-    def _load_shape_dict(self, shape_file_path: str) -> dict[tuple[str, str], list[Coord]]:
+    def _load_shape_dict(
+        self, shape_file_path: str
+    ) -> dict[tuple[str, str], list[Coord]]:
         """shapes.jsonを読み込んで (from, to) -> [Coord, ...] のdictを返す"""
         shape_dict: dict[tuple[str, str], list[Coord]] = {}
         with open(shape_file_path, "r", encoding="utf-8") as f:
@@ -187,16 +188,20 @@ class PtransSearcher:
         for _ in car_output.stops:
             new_nodeid = f"A{random.randint(1000, 9999)}"
             nodeid_list.append(new_nodeid)
-                
+
         # CarOutputRouteの経路をエッジとしてグラフに追加
         for i, section in enumerate(car_output.sections):
             org_nodeid = nodeid_list[i]
-            dst_nodeid = nodeid_list[i + 1] if i + 1 < len(nodeid_list) else nodeid_list[0]
+            dst_nodeid = (
+                nodeid_list[i + 1] if i + 1 < len(nodeid_list) else nodeid_list[0]
+            )
             weight = section.duration
             graph.add_edge(org_nodeid, dst_nodeid, weight, "car")
             # ★ shape_dictに緯度経度点列を追加
             decoded = polyline.decode(section.shape)
-            self.shape_dict[(org_nodeid, dst_nodeid)] = [Coord(lat=lat, lon=lon) for lat, lon in decoded]
+            self.shape_dict[(org_nodeid, dst_nodeid)] = [
+                Coord(lat=lat, lon=lon) for lat, lon in decoded
+            ]
 
         # CarOutputRouteのバス停と、グラフの既存バス停の間の徒歩エッジを追加
         for i, output_stop in enumerate(car_output.stops):
@@ -211,7 +216,6 @@ class PtransSearcher:
                 if walk_time < 10:
                     graph.add_edge(node_id, add_node_id, walk_time, "walk")
                     graph.add_edge(add_node_id, node_id, walk_time, "walk")
-            
 
     def search(self, input: PtransSearchInput) -> Tuple[List[int], float]:
         # CarOutputRoute をグラフに追加
@@ -402,6 +406,5 @@ if __name__ == "__main__":
         shape_dict=ptrans_searcher.shape_dict,
         start_coord=(search_input.start.lat, search_input.start.lon),
         goal_coord=(search_input.goal.lat, search_input.goal.lon),
-        output_path="ptrans_result.kml"
+        output_path="ptrans_result.kml",
     )
-    
