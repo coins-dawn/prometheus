@@ -9,7 +9,6 @@ from prometheus.ptrans.ptrans_input import PtransSearchInput
 from prometheus.car.car_output import CarOutputRoute
 from prometheus.coord import Coord
 from typing import Dict, List, Tuple, Optional
-from prometheus.ptrans.ptrans_visualizer import generate_ptrans_route_kml
 
 STOP_FILE_PATH = "data/gtfs/stops.txt"
 TRAVEL_TIME_FILE_PATH = "data/gtfs/average_travel_times.csv"
