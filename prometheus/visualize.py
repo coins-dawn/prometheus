@@ -30,7 +30,7 @@ def generate_ptrans_route_kml(
     shape_dict: dict,
     start_coord: tuple[float, float] = None,
     goal_coord: tuple[float, float] = None,
-    output_path="ptrans_result.kml"
+    output_path="ptrans_result.kml",
 ):
     kml = simplekml.Kml()
 

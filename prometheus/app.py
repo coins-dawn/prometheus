@@ -45,7 +45,7 @@ def ptrans_search():
         search_input = PtransSearchInput(**body)
     except Exception as e:
         return jsonify({"status": "NG", "message": str(e)}), 400
-    
+
     search_output = ptrans_searcher.search(search_input)
 
     # try:
