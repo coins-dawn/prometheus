@@ -47,12 +47,10 @@ def ptrans_search():
     except Exception as e:
         return jsonify({"status": "NG", "message": str(e)}), 400
 
-    search_output = ptrans_searcher.search(search_input)
-
-    # try:
-    #     search_output = ptrans_searcher.search(search_input)
-    # except Exception as e:
-    #     return jsonify({"status": "NG", "message": str(e)}), 500
+    try:
+        search_output = ptrans_searcher.search(search_input)
+    except Exception as e:
+        return jsonify({"status": "NG", "message": str(e)}), 500
 
     # generate_kml(search_output)
 
