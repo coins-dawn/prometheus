@@ -146,8 +146,8 @@ class PtransSearcher:
         with open(shape_file_path, "r", encoding="utf-8") as f:
             shapes = json.load(f)
             for entry in shapes:
-                org = int(entry["stop_from"])
-                dst = int(entry["stop_to"])
+                org = entry["stop_from"]
+                dst = entry["stop_to"]
                 coords = [Coord(lat=lat, lon=lon) for lat, lon in entry["shape"]]
                 shape_dict[(org, dst)] = coords
         return shape_dict
@@ -157,7 +157,7 @@ class PtransSearcher:
         stops_df = pd.read_csv(stops_file)
         stops: Dict[int, Tuple[float, float]] = {}
         for _, row in stops_df.iterrows():
-            stops[int(row["stop_id"])] = (
+            stops[row["stop_id"]] = (
                 float(row["stop_lat"]),
                 float(row["stop_lon"]),
             )
@@ -171,8 +171,8 @@ class PtransSearcher:
         travel_df = pd.read_csv(travel_times_file)
         for _, row in travel_df.iterrows():
             graph.add_edge(
-                int(row["stop_from"]),
-                int(row["stop_to"]),
+                row["stop_from"],
+                row["stop_to"],
                 float(row["average_travel_time"]),
                 "bus",
             )
