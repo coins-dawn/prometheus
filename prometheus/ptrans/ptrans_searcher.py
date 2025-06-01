@@ -16,6 +16,7 @@ from prometheus.ptrans.ptrans_output import (
     PtransOutputSectionType,
     PtransOutputSpotType,
 )
+from prometheus.utility import add_time
 from prometheus.coord import Coord
 from typing import Dict, List, Tuple, Optional
 
@@ -68,8 +69,8 @@ def dijkstra(
     goal_candidates: List[int],
     start_distances: Dict[int, float],
     goal_distances: Dict[int, float],
-) -> Tuple[Optional[List[int]], float]:
-    """Dijkstra法で最短経路を探索し、徒歩区間も考慮"""
+) -> Tuple[Optional[List[dict]], float]:
+    """Dijkstra法で最短経路を探索し、徒歩区間も考慮し、エッジ列を返す"""
 
     def calc_additional_cost(prev_mode: str, next_mode: str) -> int:
         if prev_mode == "bus" and next_mode == "bus":
@@ -83,35 +84,54 @@ def dijkstra(
     prev_nodes: Dict[int, int] = {}
     prev_modes: Dict[int, str] = {}
 
-    # スタート候補を優先度付きキューに追加
     for start in start_candidates:
         heapq.heappush(
             pq, (start_distances[start] / WALK_SPEED, start, "walk")
-        )  # 徒歩時間加算
+        )
         costs[start] = start_distances[start] / WALK_SPEED
 
-    # 探索ループ
     while pq:
         curr_cost, node, prev_mode = heapq.heappop(pq)
 
-        # ゴール候補に到達した場合、経路をトレースして返す
         if node in goal_candidates:
             total_cost = curr_cost + goal_distances[node] / WALK_SPEED
+            # 経路をトレースしてエッジ列に変換
             path = trace_path(prev_nodes, node)
-            return path, total_cost
+            edge_list = []
+            for i in range(len(path) - 1):
+                org = path[i]
+                dst = path[i + 1]
+                mode = prev_modes.get(dst, "walk")  # dstに到達した時のmode
+                edge_list.append({
+                    "org_node": org,
+                    "dst_node": dst,
+                    "type": mode
+                })
+            return edge_list, total_cost
 
-        # 隣接ノードを探索
         for neighbor, weight, mode in graph.get(node, []):
             new_cost = curr_cost + weight + calc_additional_cost(prev_mode, mode)
-
             if neighbor not in costs or new_cost < costs[neighbor]:
                 costs[neighbor] = new_cost
                 prev_nodes[neighbor] = node
                 prev_modes[neighbor] = mode
                 heapq.heappush(pq, (new_cost, neighbor, mode))
 
-    # ゴールに到達できなかった場合
     return None, float("inf")
+
+def find_next_bus_time(current_time, time_table):
+    # current_timeを"HH:MM"から分に変換
+    h, m = map(int, current_time.split(":"))
+    current_minutes = h * 60 + m
+
+    for bus_time in time_table:
+        # bus_timeを"HH:MM:SS"から分に変換
+        bh, bm = map(int, bus_time.split(":"))
+        bus_minutes = bh * 60 + bm
+        if bus_minutes > current_minutes:
+            # "HH:MM:SS"のまま返す
+            return bus_time[:5]  # "HH:MM"
+    return None
 
 
 class Graph:
@@ -166,10 +186,10 @@ class PtransSearcher:
                 shape_dict[(org, dst)] = polyline_str
         return shape_dict
 
-    def _load_stops(self, stops_file: str) -> Dict[int, Tuple[float, float]]:
+    def _load_stops(self, stops_file: str) -> Dict[str, Tuple[float, float]]:
         """stops.txt からバス停のIDと座標を取得"""
         stops_df = pd.read_csv(stops_file)
-        stops: Dict[int, Tuple[float, float]] = {}
+        stops: Dict[str, Tuple[float, float]] = {}
         for _, row in stops_df.iterrows():
             stops[row["stop_id"]] = (
                 float(row["stop_lat"]),
@@ -218,11 +238,19 @@ class PtransSearcher:
             )
             weight = section.duration
             graph.add_edge(org_nodeid, dst_nodeid, weight, "car")
-            # ★ shape_dictに緯度経度点列を追加
-            decoded = polyline.decode(section.shape)
-            self.shape_dict[(org_nodeid, dst_nodeid)] = [
-                Coord(lat=lat, lon=lon) for lat, lon in decoded
-            ]
+            # shape_dictの更新
+            self.shape_dict[(org_nodeid, dst_nodeid)] = section.shape
+            # trip_pairsの更新
+            self.trip_pairs[(org_nodeid, dst_nodeid)] = {
+                "weekday": {
+                    "name": "コミュニティバス",
+                    "time_table": car_output.stops[i].departure_times,
+                },
+                "holiday": {
+                    "name": "コミュニティバス",
+                    "time_table": car_output.stops[i].departure_times,
+                }
+            }
 
         # CarOutputRouteのバス停と、グラフの既存バス停の間の徒歩エッジを追加
         for i, output_stop in enumerate(car_output.stops):
@@ -255,6 +283,70 @@ class PtransSearcher:
             start_distances,
             goal_distances,
         )
+        
+        pprint.pprint(best_path)
+        
+        
+        ### セクションを計算する（のちほどメソッドに切り出し）
+        sections = []
+        current_time = input.start_time
+        
+        # スタートから最初のバス停までの徒歩区間を追加
+        first_stop = best_path[0]["org_node"]
+        first_stop_coord = self.stops[first_stop]
+        start_2_first_stop_distance = int(haversine(
+            input.start.lat, input.start.lon, first_stop_coord[0], first_stop_coord[1]
+        ))
+        start_2_first_stop_duration = int(start_2_first_stop_distance / WALK_SPEED)
+        current_time = add_time(current_time, start_2_first_stop_duration)
+        sections.append(
+            PtransOutputSection(
+                distance=start_2_first_stop_distance,
+                duration=0,
+                shape="",
+                start_time=input.start_time,
+                goal_time=current_time,
+                type=PtransOutputSectionType.WALK,
+                name="徒歩"
+            )
+        )
+        # 各セクションを追加
+        for section in best_path:
+            org_node = section["org_node"]
+            dst_node = section["dst_node"]
+            mode = section["type"]
+            if mode == "walk":
+                sections.append(
+                    PtransOutputSection(
+                        distance=0,
+                        duration=0,
+                        shape="",
+                        start_time=current_time,
+                        goal_time=current_time,
+                        type=PtransOutputSectionType.WALK,
+                        name="徒歩"
+                    )
+                )
+                continue
+            # いったんweekdayにきめうち
+            time_table = self.trip_pairs.get((org_node, dst_node), {}).get("weekday", {}).get("time_table", [])
+            next_time = find_next_bus_time(current_time, time_table)
+            if not next_time:
+                raise Exception("最終バスを逃してしまいました")
+            sections.append(
+                PtransOutputSection(
+                    distance=0,
+                    duration=0,
+                    shape=self.shape_dict.get((org_node, dst_node), ""),
+                    start_time=current_time,
+                    goal_time=next_time,
+                    type=PtransOutputSectionType.BUS,
+                    name=self.trip_pairs.get((org_node, dst_node), {}).get("weekday", {}).get("name", "")
+                )
+            )
+            current_time = next_time
+        
+        # 最後のバス停からゴールまでの徒歩区間を追加
 
         # レスポンスを構築
         return PtransSearchOutput(
@@ -270,16 +362,6 @@ class PtransSearcher:
                         stay_time=0,
                     )
                 ],
-                sections=[
-                    PtransOutputSection(
-                        distance=0,
-                        duration=0,
-                        shape="",
-                        start_time="",
-                        goal_time="",
-                        type=PtransOutputSectionType.BUS,
-                        name="",
-                    )
-                ],
+                sections=sections,
             )
         )
