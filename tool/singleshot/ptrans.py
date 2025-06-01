@@ -15,11 +15,11 @@ if __name__ == "__main__":
     search_input = PtransSearchInput(**json.loads(input_str))
     result = ptrans_searcher.search(search_input)
     print(result)
-    generate_ptrans_route_kml(
-        node_sequence=result[0],
-        stops_dict=ptrans_searcher.stops,
-        shape_dict=ptrans_searcher.shape_dict,
-        start_coord=(search_input.start.lat, search_input.start.lon),
-        goal_coord=(search_input.goal.lat, search_input.goal.lon),
-        output_path="ptrans_result.kml",
-    )
+    # generate_ptrans_route_kml(
+    #     node_sequence=result[0],
+    #     stops_dict=ptrans_searcher.stops,
+    #     shape_dict=ptrans_searcher.shape_dict,
+    #     start_coord=(search_input.start.lat, search_input.start.lon),
+    #     goal_coord=(search_input.goal.lat, search_input.goal.lon),
+    #     output_path="ptrans_result.kml",
+    # )

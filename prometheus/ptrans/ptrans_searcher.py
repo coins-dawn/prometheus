@@ -5,6 +5,7 @@ import heapq
 import random
 import json
 import polyline
+import pprint
 from prometheus.ptrans.ptrans_input import PtransSearchInput
 from prometheus.car.car_output import CarOutputRoute
 from prometheus.ptrans.ptrans_output import (
@@ -21,6 +22,7 @@ from typing import Dict, List, Tuple, Optional
 STOP_FILE_PATH = "data/gtfs/stops.txt"
 TRAVEL_TIME_FILE_PATH = "data/gtfs/average_travel_times.csv"
 SHAPE_FILE_PATH = "data/gtfs/shapes.json"
+TRIP_PAIRS_FILE_PATH = "data/gtfs/trip_pairs.json"
 
 WALK_SPEED = 50  # メートル/分。直線距離ベースなので少し遅めにしている
 
@@ -135,21 +137,33 @@ class PtransSearcher:
     def __init__(self) -> None:
         self.stops = self._load_stops(STOP_FILE_PATH)
         self.shape_dict = self._load_shape_dict(SHAPE_FILE_PATH)
+        self.trip_pairs = self._load_trip_pairs(TRIP_PAIRS_FILE_PATH)
         self.graph = self._build_graph(self.stops, TRAVEL_TIME_FILE_PATH)
         print(">>> GTFSグラフのロードが完了しました。")
 
+    def _load_trip_pairs(self, trip_pairs_file_path: str) -> dict[tuple[str, str], dict]:
+        """trip_pairs.jsonを読み込んで (from, to) -> trip情報 のdictを返す"""
+        trip_pairs: dict[tuple[str, str], dict] = {}
+        with open(trip_pairs_file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            for entry in data:
+                org = entry["stop_from"]
+                dst = entry["stop_to"]
+                trip_pairs[(org, dst)] = entry["trip"]
+        return trip_pairs
+
     def _load_shape_dict(
         self, shape_file_path: str
-    ) -> dict[tuple[str, str], list[Coord]]:
-        """shapes.jsonを読み込んで (from, to) -> [Coord, ...] のdictを返す"""
-        shape_dict: dict[tuple[str, str], list[Coord]] = {}
+    ) -> dict[tuple[str, str], str]:
+        """shapes.jsonを読み込んで (from, to) -> polyline文字列 のdictを返す"""
+        shape_dict: dict[tuple[str, str], str] = {}
         with open(shape_file_path, "r", encoding="utf-8") as f:
             shapes = json.load(f)
             for entry in shapes:
                 org = entry["stop_from"]
                 dst = entry["stop_to"]
-                coords = [Coord(lat=lat, lon=lon) for lat, lon in entry["shape"]]
-                shape_dict[(org, dst)] = coords
+                polyline_str = entry["shape"]
+                shape_dict[(org, dst)] = polyline_str
         return shape_dict
 
     def _load_stops(self, stops_file: str) -> Dict[int, Tuple[float, float]]:
