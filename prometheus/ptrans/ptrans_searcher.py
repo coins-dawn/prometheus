@@ -302,7 +302,7 @@ class PtransSearcher:
         sections.append(
             PtransOutputSection(
                 distance=start_2_first_stop_distance,
-                duration=0,
+                duration=start_2_first_stop_duration,
                 shape="",
                 start_time=input.start_time,
                 goal_time=current_time,
@@ -347,6 +347,24 @@ class PtransSearcher:
             current_time = next_time
         
         # 最後のバス停からゴールまでの徒歩区間を追加
+        last_stop = best_path[-1]["dst_node"]
+        last_stop_coord = self.stops[last_stop]
+        last_stop_2_goal_distance = int(haversine(
+            input.goal.lat, input.goal.lon, last_stop_coord[0], last_stop_coord[1]
+        ))
+        last_stop_2_goal_duration = int(last_stop_2_goal_distance / WALK_SPEED)
+        goal_time = add_time(current_time, last_stop_2_goal_duration)
+        sections.append(
+            PtransOutputSection(
+                distance=last_stop_2_goal_distance,
+                duration=last_stop_2_goal_duration,
+                shape="",
+                start_time=current_time,
+                goal_time=goal_time,
+                type=PtransOutputSectionType.WALK,
+                name="徒歩"
+            )
+        )
 
         # レスポンスを構築
         return PtransSearchOutput(
