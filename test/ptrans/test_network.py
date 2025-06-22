@@ -362,12 +362,12 @@ def test_add_combus_to_search_network():
 
 
 def test_find_nearest_node():
-    from prometheus.ptrans.network import haversine
+    from prometheus.ptrans.network import haversine, EntryResult
 
     searcher = Searcher()
     coord = Coord(lat=36.68936, lon=137.18519)
-    nearest_nodes, distances = searcher.find_nearest_node(coord)
-    assert len(nearest_nodes) == 10
+    entry_results = searcher.find_nearest_node(coord)
+    assert len(entry_results) == 10
 
     # node_dictから全ノードとの距離を計算し、上位10件のノードIDを取得
     all_distances = {
@@ -376,5 +376,6 @@ def test_find_nearest_node():
     }
     expected_top10 = sorted(all_distances, key=all_distances.get)[:10]
 
-    # find_nearest_nodeの返却値と一致することを確認
-    assert nearest_nodes == expected_top10
+    # EntryResultのnode.idが期待通りか確認
+    result_ids = [entry.node.node_id for entry in entry_results]
+    assert result_ids == expected_top10
