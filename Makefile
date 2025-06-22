@@ -26,4 +26,4 @@ ptrans-singleshot:
 
 .PHONY: test
 test:
-	PYTHONPATH=$$PYTHONPATH:./prometheus pytest test
+	PYTHONPATH=$$PYTHONPATH:./prometheus pytest -s test

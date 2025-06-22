@@ -219,7 +219,7 @@ class Searcher:
         for edge in combus_edges:
             self.edge_dict[(edge.org_node_id, edge.dst_node_id)] = Edge(
                 travel_time=edge.duration,
-                transit_type=TransitType.BUS,
+                transit_type=TransitType.COMBUS,
             )
 
         # 既存のバス停から徒歩10分いないなら徒歩エッジを追加
