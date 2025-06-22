@@ -28,6 +28,7 @@ class TransitType(Enum):
 class Node:
     """ネットワーク中のノードを表すクラス。"""
 
+    node_id: str
     name: str
     lat: float
     lon: float
@@ -37,6 +38,8 @@ class Node:
 class Edge:
     """ノード間のエッジを表すデータクラス"""
 
+    org_node_id: str
+    dst_node_id: str
     travel_time: int  # 移動時間[分]
     transit_type: TransitType  # 交通手段の種類
 
@@ -70,7 +73,13 @@ class CombusEdge:
     time_tables: TimeTable
 
 
-def haversine(lat1, lon1, lat2, lon2):
+@dataclass
+class EntryResult:
+    node: Node
+    distance: int
+
+
+def haversine(lat1, lon1, lat2, lon2) -> int:
     """2点間の概算距離を求める（ハーバーサイン距離）"""
     R = 6371  # 地球半径 (km)
     dlat = math.radians(lat2 - lat1)
@@ -82,7 +91,7 @@ def haversine(lat1, lon1, lat2, lon2):
         * math.sin(dlon / 2) ** 2
     )
     c = 2 * math.asin(math.sqrt(a))
-    return R * c * 1000  # m に変換
+    return int(R * c * 1000)  # m に変換
 
 
 def convert_car_route_2_combus_data(
@@ -190,6 +199,7 @@ class Searcher:
         node_dict: Dict[str, Node] = {}
         for _, row in stops_df.iterrows():
             node_dict[row["stop_id"]] = Node(
+                node_id=row["stop_id"],
                 name=row["stop_name"],
                 lat=float(row["stop_lat"]),
                 lon=float(row["stop_lon"]),
@@ -203,6 +213,8 @@ class Searcher:
         edge_dict: Dict[Tuple[str, str], Edge] = {}
         for _, row in travel_df.iterrows():
             edge_dict[(row["stop_from"], row["stop_to"])] = Edge(
+                org_node_id=row["stop_from"],
+                dst_node_id=row["stop_to"],
                 travel_time=float(row["average_travel_time"]),
                 transit_type=TransitType.BUS,
             )
@@ -213,12 +225,15 @@ class Searcher:
     ) -> None:
         for node in combus_nodes:
             self.node_dict[node.id] = Node(
+                node_id=node.id,
                 name=node.name,
                 lat=node.lat,
                 lon=node.lon,
             )
         for edge in combus_edges:
             self.edge_dict[(edge.org_node_id, edge.dst_node_id)] = Edge(
+                org_node_id=edge.org_node_id,
+                dst_node_id=edge.dst_node_id,
                 travel_time=edge.duration,
                 transit_type=TransitType.COMBUS,
             )
@@ -231,20 +246,30 @@ class Searcher:
                 )
                 walk_time = distance_to_add_node / WALK_SPEED
                 if walk_time < 10:
-                    edge = Edge(
+                    self.edge_dict[(node_id, combus_node.id)] = Edge(
+                        org_node_id=node_id,
+                        dst_node_id=combus_node.id,
                         travel_time=walk_time,
                         transit_type=TransitType.WALK,
                     )
-                    self.edge_dict[(node_id, combus_node.id)] = edge
-                    self.edge_dict[(combus_node.id, node_id)] = edge
+                    self.edge_dict[(combus_node.id, node_id)] = Edge(
+                        org_node_id=combus_node.id,
+                        dst_node_id=node_id,
+                        travel_time=walk_time,
+                        transit_type=TransitType.WALK,
+                    )
 
-    def find_nearest_node(self, target_coord: Coord, k: int = 10):
+    def find_nearest_node(self, target_coord: Coord, k: int = 10) -> List[EntryResult]:
         """指定した地点に最も近いノードをk件返す"""
         distances = {
             stop_id: haversine(target_coord.lat, target_coord.lon, coord.lat, coord.lon)
             for stop_id, coord in self.node_dict.items()
         }
-        return sorted(distances, key=distances.get)[:k], distances
+        nearest_nodes = sorted(distances, key=distances.get)[:k]
+        return [
+            EntryResult(node=self.node_dict[nid], distance=distances[nid])
+            for nid in nearest_nodes
+        ]
 
     def search():
         pass
