@@ -4,6 +4,7 @@ from prometheus.stop import Stop
 from prometheus.ptrans.network import convert_car_route_2_combus_data
 from prometheus.ptrans.network import CombusEdge, CombusNode, TimeTable
 from prometheus.ptrans.network import Searcher
+from prometheus.ptrans.network import SearchResult
 
 car_output = CarOutputRoute(
     distance=26124,
@@ -319,8 +320,16 @@ def test_searcher_node_and_edge_dict():
     searcher = Searcher()
     node_count = len(searcher.node_dict)
     edge_count = len(searcher.edge_dict)
+
+    walk_edges = [
+        e for e in searcher.edge_dict.values() if e.transit_type.name == "WALK"
+    ]
+    bus_edges = [e for e in searcher.edge_dict.values() if e.transit_type.name == "BUS"]
+
     assert node_count == 1228
-    assert edge_count == 35710
+    assert edge_count == 41033
+    assert len(walk_edges) > 0
+    assert len(bus_edges) > 0
 
 
 def test_add_combus_to_search_network():
@@ -379,3 +388,17 @@ def test_find_nearest_node():
     # EntryResultのnode.idが期待通りか確認
     result_ids = [entry.node.node_id for entry in entry_results]
     assert result_ids == expected_top10
+
+
+def test_searcher_search():
+    searcher = Searcher()
+    start = Coord(lat=36.689497, lon=137.183761)
+    goal = Coord(lat=36.709989, lon=137.262297)
+    start_candidates = searcher.find_nearest_node(start)
+    goal_candidates = searcher.find_nearest_node(goal)
+    result: SearchResult = searcher.search(start_candidates, goal_candidates)
+    assert result is not None
+    assert hasattr(result, "sections")
+    assert len(result.sections) > 0
+    for edge in result.sections:
+        print(edge.org_node_id, edge.dst_node_id, edge.travel_time, edge.transit_type)

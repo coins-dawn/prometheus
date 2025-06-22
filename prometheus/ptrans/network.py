@@ -3,6 +3,7 @@ import random
 import json
 import math
 import heapq
+import itertools
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
@@ -202,6 +203,13 @@ class Tracer:
         pass
 
 
+@dataclass
+class AdjacentDictElem:
+    node: Node
+    cost: int
+    transit_type: TransitType
+
+
 class Searcher:
     """経路探索を行い最適経路を求めるクラス。"""
 
@@ -210,7 +218,7 @@ class Searcher:
         self.edge_dict: Dict[Tuple[str, str], Edge] = self._load_edge_dict(
             TRAVEL_TIME_FILE_PATH
         )
-        self.adjacent_edge_dict: Dict[str, List[Tuple[Edge, int, TransitType]]] = (
+        self.adjacent_dict: Dict[str, List[AdjacentDictElem]] = (
             self._create_adjacent_edges_dict()
         )
 
@@ -238,17 +246,43 @@ class Searcher:
                 travel_time=float(row["average_travel_time"]),
                 transit_type=TransitType.BUS,
             )
+
+        # 徒歩のエッジを追加
+        for node1, node2 in itertools.combinations(self.node_dict.keys(), 2):
+            lat1, lon1 = self.node_dict[node1].lat, self.node_dict[node1].lon
+            lat2, lon2 = self.node_dict[node2].lat, self.node_dict[node2].lon
+            distance = haversine(lat1, lon1, lat2, lon2)
+            walk_time = distance / WALK_SPEED
+            if walk_time < 10:
+                edge_dict[(node1, node2)] = Edge(
+                    org_node_id=node1,
+                    dst_node_id=node2,
+                    travel_time=walk_time,
+                    transit_type=TransitType.WALK,
+                )
+                edge_dict[(node2, node1)] = Edge(
+                    org_node_id=node2,
+                    dst_node_id=node1,
+                    travel_time=walk_time,
+                    transit_type=TransitType.WALK,
+                )
         return edge_dict
 
     def _create_adjacent_edges_dict(
         self,
-    ) -> Dict[str, List[Tuple[Edge, int, TransitType]]]:
-        adjacent_edge_dict: Dict[str, List[Tuple[Edge, int, TransitType]]] = {}
+    ) -> Dict[str, List[AdjacentDictElem]]:
+        adjacent_dict: Dict[str, List[AdjacentDictElem]] = {}
         for (org, dst), edge in self.edge_dict.items():
-            if org not in adjacent_edge_dict:
-                adjacent_edge_dict[org] = []
-            adjacent_edge_dict[org].append((edge, dst, edge.transit_type))
-        return adjacent_edge_dict
+            if org not in adjacent_dict:
+                adjacent_dict[org] = []
+            adjacent_dict[org].append(
+                AdjacentDictElem(
+                    node=self.node_dict[dst],
+                    cost=edge.travel_time,
+                    transit_type=edge.transit_type,
+                )
+            )
+        return adjacent_dict
 
     def add_combus_to_search_network(
         self, combus_nodes: List[CombusNode], combus_edges: List[CombusEdge]
@@ -303,7 +337,7 @@ class Searcher:
 
     def search(
         self, start_candidates: List[EntryResult], goal_candidates: List[EntryResult]
-    ) -> List[Edge]:
+    ) -> SearchResult:
         def calc_additional_cost(prev_mode: TransitType, next_mode: TransitType) -> int:
             if prev_mode == TransitType.BUS and next_mode == TransitType.BUS:
                 return 10
@@ -311,22 +345,29 @@ class Searcher:
                 return 10
             return 0
 
-        pq: List[Tuple[float, Node, TransitType]] = []  # ポテンシャル、ノード、交通手段
+        pq: List[Tuple[float, int, TransitType]] = (
+            []
+        )  # ポテンシャル、ノードID、交通手段
         costs: Dict[int, float] = {}
         prev_nodes: Dict[int, int] = {}  # start空の拡散結果における、ひとつ前のノードID
 
         for start in start_candidates:
             heapq.heappush(
-                pq, (start.distance / WALK_SPEED, start.node, TransitType.WALK)
+                pq, (start.distance / WALK_SPEED, start.node.node_id, TransitType.WALK)
             )
             costs[start.node.node_id] = start.distance / WALK_SPEED
 
-        while pq:
-            curr_cost, node, prev_mode = heapq.heappop(pq)
+        goal_candidates_nodeid_list = [goal.node.node_id for goal in goal_candidates]
 
-            if node in goal_candidates:
+        while pq:
+            curr_cost, node_id, prev_mode = heapq.heappop(pq)
+
+            # !bug
+            # ゴールノードについては最適なものではなく、
+            # 最初に選ばれたものが選ばれている
+            if node_id in goal_candidates_nodeid_list:
                 # 経路をトレースしてエッジ列に変換
-                node_id_list = trace_path(prev_nodes, node)
+                node_id_list = trace_path(prev_nodes, node_id)
                 edge_list = []
                 for i in range(len(node_id_list) - 1):
                     org_node_id = node_id_list[i]
@@ -335,10 +376,13 @@ class Searcher:
                     edge_list.append(edge)
                 return SearchResult(sections=edge_list)
 
-            for neighbor, weight, mode in self.adjacent_edge_dict.get(node.node_id, []):
+            for adjacent_elem in self.adjacent_dict.get(node_id, []):
+                adjacent_node_id = adjacent_elem.node.node_id
+                weight = adjacent_elem.cost
+                mode = adjacent_elem.transit_type
                 new_cost = curr_cost + weight + calc_additional_cost(prev_mode, mode)
-                if neighbor not in costs or new_cost < costs[neighbor]:
-                    costs[neighbor] = new_cost
-                    prev_nodes[neighbor] = node
-                    heapq.heappush(pq, (new_cost, neighbor, mode))
+                if adjacent_node_id not in costs or new_cost < costs[adjacent_node_id]:
+                    costs[adjacent_node_id] = new_cost
+                    prev_nodes[adjacent_node_id] = node_id
+                    heapq.heappush(pq, (new_cost, adjacent_node_id, mode))
         return None
