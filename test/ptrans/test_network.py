@@ -3,6 +3,7 @@ from prometheus.coord import Coord
 from prometheus.stop import Stop
 from prometheus.ptrans.network import convert_car_route_2_combus_data
 from prometheus.ptrans.network import CombusEdge, CombusNode, TimeTable
+from prometheus.ptrans.network import Searcher
 
 car_output = CarOutputRoute(
     distance=26124,
@@ -312,3 +313,50 @@ def test_convert_car_route_2_combus_data():
 
     assert edges == expected_edges
     assert nodes == expected_nodes
+
+
+def test_searcher_node_and_edge_dict():
+    searcher = Searcher()
+    node_count = len(searcher.node_dict)
+    edge_count = len(searcher.edge_dict)
+    assert node_count == 1228
+    assert edge_count == 35710
+
+
+def test_add_combus_to_search_network():
+    from prometheus.ptrans.network import (
+        Searcher,
+        convert_car_route_2_combus_data,
+        TransitType,
+    )
+
+    searcher = Searcher()
+    before_node_ids = set(searcher.node_dict.keys())
+    before_edge_keys = set(searcher.edge_dict.keys())
+
+    edges, nodes = convert_car_route_2_combus_data(car_output)
+    searcher.add_combus_to_search_network(nodes, edges)
+
+    after_node_ids = set(searcher.node_dict.keys())
+    after_edge_keys = set(searcher.edge_dict.keys())
+    added_node_ids = after_node_ids - before_node_ids
+    added_edge_keys = after_edge_keys - before_edge_keys
+
+    after_node_count = len(searcher.node_dict)
+    before_node_count = len(before_node_ids)
+
+    added_combus_edges = [
+        k
+        for k in added_edge_keys
+        if getattr(searcher.edge_dict[k], "transit_type", None) == TransitType.COMBUS
+    ]
+
+    # 追加されたノードの数が期待通り
+    assert after_node_count == before_node_count + len(nodes)
+
+    # 追加されたノードのノード番号が「A」から始まる
+    assert all(nid.startswith("A") for nid in added_node_ids)
+
+    # 追加されたエッジの数が期待通り
+    assert len(edges) == len(added_combus_edges)
+
