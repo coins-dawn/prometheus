@@ -2,6 +2,7 @@ import pandas
 import random
 import json
 import math
+import heapq
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
@@ -79,6 +80,11 @@ class EntryResult:
     distance: int
 
 
+@dataclass
+class SearchResult:
+    sections: List[Edge]
+
+
 def haversine(lat1, lon1, lat2, lon2) -> int:
     """2点間の概算距離を求める（ハーバーサイン距離）"""
     R = 6371  # 地球半径 (km)
@@ -142,6 +148,17 @@ def convert_car_route_2_combus_data(
     return combus_edges, combus_nodes
 
 
+def trace_path(prev_nodes: Dict[int, int], goal_node: int) -> List[int]:
+    """ゴールノードからスタートノードまでの経路をトレース"""
+    node_id_list = []
+    node = goal_node
+    while node in prev_nodes:
+        node_id_list.append(node)
+        node = prev_nodes[node]
+    node_id_list.append(node)  # スタートノードを追加
+    return node_id_list[::-1]  # 経路を逆順にして返す
+
+
 class Tracer:
     """経路確定後に時刻表を参照してトレースを行うクラス。"""
 
@@ -193,6 +210,9 @@ class Searcher:
         self.edge_dict: Dict[Tuple[str, str], Edge] = self._load_edge_dict(
             TRAVEL_TIME_FILE_PATH
         )
+        self.adjacent_edge_dict: Dict[str, List[Tuple[Edge, int, TransitType]]] = (
+            self._create_adjacent_edges_dict()
+        )
 
     def _load_node_dict(self, stops_file: str) -> Dict[str, Node]:
         stops_df = pandas.read_csv(stops_file)
@@ -219,6 +239,16 @@ class Searcher:
                 transit_type=TransitType.BUS,
             )
         return edge_dict
+
+    def _create_adjacent_edges_dict(
+        self,
+    ) -> Dict[str, List[Tuple[Edge, int, TransitType]]]:
+        adjacent_edge_dict: Dict[str, List[Tuple[Edge, int, TransitType]]] = {}
+        for (org, dst), edge in self.edge_dict.items():
+            if org not in adjacent_edge_dict:
+                adjacent_edge_dict[org] = []
+            adjacent_edge_dict[org].append((edge, dst, edge.transit_type))
+        return adjacent_edge_dict
 
     def add_combus_to_search_network(
         self, combus_nodes: List[CombusNode], combus_edges: List[CombusEdge]
@@ -271,5 +301,44 @@ class Searcher:
             for nid in nearest_nodes
         ]
 
-    def search():
-        pass
+    def search(
+        self, start_candidates: List[EntryResult], goal_candidates: List[EntryResult]
+    ) -> List[Edge]:
+        def calc_additional_cost(prev_mode: TransitType, next_mode: TransitType) -> int:
+            if prev_mode == TransitType.BUS and next_mode == TransitType.BUS:
+                return 10
+            if prev_mode == TransitType.WALK and next_mode == TransitType.BUS:
+                return 10
+            return 0
+
+        pq: List[Tuple[float, Node, TransitType]] = []  # ポテンシャル、ノード、交通手段
+        costs: Dict[int, float] = {}
+        prev_nodes: Dict[int, int] = {}  # start空の拡散結果における、ひとつ前のノードID
+
+        for start in start_candidates:
+            heapq.heappush(
+                pq, (start.distance / WALK_SPEED, start.node, TransitType.WALK)
+            )
+            costs[start.node.node_id] = start.distance / WALK_SPEED
+
+        while pq:
+            curr_cost, node, prev_mode = heapq.heappop(pq)
+
+            if node in goal_candidates:
+                # 経路をトレースしてエッジ列に変換
+                node_id_list = trace_path(prev_nodes, node)
+                edge_list = []
+                for i in range(len(node_id_list) - 1):
+                    org_node_id = node_id_list[i]
+                    dst_node_id = node_id_list[i + 1]
+                    edge = self.edge_dict.get((org_node_id, dst_node_id))
+                    edge_list.append(edge)
+                return SearchResult(sections=edge_list)
+
+            for neighbor, weight, mode in self.adjacent_edge_dict.get(node.node_id, []):
+                new_cost = curr_cost + weight + calc_additional_cost(prev_mode, mode)
+                if neighbor not in costs or new_cost < costs[neighbor]:
+                    costs[neighbor] = new_cost
+                    prev_nodes[neighbor] = node
+                    heapq.heappush(pq, (new_cost, neighbor, mode))
+        return None
