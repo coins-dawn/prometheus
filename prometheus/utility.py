@@ -14,7 +14,9 @@ def convert_for_json(obj):
         return OrderedDict((k, convert_for_json(v)) for k, v in obj.items())
     elif hasattr(obj, "__dataclass_fields__"):
         # dataclassも順序を保持
-        return OrderedDict((k, convert_for_json(getattr(obj, k))) for k in obj.__dataclass_fields__)
+        return OrderedDict(
+            (k, convert_for_json(getattr(obj, k))) for k in obj.__dataclass_fields__
+        )
     else:
         return obj
 
