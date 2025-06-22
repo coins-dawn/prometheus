@@ -4,7 +4,7 @@ fetch:
 
 .PHONY: format
 format:
-	black prometheus
+	black prometheus test
 
 .PHONY: run-server
 run-server:
@@ -23,3 +23,7 @@ car-singleshot:
 .PHONY: ptrans-singleshot
 ptrans-singleshot:
 	PYTHONPATH=$$PYTHONPATH:./prometheus python tool/singleshot/ptrans.py tool/singleshot/ptrans_input.json
+
+.PHONY: test
+test:
+	PYTHONPATH=$$PYTHONPATH:./prometheus pytest test
