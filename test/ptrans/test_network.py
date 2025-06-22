@@ -360,3 +360,21 @@ def test_add_combus_to_search_network():
     # 追加されたエッジの数が期待通り
     assert len(edges) == len(added_combus_edges)
 
+
+def test_find_nearest_node():
+    from prometheus.ptrans.network import haversine
+
+    searcher = Searcher()
+    coord = Coord(lat=36.68936, lon=137.18519)
+    nearest_nodes, distances = searcher.find_nearest_node(coord)
+    assert len(nearest_nodes) == 10
+
+    # node_dictから全ノードとの距離を計算し、上位10件のノードIDを取得
+    all_distances = {
+        node_id: haversine(coord.lat, coord.lon, node.lat, node.lon)
+        for node_id, node in searcher.node_dict.items()
+    }
+    expected_top10 = sorted(all_distances, key=all_distances.get)[:10]
+
+    # find_nearest_nodeの返却値と一致することを確認
+    assert nearest_nodes == expected_top10
