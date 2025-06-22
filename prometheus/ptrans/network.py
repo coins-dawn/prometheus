@@ -5,6 +5,7 @@ import math
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from prometheus.coord import Coord
 from prometheus.car.car_output import CarOutputRoute
 
 STOP_FILE_PATH = "data/gtfs/stops.txt"
@@ -236,6 +237,14 @@ class Searcher:
                     )
                     self.edge_dict[(node_id, combus_node.id)] = edge
                     self.edge_dict[(combus_node.id, node_id)] = edge
+
+    def find_nearest_node(self, target_coord: Coord, k: int = 10):
+        """指定した地点に最も近いノードをk件返す"""
+        distances = {
+            stop_id: haversine(target_coord.lat, target_coord.lon, coord.lat, coord.lon)
+            for stop_id, coord in self.node_dict.items()
+        }
+        return sorted(distances, key=distances.get)[:k], distances
 
     def search():
         pass
