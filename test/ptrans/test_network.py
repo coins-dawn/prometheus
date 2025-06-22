@@ -4,122 +4,122 @@ from prometheus.stop import Stop
 from prometheus.ptrans.network import convert_car_route_2_combus_data
 from prometheus.ptrans.network import CombusEdge, CombusNode, TimeTable
 
+car_output = CarOutputRoute(
+    distance=26124,
+    duration=44,
+    sections=[
+        CarOutputSection(
+            distance=4331,
+            duration=6,
+            shape="avv~EgyfdYYk@e@}@Uc@iA`@e@b@y@v@{BoEU_@We@IO{CeGqDgH}FdA{AVg@J[FcDl@IBM@wA{Ci@gAgBwDsBqEIFw@n@kCSgAIiAIw@G_AESGOGGEyAM_EOkAGWCeBEq@AoAAmAEgACOA{@AG@aAEs@Aw@aCgBsFQPQNKRKQCm@y@MyASWEKEqB[mCa@iAQ}@O_Em@gDk@q@Go@B]AQCGCmCAaAAw@?G?M@I?Q?aC@}C@gB?eBKINMNQFYDc@@sDZW@m@E[Ce@D}@TgCb@OBaEx@Q@G}ACgAa@kC[kBKiA{AGC~@@VGHAp@",
+        ),
+        CarOutputSection(
+            distance=6272,
+            duration=9,
+            shape="{||~Eg~hdYAd@CPMPWXa@d@g@t@GRoAfB{BmCgAaBw@mAGGEIDEdEaEJENMNOXPFBb@Nh@Ht@DlSHlFB?M?IhEBh@a@FsA@]jB]zAWfEw@r@MfB]FATmCRiCFo@LwAPqCTkCd@kG@_@@Y|Co^BOXeCLgBFgCFgDJcE@k@@g@BaCBqBFeEDqBBgC@_@?a@B_BBuBLiBPoCHiANoBBk@@MLkB?GBc@AK?{A?Q?]?WCoAAcAAi@@{@?QA]?K@_ABm@F_A@YPgBLuBB_@@OXsEX_F@W@OLgBBq@XyEFoABg@B[RcCZgDIE",
+        ),
+        CarOutputSection(
+            distance=3252,
+            duration=5,
+            shape="_pz~EilsdYuC_B[c@kBeAaAYa@Iz@}AzAwCp@@tBBzAAj@?L?L?F?hABpDFb@?|@B~ABD?H?L?v@Bz@D\\@`@B`@JLBTHNH`@ThAv@pA~@tA|@VJb@J|ANpBLt@FTBL@R@P@nAHR@bGZJAPAVEPGZMbAc@bB{@`Ac@^KVEt@KTCdBOdB]`AYd@IX?^F^R~AjAB@|AjAvBzAb@\\XVfE|Ch@Al@?vA?dB?xA?`@@N@f@NxAn@lA`@l@NCkAxB_BDMLYt@}B\\}@Fi@Am@`Ce@`Ba@",
+        ),
+        CarOutputSection(
+            distance=4439,
+            duration=7,
+            shape="_ev~EsvsdYhCq@KgBBo@Tm@d@oAY]HEt@o@r@{@k@iBw@eCfBiArBgAhGuCdAe@fBy@r@Yh@|BHf@?^FZH\\Zf@|@tA\\f@X`@f@Z^TLVHZBP@VETk@jDfAXLHJLPXn@tA^bADT@^OnAl@R^JdAZ|@XDFNF|@pJLnBNtBRF|@XXJ|Br@QfBEl@AJANGbA?d@?J@LDRDNB@?TCNq@vASd@@hFAlCObI[xGZ?`CBR?`D{B^BpARND\\ZVRPLnAp@r@`@xAz@tD~Ab@T~@b@vDnBdBz@jDlB`HvDcA`Fu@dF}BjRiCwA",
+        ),
+        CarOutputSection(
+            distance=7830,
+            duration=12,
+            shape="uas~EexodYhCvAi@pEhD]hD_@x@In@GjAMz@IHAl@Gz@KHrAHnAHrAXlATfAHZDT@DF`@\\Gh@EO`Ec@|PM~FAj@d@bCBZBrA@`E?L?V@LFVLHTGRDDX@pBC\\ZTpALn@BbA?j@@HhBBj@V~H?HInDAL~AHRBFJb@RFxB@nAQ|CIjAD@H@MzAe@fGCb@Eb@IdAc@vFKrACbAArD?rB@`C?lC?\\?\\AdC?H?X?hB?vB?t@@lC?rFA~E?x@@h@Bj@Ff@Hj@lEbZhClR_GrAo@N}D`AwE`AmEbA`AfHm@P]M}@KyAUyAYg@KsAg@kB{@gAi@S@y@Y_DsAKEAHAHAF{@e@]MUAUDYP[J_@@iDa@_AC{ADc@?m@Nm@\\OPkAj@kBTuACy@K]AUBYLWTS^Kb@Ud@]b@y@j@OQMII?a@Es@Gy@F}Cr@eBf@{Bp@{Dv@eBVgGDsNAoG@UAg@?aAJ}@\\iDtALx@Db@A^I\\M\\WVeDxC",
+        ),
+    ],
+    stops=[
+        CarOutputStop(
+            departure_times=[
+                "10:00",
+                "10:44",
+                "11:28",
+                "12:12",
+                "12:56",
+                "13:40",
+                "14:24",
+                "15:08",
+                "15:52",
+                "16:36",
+            ],
+            stay_time=1,
+            stop=Stop(coord=Coord(lat=36.65742, lon=137.17421), name="バス停1"),
+        ),
+        CarOutputStop(
+            departure_times=[
+                "10:06",
+                "10:50",
+                "11:34",
+                "12:18",
+                "13:02",
+                "13:46",
+                "14:30",
+                "15:14",
+                "15:58",
+                "16:42",
+            ],
+            stay_time=1,
+            stop=Stop(coord=Coord(lat=36.68936, lon=137.18519), name="バス停2"),
+        ),
+        CarOutputStop(
+            departure_times=[
+                "10:15",
+                "10:59",
+                "11:43",
+                "12:27",
+                "13:11",
+                "13:55",
+                "14:39",
+                "15:23",
+                "16:07",
+                "16:51",
+            ],
+            stay_time=1,
+            stop=Stop(coord=Coord(lat=36.67738, lon=137.23892), name="バス停3"),
+        ),
+        CarOutputStop(
+            departure_times=[
+                "10:20",
+                "11:04",
+                "11:48",
+                "12:32",
+                "13:16",
+                "14:00",
+                "14:44",
+                "15:28",
+                "16:12",
+                "16:56",
+            ],
+            stay_time=1,
+            stop=Stop(coord=Coord(lat=36.65493, lon=137.24001), name="バス停4"),
+        ),
+        CarOutputStop(
+            departure_times=[
+                "10:27",
+                "11:11",
+                "11:55",
+                "12:39",
+                "13:23",
+                "14:07",
+                "14:51",
+                "15:35",
+                "16:19",
+                "17:03",
+            ],
+            stay_time=1,
+            stop=Stop(coord=Coord(lat=36.63964, lon=137.21958), name="バス停5"),
+        ),
+    ],
+)
+
 
 def test_convert_car_route_2_combus_data():
-    car_output = CarOutputRoute(
-        distance=26124,
-        duration=44,
-        sections=[
-            CarOutputSection(
-                distance=4331,
-                duration=6,
-                shape="avv~EgyfdYYk@e@}@Uc@iA`@e@b@y@v@{BoEU_@We@IO{CeGqDgH}FdA{AVg@J[FcDl@IBM@wA{Ci@gAgBwDsBqEIFw@n@kCSgAIiAIw@G_AESGOGGEyAM_EOkAGWCeBEq@AoAAmAEgACOA{@AG@aAEs@Aw@aCgBsFQPQNKRKQCm@y@MyASWEKEqB[mCa@iAQ}@O_Em@gDk@q@Go@B]AQCGCmCAaAAw@?G?M@I?Q?aC@}C@gB?eBKINMNQFYDc@@sDZW@m@E[Ce@D}@TgCb@OBaEx@Q@G}ACgAa@kC[kBKiA{AGC~@@VGHAp@",
-            ),
-            CarOutputSection(
-                distance=6272,
-                duration=9,
-                shape="{||~Eg~hdYAd@CPMPWXa@d@g@t@GRoAfB{BmCgAaBw@mAGGEIDEdEaEJENMNOXPFBb@Nh@Ht@DlSHlFB?M?IhEBh@a@FsA@]jB]zAWfEw@r@MfB]FATmCRiCFo@LwAPqCTkCd@kG@_@@Y|Co^BOXeCLgBFgCFgDJcE@k@@g@BaCBqBFeEDqBBgC@_@?a@B_BBuBLiBPoCHiANoBBk@@MLkB?GBc@AK?{A?Q?]?WCoAAcAAi@@{@?QA]?K@_ABm@F_A@YPgBLuBB_@@OXsEX_F@W@OLgBBq@XyEFoABg@B[RcCZgDIE",
-            ),
-            CarOutputSection(
-                distance=3252,
-                duration=5,
-                shape="_pz~EilsdYuC_B[c@kBeAaAYa@Iz@}AzAwCp@@tBBzAAj@?L?L?F?hABpDFb@?|@B~ABD?H?L?v@Bz@D\\@`@B`@JLBTHNH`@ThAv@pA~@tA|@VJb@J|ANpBLt@FTBL@R@P@nAHR@bGZJAPAVEPGZMbAc@bB{@`Ac@^KVEt@KTCdBOdB]`AYd@IX?^F^R~AjAB@|AjAvBzAb@\\XVfE|Ch@Al@?vA?dB?xA?`@@N@f@NxAn@lA`@l@NCkAxB_BDMLYt@}B\\}@Fi@Am@`Ce@`Ba@",
-            ),
-            CarOutputSection(
-                distance=4439,
-                duration=7,
-                shape="_ev~EsvsdYhCq@KgBBo@Tm@d@oAY]HEt@o@r@{@k@iBw@eCfBiArBgAhGuCdAe@fBy@r@Yh@|BHf@?^FZH\\Zf@|@tA\\f@X`@f@Z^TLVHZBP@VETk@jDfAXLHJLPXn@tA^bADT@^OnAl@R^JdAZ|@XDFNF|@pJLnBNtBRF|@XXJ|Br@QfBEl@AJANGbA?d@?J@LDRDNB@?TCNq@vASd@@hFAlCObI[xGZ?`CBR?`D{B^BpARND\\ZVRPLnAp@r@`@xAz@tD~Ab@T~@b@vDnBdBz@jDlB`HvDcA`Fu@dF}BjRiCwA",
-            ),
-            CarOutputSection(
-                distance=7830,
-                duration=12,
-                shape="uas~EexodYhCvAi@pEhD]hD_@x@In@GjAMz@IHAl@Gz@KHrAHnAHrAXlATfAHZDT@DF`@\\Gh@EO`Ec@|PM~FAj@d@bCBZBrA@`E?L?V@LFVLHTGRDDX@pBC\\ZTpALn@BbA?j@@HhBBj@V~H?HInDAL~AHRBFJb@RFxB@nAQ|CIjAD@H@MzAe@fGCb@Eb@IdAc@vFKrACbAArD?rB@`C?lC?\\?\\AdC?H?X?hB?vB?t@@lC?rFA~E?x@@h@Bj@Ff@Hj@lEbZhClR_GrAo@N}D`AwE`AmEbA`AfHm@P]M}@KyAUyAYg@KsAg@kB{@gAi@S@y@Y_DsAKEAHAHAF{@e@]MUAUDYP[J_@@iDa@_AC{ADc@?m@Nm@\\OPkAj@kBTuACy@K]AUBYLWTS^Kb@Ud@]b@y@j@OQMII?a@Es@Gy@F}Cr@eBf@{Bp@{Dv@eBVgGDsNAoG@UAg@?aAJ}@\\iDtALx@Db@A^I\\M\\WVeDxC",
-            ),
-        ],
-        stops=[
-            CarOutputStop(
-                departure_times=[
-                    "10:00",
-                    "10:44",
-                    "11:28",
-                    "12:12",
-                    "12:56",
-                    "13:40",
-                    "14:24",
-                    "15:08",
-                    "15:52",
-                    "16:36",
-                ],
-                stay_time=1,
-                stop=Stop(coord=Coord(lat=36.65742, lon=137.17421), name="バス停1"),
-            ),
-            CarOutputStop(
-                departure_times=[
-                    "10:06",
-                    "10:50",
-                    "11:34",
-                    "12:18",
-                    "13:02",
-                    "13:46",
-                    "14:30",
-                    "15:14",
-                    "15:58",
-                    "16:42",
-                ],
-                stay_time=1,
-                stop=Stop(coord=Coord(lat=36.68936, lon=137.18519), name="バス停2"),
-            ),
-            CarOutputStop(
-                departure_times=[
-                    "10:15",
-                    "10:59",
-                    "11:43",
-                    "12:27",
-                    "13:11",
-                    "13:55",
-                    "14:39",
-                    "15:23",
-                    "16:07",
-                    "16:51",
-                ],
-                stay_time=1,
-                stop=Stop(coord=Coord(lat=36.67738, lon=137.23892), name="バス停3"),
-            ),
-            CarOutputStop(
-                departure_times=[
-                    "10:20",
-                    "11:04",
-                    "11:48",
-                    "12:32",
-                    "13:16",
-                    "14:00",
-                    "14:44",
-                    "15:28",
-                    "16:12",
-                    "16:56",
-                ],
-                stay_time=1,
-                stop=Stop(coord=Coord(lat=36.65493, lon=137.24001), name="バス停4"),
-            ),
-            CarOutputStop(
-                departure_times=[
-                    "10:27",
-                    "11:11",
-                    "11:55",
-                    "12:39",
-                    "13:23",
-                    "14:07",
-                    "14:51",
-                    "15:35",
-                    "16:19",
-                    "17:03",
-                ],
-                stay_time=1,
-                stop=Stop(coord=Coord(lat=36.63964, lon=137.21958), name="バス停5"),
-            ),
-        ],
-    )
-
     edges, nodes = convert_car_route_2_combus_data(car_output)
     assert len(edges) == 5
     assert len(nodes) == 5
