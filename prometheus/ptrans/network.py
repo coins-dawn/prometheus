@@ -65,13 +65,6 @@ class TimeTable:
 
 
 @dataclass
-class CombusNode:
-    id: str
-    name: str
-    coord: Coord
-
-
-@dataclass
 class CombusEdge:
     org_node_id: str
     dst_node_id: str
@@ -109,7 +102,7 @@ def haversine(coord1: Coord, coord2: Coord) -> int:
 
 def convert_car_route_2_combus_data(
     car_output: CarOutputRoute,
-) -> Tuple[List[CombusEdge], List[CombusNode]]:
+) -> Tuple[List[CombusEdge], List[Node]]:
     # 新しいノードIDを採番
     random.seed(0)
     nodeid_list = []
@@ -144,7 +137,7 @@ def convert_car_route_2_combus_data(
     combus_nodes = []
     for i, stop in enumerate(car_output.stops):
         combus_nodes.append(
-            CombusNode(id=nodeid_list[i], name=f"バス停{i+1}", coord=stop.stop.coord)
+            Node(node_id=nodeid_list[i], name=f"バス停{i+1}", coord=stop.stop.coord)
         )
 
     return combus_edges, combus_nodes
@@ -368,11 +361,11 @@ class Searcher:
         return adjacent_dict
 
     def add_combus_to_search_network(
-        self, combus_nodes: List[CombusNode], combus_edges: List[CombusEdge]
+        self, combus_nodes: List[Node], combus_edges: List[CombusEdge]
     ) -> None:
         for node in combus_nodes:
-            self.node_dict[node.id] = Node(
-                node_id=node.id,
+            self.node_dict[node.node_id] = Node(
+                node_id=node.node_id,
                 name=node.name,
                 coord=node.coord,
             )
@@ -388,21 +381,19 @@ class Searcher:
         for combus_node in combus_nodes:
             for node_id, node in self.node_dict.items():
                 # node.coordとcombus_node.coordの型をチェック
-                if not isinstance(node, Node) or not isinstance(
-                    combus_node, CombusNode
-                ):
+                if not isinstance(node, Node) or not isinstance(combus_node, Node):
                     raise TypeError("node and combus_node must be Node instances")
                 distance_to_add_node = haversine(node.coord, combus_node.coord)
                 walk_time = distance_to_add_node / WALK_SPEED
                 if walk_time < 10:
-                    self.edge_dict[(node_id, combus_node.id)] = Edge(
+                    self.edge_dict[(node_id, combus_node.node_id)] = Edge(
                         org_node_id=node_id,
-                        dst_node_id=combus_node.id,
+                        dst_node_id=combus_node.node_id,
                         travel_time=walk_time,
                         transit_type=TransitType.WALK,
                     )
-                    self.edge_dict[(combus_node.id, node_id)] = Edge(
-                        org_node_id=combus_node.id,
+                    self.edge_dict[(combus_node.node_id, node_id)] = Edge(
+                        org_node_id=combus_node.node_id,
                         dst_node_id=node_id,
                         travel_time=walk_time,
                         transit_type=TransitType.WALK,

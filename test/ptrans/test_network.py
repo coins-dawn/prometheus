@@ -2,7 +2,7 @@ from prometheus.car.car_output import CarOutputRoute, CarOutputSection, CarOutpu
 from prometheus.coord import Coord
 from prometheus.stop import Stop
 from prometheus.ptrans.network import convert_car_route_2_combus_data
-from prometheus.ptrans.network import CombusEdge, CombusNode, TimeTable
+from prometheus.ptrans.network import CombusEdge, Node, TimeTable
 from prometheus.ptrans.network import Searcher
 from prometheus.ptrans.network import SearchResult
 
@@ -305,21 +305,11 @@ def test_convert_car_route_2_combus_data():
     ]
 
     expected_nodes = [
-        CombusNode(
-            id="A7311", name="バス停1", coord=Coord(lat=36.65742, lon=137.17421)
-        ),
-        CombusNode(
-            id="A7890", name="バス停2", coord=Coord(lat=36.68936, lon=137.18519)
-        ),
-        CombusNode(
-            id="A1663", name="バス停3", coord=Coord(lat=36.67738, lon=137.23892)
-        ),
-        CombusNode(
-            id="A5242", name="バス停4", coord=Coord(lat=36.65493, lon=137.24001)
-        ),
-        CombusNode(
-            id="A9376", name="バス停5", coord=Coord(lat=36.63964, lon=137.21958)
-        ),
+        Node(node_id="A7311", name="バス停1", coord=Coord(lat=36.65742, lon=137.17421)),
+        Node(node_id="A7890", name="バス停2", coord=Coord(lat=36.68936, lon=137.18519)),
+        Node(node_id="A1663", name="バス停3", coord=Coord(lat=36.67738, lon=137.23892)),
+        Node(node_id="A5242", name="バス停4", coord=Coord(lat=36.65493, lon=137.24001)),
+        Node(node_id="A9376", name="バス停5", coord=Coord(lat=36.63964, lon=137.21958)),
     ]
 
     assert edges == expected_edges
