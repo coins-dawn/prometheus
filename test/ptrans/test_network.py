@@ -305,11 +305,21 @@ def test_convert_car_route_2_combus_data():
     ]
 
     expected_nodes = [
-        CombusNode(id="A7311", name="バス停1", lat=36.65742, lon=137.17421),
-        CombusNode(id="A7890", name="バス停2", lat=36.68936, lon=137.18519),
-        CombusNode(id="A1663", name="バス停3", lat=36.67738, lon=137.23892),
-        CombusNode(id="A5242", name="バス停4", lat=36.65493, lon=137.24001),
-        CombusNode(id="A9376", name="バス停5", lat=36.63964, lon=137.21958),
+        CombusNode(
+            id="A7311", name="バス停1", coord=Coord(lat=36.65742, lon=137.17421)
+        ),
+        CombusNode(
+            id="A7890", name="バス停2", coord=Coord(lat=36.68936, lon=137.18519)
+        ),
+        CombusNode(
+            id="A1663", name="バス停3", coord=Coord(lat=36.67738, lon=137.23892)
+        ),
+        CombusNode(
+            id="A5242", name="バス停4", coord=Coord(lat=36.65493, lon=137.24001)
+        ),
+        CombusNode(
+            id="A9376", name="バス停5", coord=Coord(lat=36.63964, lon=137.21958)
+        ),
     ]
 
     assert edges == expected_edges
@@ -380,7 +390,7 @@ def test_find_nearest_node():
 
     # node_dictから全ノードとの距離を計算し、上位10件のノードIDを取得
     all_distances = {
-        node_id: haversine(coord.lat, coord.lon, node.lat, node.lon)
+        node_id: haversine(coord, node.coord)
         for node_id, node in searcher.node_dict.items()
     }
     expected_top10 = sorted(all_distances, key=all_distances.get)[:10]

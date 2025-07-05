@@ -25,9 +25,8 @@ class PtransOutputSpot:
 
 @dataclass
 class PtransOutputSection:
-    distance: float
     duration: int
-    shape: str
+    shape: str  # polyline or ""
     start_time: str
     goal_time: str
     type: PtransOutputSectionType

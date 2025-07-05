@@ -14,6 +14,7 @@ from prometheus.ptrans.ptrans_output import (
     PtransSearchOutput,
     PtransOutputRoute,
     PtransOutputSpot,
+    PtransOutputSectionType,
 )
 
 
@@ -39,8 +40,7 @@ class Node:
 
     node_id: str
     name: str
-    lat: float
-    lon: float
+    coord: Coord
 
 
 @dataclass
@@ -68,8 +68,7 @@ class TimeTable:
 class CombusNode:
     id: str
     name: str
-    lat: float
-    lon: float
+    coord: Coord
 
 
 @dataclass
@@ -93,15 +92,15 @@ class SearchResult:
     sections: List[Edge]
 
 
-def haversine(lat1, lon1, lat2, lon2) -> int:
+def haversine(coord1: Coord, coord2: Coord) -> int:
     """2点間の概算距離を求める（ハーバーサイン距離）"""
     R = 6371  # 地球半径 (km)
-    dlat = math.radians(lat2 - lat1)
-    dlon = math.radians(lon2 - lon1)
+    dlat = math.radians(coord2.lat - coord1.lat)
+    dlon = math.radians(coord2.lon - coord1.lon)
     a = (
         math.sin(dlat / 2) ** 2
-        + math.cos(math.radians(lat1))
-        * math.cos(math.radians(lat2))
+        + math.cos(math.radians(coord1.lat))
+        * math.cos(math.radians(coord2.lat))
         * math.sin(dlon / 2) ** 2
     )
     c = 2 * math.asin(math.sqrt(a))
@@ -145,12 +144,7 @@ def convert_car_route_2_combus_data(
     combus_nodes = []
     for i, stop in enumerate(car_output.stops):
         combus_nodes.append(
-            CombusNode(
-                id=nodeid_list[i],
-                name=f"バス停{i+1}",
-                lat=stop.stop.coord.lat,
-                lon=stop.stop.coord.lon,
-            )
+            CombusNode(id=nodeid_list[i], name=f"バス停{i+1}", coord=stop.stop.coord)
         )
 
     return combus_edges, combus_nodes
@@ -215,14 +209,34 @@ class Tracer:
                 combus_edge.time_tables
             )
 
-    def trace(
+    def create_sections(
         self,
         search_result: SearchResult,
         start_time: str,
         start_coord: Coord,
         goal_coord: Coord,
-    ) -> PtransSearchOutput:
+    ) -> List[PtransOutputSection]:
         output_section: List[PtransOutputSection] = []
+
+        # 出発地～最初のバス停
+        # first_bus_stop_coord = Coord(
+        #     lat=search_result.sections[0].coord.lat,
+        #     lon=search_result.sections[0].coord.lon,
+        # )
+        # start_to_first_bus_stop_distance = haversine(start_coord, first_bus_stop_coord)
+        # start_to_first_bus_stop_time = start_to_first_bus_stop_distance / WALK_SPEED
+        # output_section.append(
+        #     PtransOutputSection(
+        #         duration=0,  # 出発地から最初のバス停までの時間は0
+        #         shape=start_time,
+        #         start_time=start_time,  # 出発時刻を設定
+        #         goal_time="",  # ゴール時刻は後で設定する
+        #         name="徒歩",
+        #         type=PtransOutputSectionType.WALK,
+        #     )
+        # )
+
+        # 最初のバス停～最後のバス停
         for edge in search_result.sections:
             org_node_id = edge.org_node_id
             dst_node_id = edge.dst_node_id
@@ -230,7 +244,6 @@ class Tracer:
             time_table = self.time_table_dict.get((org_node_id, dst_node_id), None)
             output_section.append(
                 PtransOutputSection(
-                    distance=0,  # 距離は計算しない
                     duration=edge.travel_time,
                     shape=polyline_str,
                     start_time="",  # 時刻は後で設定する
@@ -241,13 +254,35 @@ class Tracer:
                     type=edge.transit_type.value,
                 )
             )
+
+        # 最後のバス停～目的地
+
+        return output_section
+
+    def create_spots(self) -> List[PtransOutputSpot]:
+        return []
+
+    def trace(
+        self,
+        search_result: SearchResult,
+        start_time: str,
+        start_coord: Coord,
+        goal_coord: Coord,
+    ) -> PtransSearchOutput:
+        sections = self.create_sections(
+            search_result, start_time, start_coord, goal_coord
+        )
+        spots = self.create_spots()
+        goal_time = start_time  # ゴール時刻は後で設定
+        duration = 0  # 後で設定
+
         return PtransSearchOutput(
             PtransOutputRoute(
-                start_time="",  # 時刻は後で設定する
-                goal_time="",  # 時刻は後で設定する
-                duration=sum(edge.travel_time for edge in search_result.sections),
-                spots=[],
-                sections=output_section,
+                start_time=start_time,
+                goal_time=goal_time,
+                duration=duration,
+                spots=spots,
+                sections=sections,
             )
         )
 
@@ -278,8 +313,7 @@ class Searcher:
             node_dict[row["stop_id"]] = Node(
                 node_id=row["stop_id"],
                 name=row["stop_name"],
-                lat=float(row["stop_lat"]),
-                lon=float(row["stop_lon"]),
+                coord=Coord(lat=float(row["stop_lat"]), lon=float(row["stop_lon"])),
             )
         return node_dict
 
@@ -297,21 +331,21 @@ class Searcher:
             )
 
         # 徒歩のエッジを追加
-        for node1, node2 in itertools.combinations(self.node_dict.keys(), 2):
-            lat1, lon1 = self.node_dict[node1].lat, self.node_dict[node1].lon
-            lat2, lon2 = self.node_dict[node2].lat, self.node_dict[node2].lon
-            distance = haversine(lat1, lon1, lat2, lon2)
+        for node_id_1, node_id_2 in itertools.combinations(self.node_dict.keys(), 2):
+            node1 = self.node_dict[node_id_1]
+            node2 = self.node_dict[node_id_2]
+            distance = haversine(node1.coord, node2.coord)
             walk_time = distance / WALK_SPEED
             if walk_time < 10:
-                edge_dict[(node1, node2)] = Edge(
-                    org_node_id=node1,
-                    dst_node_id=node2,
+                edge_dict[(node_id_1, node_id_2)] = Edge(
+                    org_node_id=node_id_1,
+                    dst_node_id=node_id_2,
                     travel_time=walk_time,
                     transit_type=TransitType.WALK,
                 )
-                edge_dict[(node2, node1)] = Edge(
-                    org_node_id=node2,
-                    dst_node_id=node1,
+                edge_dict[(node_id_2, node_id_1)] = Edge(
+                    org_node_id=node_id_2,
+                    dst_node_id=node_id_1,
                     travel_time=walk_time,
                     transit_type=TransitType.WALK,
                 )
@@ -340,8 +374,7 @@ class Searcher:
             self.node_dict[node.id] = Node(
                 node_id=node.id,
                 name=node.name,
-                lat=node.lat,
-                lon=node.lon,
+                coord=node.coord,
             )
         for edge in combus_edges:
             self.edge_dict[(edge.org_node_id, edge.dst_node_id)] = Edge(
@@ -354,9 +387,12 @@ class Searcher:
         # 既存のバス停から徒歩10分いないなら徒歩エッジを追加
         for combus_node in combus_nodes:
             for node_id, node in self.node_dict.items():
-                distance_to_add_node = haversine(
-                    node.lat, node.lon, combus_node.lat, combus_node.lon
-                )
+                # node.coordとcombus_node.coordの型をチェック
+                if not isinstance(node, Node) or not isinstance(
+                    combus_node, CombusNode
+                ):
+                    raise TypeError("node and combus_node must be Node instances")
+                distance_to_add_node = haversine(node.coord, combus_node.coord)
                 walk_time = distance_to_add_node / WALK_SPEED
                 if walk_time < 10:
                     self.edge_dict[(node_id, combus_node.id)] = Edge(
@@ -375,8 +411,8 @@ class Searcher:
     def find_nearest_node(self, target_coord: Coord, k: int = 10) -> List[EntryResult]:
         """指定した地点に最も近いノードをk件返す"""
         distances = {
-            stop_id: haversine(target_coord.lat, target_coord.lon, coord.lat, coord.lon)
-            for stop_id, coord in self.node_dict.items()
+            stop_id: haversine(target_coord, node.coord)
+            for stop_id, node in self.node_dict.items()
         }
         nearest_nodes = sorted(distances, key=distances.get)[:k]
         return [
