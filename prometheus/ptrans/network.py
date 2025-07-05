@@ -7,6 +7,7 @@ import itertools
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from utility import add_time
 from prometheus.coord import Coord
 from prometheus.car.car_output import CarOutputRoute
 from prometheus.ptrans.ptrans_output import (
@@ -154,16 +155,32 @@ def trace_path(prev_nodes: Dict[int, int], goal_node: int) -> List[int]:
     return node_id_list[::-1]  # 経路を逆順にして返す
 
 
+def find_next_bus_time(current_time: str, time_table: List[str]):
+    """
+    現在時刻と時刻表から次のバスの時刻を探す。
+    終電が終わってしまった場合にはNoneを返す。
+    """
+    h, m = map(int, current_time.split(":"))
+    current_minutes = h * 60 + m
+    for bus_time in time_table:
+        bh, bm = map(int, bus_time.split(":"))
+        bus_minutes = bh * 60 + bm
+        if bus_minutes > current_minutes:
+            return bus_time[:5]
+    return None
+
+
 class Tracer:
     """経路確定後に時刻表を参照してトレースを行うクラス。"""
 
-    def __init__(self) -> None:
+    def __init__(self, node_dict: Dict[str, Node]) -> None:
         self.shape_dict: Dict[Tuple[str, str], str] = self._load_shape_dict(
             SHAPE_FILE_PATH
         )
         self.time_table_dict: Dict[Tuple[str, str], TimeTable] = (
             self._load_time_table_dict()
         )
+        self.node_dict: Dict[str, Node] = node_dict
 
     def _load_shape_dict(self, shape_file_path: str) -> dict[tuple[str, str], str]:
         """shapes.jsonを読み込んで (from, to) -> polyline文字列 のdictを返す"""
@@ -202,6 +219,51 @@ class Tracer:
                 combus_edge.time_tables
             )
 
+    def create_output_section(self, edge, current_time: str) -> PtransOutputSection:
+        is_edge = isinstance(edge, Edge)
+
+        # 徒歩セクションの場合
+        if is_edge and edge.transit_type == TransitType.WALK:
+            return PtransOutputSection(
+                duration=edge.travel_time,
+                shape="",
+                start_time=current_time,
+                goal_time=add_time(current_time, edge.travel_time),
+                name="徒歩",
+                type=PtransOutputSectionType.WALK,
+            )
+
+        # 通常バスのセクションの場合
+        if is_edge:
+            shape = self.shape_dict.get((edge.org_node_id, edge.dst_node_id), "")
+            time_table = self.time_table_dict.get(
+                (edge.org_node_id, edge.dst_node_id), None
+            )
+            bus_time_list = time_table.weekday  # 平日で決め打ち
+            start_time = find_next_bus_time(current_time, bus_time_list)
+            return PtransOutputSection(
+                duration=edge.travel_time,
+                shape=shape,
+                start_time=start_time,
+                goal_time=add_time(start_time, edge.travel_time),
+                name=time_table.weekday_name,  # 平日で決め打ち
+                type=PtransOutputSectionType.BUS,
+            )
+
+        # コミュニティバスの場合
+        shape = edge.shape
+        time_table = edge.time_tables
+        bus_time_list = time_table.weekday  # 平日で決め打ち
+        start_time = find_next_bus_time(current_time, bus_time_list)
+        return PtransOutputSection(
+            duration=edge.duration,
+            shape=shape,
+            start_time=start_time,
+            goal_time=add_time(start_time, edge.duration),
+            name=time_table.weekday_name,  # 平日で決め打ち
+            type=PtransOutputSectionType.COMBUS,
+        )
+
     def create_sections(
         self,
         search_result: SearchResult,
@@ -209,48 +271,37 @@ class Tracer:
         start_coord: Coord,
         goal_coord: Coord,
     ) -> List[PtransOutputSection]:
-        output_section: List[PtransOutputSection] = []
+        output_section_list: List[PtransOutputSection] = []
 
         # 出発地～最初のバス停
-        # first_bus_stop_coord = Coord(
-        #     lat=search_result.sections[0].coord.lat,
-        #     lon=search_result.sections[0].coord.lon,
-        # )
-        # start_to_first_bus_stop_distance = haversine(start_coord, first_bus_stop_coord)
-        # start_to_first_bus_stop_time = start_to_first_bus_stop_distance / WALK_SPEED
-        # output_section.append(
-        #     PtransOutputSection(
-        #         duration=0,  # 出発地から最初のバス停までの時間は0
-        #         shape=start_time,
-        #         start_time=start_time,  # 出発時刻を設定
-        #         goal_time="",  # ゴール時刻は後で設定する
-        #         name="徒歩",
-        #         type=PtransOutputSectionType.WALK,
-        #     )
-        # )
+        first_bus_id = search_result.sections[0].org_node_id
+        first_bus_node = self.node_dict[first_bus_id]
+        first_bus_coord = first_bus_node.coord
+        start_to_first_bus_stop_distance = haversine(start_coord, first_bus_coord)
+        start_to_first_bus_stop_time = int(
+            start_to_first_bus_stop_distance / WALK_SPEED
+        )
+        current_time = add_time(start_time, start_to_first_bus_stop_time)
+        output_section_list.append(
+            PtransOutputSection(
+                duration=start_to_first_bus_stop_time,
+                shape="",
+                start_time=start_time,
+                goal_time=current_time,
+                name="徒歩",
+                type=PtransOutputSectionType.WALK,
+            )
+        )
 
         # 最初のバス停～最後のバス停
         for edge in search_result.sections:
-            org_node_id = edge.org_node_id
-            dst_node_id = edge.dst_node_id
-            polyline_str = self.shape_dict.get((org_node_id, dst_node_id), "")
-            time_table = self.time_table_dict.get((org_node_id, dst_node_id), None)
-            output_section.append(
-                PtransOutputSection(
-                    duration=edge.travel_time,
-                    shape=polyline_str,
-                    start_time="",  # 時刻は後で設定する
-                    goal_time="",  # 時刻は後で設定する
-                    name=(
-                        time_table.weekday_name if time_table else "徒歩"
-                    ),  # 平日で決め打ち
-                    type=edge.transit_type.value,
-                )
-            )
+            output_section = self.create_output_section(edge, current_time)
+            output_section_list.append(output_section)
+            current_time = output_section.goal_time
 
         # 最後のバス停～目的地
 
-        return output_section
+        return output_section_list
 
     def create_spots(self) -> List[PtransOutputSpot]:
         return []

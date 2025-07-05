@@ -28,6 +28,12 @@ def round_half_up(value: float) -> int:
 
 def add_time(current_time: str, minutes: int) -> str:
     """時刻文字列（例: '10:00'）に分数を加算し、'HH:MM'形式で返す。"""
+    # 1分未満の場合は切り上げ。それ以外はきりすて
+    if minutes < 1:
+        minutes = 1
+    else:
+        minutes = int(minutes)
+
     hour, minute = map(int, current_time.split(":"))
     total_minutes = hour * 60 + minute + minutes
     new_hour = (total_minutes // 60) % 24
