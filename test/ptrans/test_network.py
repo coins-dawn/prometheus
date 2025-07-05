@@ -400,5 +400,59 @@ def test_searcher_search():
     assert result is not None
     assert hasattr(result, "sections")
     assert len(result.sections) > 0
-    for edge in result.sections:
-        print(edge.org_node_id, edge.dst_node_id, edge.travel_time, edge.transit_type)
+
+
+def test_tracer_loads():
+    from prometheus.ptrans.network import Tracer
+
+    tracer = Tracer()
+    shape_count = len(tracer.shape_dict)
+    time_table_count = len(tracer.time_table_dict)
+    assert shape_count == 34978
+    assert time_table_count == 35710
+
+
+def test_add_combus_to_trace_data():
+    from prometheus.ptrans.network import Tracer, convert_car_route_2_combus_data
+
+    tracer = Tracer()
+    before_shape_count = len(tracer.shape_dict)
+    before_time_table_count = len(tracer.time_table_dict)
+
+    combus_edges, combus_nodes = convert_car_route_2_combus_data(car_output)
+    tracer.add_combus_to_trace_data(combus_edges)
+
+    after_shape_count = len(tracer.shape_dict)
+    after_time_table_count = len(tracer.time_table_dict)
+
+    assert after_shape_count > before_shape_count
+    assert after_time_table_count > before_time_table_count
+
+
+def test_tracer_trace():
+    from prometheus.ptrans.network import (
+        Searcher,
+        Tracer,
+        convert_car_route_2_combus_data,
+    )
+
+    # Searcherのセットアップ
+    searcher = Searcher()
+    combus_edges, combus_nodes = convert_car_route_2_combus_data(car_output)
+    searcher.add_combus_to_search_network(combus_nodes, combus_edges)
+
+    # 経路探索
+    start = Coord(lat=36.689497, lon=137.183761)
+    goal = Coord(lat=36.709989, lon=137.262297)
+    start_candidates = searcher.find_nearest_node(start)
+    goal_candidates = searcher.find_nearest_node(goal)
+    search_result = searcher.search(start_candidates, goal_candidates)
+
+    # Tracerのセットアップ
+    tracer = Tracer()
+    start_time = "10:00"
+    tracer.add_combus_to_trace_data(combus_edges)
+    trace_output = tracer.trace(search_result, start_time, start, goal)
+
+    # Section数のテスト
+    assert len(trace_output.route.sections) == 4
