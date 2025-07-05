@@ -9,6 +9,13 @@ from dataclasses import dataclass
 from enum import Enum
 from prometheus.coord import Coord
 from prometheus.car.car_output import CarOutputRoute
+from prometheus.ptrans.ptrans_output import (
+    PtransOutputSection,
+    PtransSearchOutput,
+    PtransOutputRoute,
+    PtransOutputSpot,
+)
+
 
 STOP_FILE_PATH = "data/gtfs/stops.txt"
 TRAVEL_TIME_FILE_PATH = "data/gtfs/average_travel_times.csv"
@@ -183,7 +190,7 @@ class Tracer:
                 shape_dict[(org, dst)] = polyline_str
         return shape_dict
 
-    def _load_time_table_dict() -> dict[tuple[str, str], TimeTable]:
+    def _load_time_table_dict(self) -> dict[tuple[str, str], TimeTable]:
         """trip_pairs.jsonを読み込んで (from, to) -> 時刻表 のdictを返す"""
         time_table_dict: dict[tuple[str, str], TimeTable] = {}
         with open(TRIP_PAIRS_FILE_PATH, "r", encoding="utf-8") as f:
@@ -192,15 +199,57 @@ class Tracer:
                 org = entry["stop_from"]
                 dst = entry["stop_to"]
                 time_table_dict[(org, dst)] = TimeTable(
-                    weekday=entry["departure_times"],
-                    holiday=entry["departure_times"],
-                    weekday_name="コミュニティバス",
-                    holiday_name="コミュニティバス",
+                    weekday=entry["trip"]["weekday"]["time_table"],
+                    holiday=entry["trip"]["holiday"]["time_table"],
+                    weekday_name=entry["trip"]["weekday"]["name"],
+                    holiday_name=entry["trip"]["holiday"]["name"],
                 )
         return time_table_dict
 
-    def add_combus_to_trace_data(self, combus: CarOutputRoute) -> None:
-        pass
+    def add_combus_to_trace_data(self, combus_edges: List[CombusEdge]) -> None:
+        for combus_edge in combus_edges:
+            self.shape_dict[(combus_edge.org_node_id, combus_edge.dst_node_id)] = (
+                combus_edge.shape
+            )
+            self.time_table_dict[(combus_edge.org_node_id, combus_edge.dst_node_id)] = (
+                combus_edge.time_tables
+            )
+
+    def trace(
+        self,
+        search_result: SearchResult,
+        start_time: str,
+        start_coord: Coord,
+        goal_coord: Coord,
+    ) -> PtransSearchOutput:
+        output_section: List[PtransOutputSection] = []
+        for edge in search_result.sections:
+            org_node_id = edge.org_node_id
+            dst_node_id = edge.dst_node_id
+            polyline_str = self.shape_dict.get((org_node_id, dst_node_id), "")
+            time_table = self.time_table_dict.get((org_node_id, dst_node_id), None)
+            output_section.append(
+                PtransOutputSection(
+                    distance=0,  # 距離は計算しない
+                    duration=edge.travel_time,
+                    shape=polyline_str,
+                    start_time="",  # 時刻は後で設定する
+                    goal_time="",  # 時刻は後で設定する
+                    name=(
+                        time_table.weekday_name if time_table else "徒歩"
+                    ),  # 平日で決め打ち
+                    type=edge.transit_type.value,
+                )
+            )
+        return PtransSearchOutput(
+            PtransOutputRoute(
+                start_time="",  # 時刻は後で設定する
+                goal_time="",  # 時刻は後で設定する
+                duration=sum(edge.travel_time for edge in search_result.sections),
+                spots=[],
+                sections=output_section,
+            )
+        )
 
 
 @dataclass
