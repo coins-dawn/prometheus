@@ -24,7 +24,7 @@ TRAVEL_TIME_FILE_PATH = "data/gtfs/average_travel_times.csv"
 SHAPE_FILE_PATH = "data/gtfs/shapes.json"
 TRIP_PAIRS_FILE_PATH = "data/gtfs/trip_pairs.json"
 
-WALK_SPEED = 50  # メートル/分。直線距離ベースなので少し遅めにしている
+WALK_SPEED = 30  # メートル/分。直線距離ベースなので少し遅めにしている
 
 
 class TransitType(Enum):
@@ -225,13 +225,20 @@ class PtransTracer:
     def create_output_section(self, edge, current_time: str) -> PtransOutputSection:
         is_edge = isinstance(edge, Edge)
 
+        def round_duration(duration: float):
+            if duration < 1:
+                return 1
+            else:
+                return int(duration)
+
         # 徒歩セクションの場合
         if is_edge and edge.transit_type == TransitType.WALK:
+            rounded_duration = round_duration(edge.travel_time)
             return PtransOutputSection(
-                duration=edge.travel_time,
+                duration=rounded_duration,
                 shape="",
                 start_time=current_time,
-                goal_time=add_time(current_time, edge.travel_time),
+                goal_time=add_time(current_time, rounded_duration),
                 name="徒歩",
                 type=PtransOutputSectionType.WALK,
             )
@@ -244,11 +251,12 @@ class PtransTracer:
             )
             bus_time_list = time_table.weekday  # 平日で決め打ち
             start_time = find_next_bus_time(current_time, bus_time_list)
+            rounded_duration = round_duration(edge.travel_time)
             return PtransOutputSection(
-                duration=edge.travel_time,
+                duration=rounded_duration,
                 shape=shape,
                 start_time=start_time,
-                goal_time=add_time(start_time, edge.travel_time),
+                goal_time=add_time(start_time, rounded_duration),
                 name=time_table.weekday_name,  # 平日で決め打ち
                 type=PtransOutputSectionType.BUS,
             )
@@ -258,11 +266,12 @@ class PtransTracer:
         time_table = edge.time_tables
         bus_time_list = time_table.weekday  # 平日で決め打ち
         start_time = find_next_bus_time(current_time, bus_time_list)
+        rounded_duration = round_duration(edge.duration)
         return PtransOutputSection(
-            duration=edge.duration,
+            duration=rounded_duration,
             shape=shape,
             start_time=start_time,
-            goal_time=add_time(start_time, edge.duration),
+            goal_time=add_time(start_time, rounded_duration),
             name=time_table.weekday_name,  # 平日で決め打ち
             type=PtransOutputSectionType.COMBUS,
         )
