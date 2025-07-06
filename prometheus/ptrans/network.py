@@ -300,6 +300,21 @@ class Tracer:
             current_time = output_section.goal_time
 
         # 最後のバス停～目的地
+        last_bus_id = search_result.sections[-1].dst_node_id
+        last_bus_node = self.node_dict[last_bus_id]
+        last_bus_coord = last_bus_node.coord
+        last_bus_stop_to_goal_distance = haversine(last_bus_coord, goal_coord)
+        last_bus_stop_to_goal_time = int(last_bus_stop_to_goal_distance / WALK_SPEED)
+        output_section_list.append(
+            PtransOutputSection(
+                duration=last_bus_stop_to_goal_time,
+                shape="",
+                start_time=current_time,
+                goal_time=add_time(current_time, last_bus_stop_to_goal_time),
+                name="徒歩",
+                type=PtransOutputSectionType.WALK,
+            )
+        )
 
         return output_section_list
 
