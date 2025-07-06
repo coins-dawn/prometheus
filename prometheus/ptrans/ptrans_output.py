@@ -3,12 +3,6 @@ from enum import Enum
 from dataclasses import dataclass
 
 
-class PtransOutputSpotType(str, Enum):
-    BUS = "bus"
-    WALK = "walk"
-    COMBUS = "combus"
-
-
 class PtransOutputSectionType(str, Enum):
     BUS = "bus"
     WALK = "walk"
@@ -19,8 +13,6 @@ class PtransOutputSectionType(str, Enum):
 class PtransOutputSpot:
     name: str
     coord: Coord
-    type: PtransOutputSpotType
-    stay_time: int
 
 
 @dataclass

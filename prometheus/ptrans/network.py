@@ -329,8 +329,25 @@ class PtransTracer:
 
         return output_section_list
 
-    def create_spots(self) -> List[PtransOutputSpot]:
-        return []
+    def create_spots(
+        self, search_result: SearchResult, start_coord: Coord, goal_coord: Coord
+    ) -> List[PtransOutputSpot]:
+        spots: List[PtransOutputSpot] = []
+
+        # 出発地
+        spots.append(PtransOutputSpot(name="出発地", coord=start_coord))
+
+        # バス停
+        for section in search_result.sections:
+            bus_stop = self.node_dict[section.org_node_id]
+            spots.append(PtransOutputSpot(name=bus_stop.name, coord=bus_stop.coord))
+        last_bus = self.node_dict[search_result.sections[-1].dst_node_id]
+        spots.append(PtransOutputSpot(name=last_bus.name, coord=last_bus.coord))
+
+        # 目的地
+        spots.append(PtransOutputSpot(name="目的地", coord=goal_coord))
+
+        return spots
 
     def trace(
         self,
@@ -342,7 +359,7 @@ class PtransTracer:
         sections = self.create_sections(
             search_result, start_time, start_coord, goal_coord
         )
-        spots = self.create_spots()
+        spots = self.create_spots(search_result, start_coord, goal_coord)
         goal_time = sections[-1].goal_time
         duration = sub_time(start_time, goal_time)
 
