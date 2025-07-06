@@ -455,5 +455,5 @@ def test_tracer_trace():
     trace_output = tracer.trace(search_result, start_time, start, goal)
 
     # Section数のテスト
-    assert len(trace_output.route.sections) == 5
+    assert len(trace_output.route.sections) == 6
     print(trace_output.route.sections)
