@@ -1,10 +1,10 @@
 from prometheus.car.car_output import CarOutputRoute, CarOutputSection, CarOutputStop
 from prometheus.coord import Coord
 from prometheus.stop import Stop
-from prometheus.ptrans.network import convert_car_route_2_combus_data
-from prometheus.ptrans.network import CombusEdge, Node, TimeTable
-from prometheus.ptrans.network import PtransSearcher
-from prometheus.ptrans.network import SearchResult
+from prometheus.ptrans.ptrans_searcher import convert_car_route_2_combus_data
+from prometheus.ptrans.ptrans_searcher import CombusEdge, Node, TimeTable
+from prometheus.ptrans.ptrans_searcher import PtransSearcher
+from prometheus.ptrans.ptrans_searcher import SearchResult
 
 car_output = CarOutputRoute(
     distance=26124,
@@ -331,7 +331,7 @@ def test_searcher_node_and_edge_dict():
 
 
 def test_add_combus_to_search_network():
-    from prometheus.ptrans.network import (
+    from prometheus.ptrans.ptrans_searcher import (
         PtransSearcher,
         convert_car_route_2_combus_data,
         TransitType,
@@ -369,7 +369,7 @@ def test_add_combus_to_search_network():
 
 
 def test_find_nearest_node():
-    from prometheus.ptrans.network import haversine, EntryResult
+    from prometheus.ptrans.ptrans_searcher import haversine, EntryResult
 
     searcher = PtransSearcher()
     coord = Coord(lat=36.68936, lon=137.18519)
@@ -401,7 +401,7 @@ def test_searcher_search():
 
 
 def test_tracer_loads():
-    from prometheus.ptrans.network import PtransTracer
+    from prometheus.ptrans.ptrans_searcher import PtransTracer
 
     tracer = PtransTracer()
     shape_count = len(tracer.shape_dict)
@@ -411,7 +411,10 @@ def test_tracer_loads():
 
 
 def test_add_combus_to_trace_data():
-    from prometheus.ptrans.network import PtransTracer, convert_car_route_2_combus_data
+    from prometheus.ptrans.ptrans_searcher import (
+        PtransTracer,
+        convert_car_route_2_combus_data,
+    )
 
     tracer = PtransTracer()
     before_shape_count = len(tracer.shape_dict)
@@ -428,7 +431,7 @@ def test_add_combus_to_trace_data():
 
 
 def test_tracer_trace():
-    from prometheus.ptrans.network import (
+    from prometheus.ptrans.ptrans_searcher import (
         PtransSearcher,
         PtransTracer,
         convert_car_route_2_combus_data,
@@ -455,4 +458,3 @@ def test_tracer_trace():
 
     # Section数のテスト
     assert len(trace_output.route.sections) == 5
-    print(trace_output.route.sections)
