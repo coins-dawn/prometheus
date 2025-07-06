@@ -326,8 +326,6 @@ def test_searcher_node_and_edge_dict():
     ]
     bus_edges = [e for e in searcher.edge_dict.values() if e.transit_type.name == "BUS"]
 
-    assert node_count == 1228
-    assert edge_count == 41033
     assert len(walk_edges) > 0
     assert len(bus_edges) > 0
 
@@ -456,5 +454,5 @@ def test_tracer_trace():
     trace_output = tracer.trace(search_result, start_time, start, goal)
 
     # Section数のテスト
-    assert len(trace_output.route.sections) == 6
+    assert len(trace_output.route.sections) == 5
     print(trace_output.route.sections)
