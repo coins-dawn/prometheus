@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from prometheus.car.car_searcher import CarSearcher
 from prometheus.ptrans.ptrans_searcher import (
     PtransSearcher,
@@ -14,6 +15,7 @@ app = Flask(__name__)
 car_searcher = CarSearcher()
 ptrans_searcher = PtransSearcher()
 ptrans_tracer = PtransTracer()
+CORS(app)
 
 
 @app.route("/search/car", methods=["POST"])
