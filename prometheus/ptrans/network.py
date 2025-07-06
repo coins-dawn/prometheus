@@ -158,7 +158,6 @@ def trace_path(prev_nodes: Dict[int, int], goal_node: int) -> List[int]:
 def find_next_bus_time(current_time: str, time_table: List[str]):
     """
     現在時刻と時刻表から次のバスの時刻を探す。
-    終電が終わってしまった場合にはNoneを返す。
     """
     h, m = map(int, current_time.split(":"))
     current_minutes = h * 60 + m
@@ -167,7 +166,7 @@ def find_next_bus_time(current_time: str, time_table: List[str]):
         bus_minutes = bh * 60 + bm
         if bus_minutes > current_minutes:
             return bus_time[:5]
-    return None
+    raise Exception("終電に間に合う経路が見つかりませんでした。")
 
 
 class PtransTracer:
