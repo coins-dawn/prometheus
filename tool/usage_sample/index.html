@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>CORSエラー再現用</title>
+  </head>
+  <body>
+    <h1>外部APIに直接POST（CORSエラー）</h1>
+    <button onclick="sendRequest()">リクエスト送信</button>
+    <pre id="result"></pre>
+
+    <script>
+      async function sendRequest() {
+        const resultElem = document.getElementById("result");
+
+        try {
+          const response = await fetch("https://prometheus-h24i.onrender.com/search/car", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              "route-name": "循環バス",
+              "start-time": "10:00",
+              "stops": [
+                {
+                  "name": "バス停1",
+                  "coord": { "lat": 36.65742, "lon": 137.17421 }
+                },
+                {
+                  "name": "バス停2",
+                  "coord": { "lat": 36.68936, "lon": 137.18519 }
+                },
+                {
+                  "name": "バス停3",
+                  "coord": { "lat": 36.67738, "lon": 137.23892 }
+                },
+                {
+                  "name": "バス停4",
+                  "coord": { "lat": 36.65493, "lon": 137.24001 }
+                },
+                {
+                  "name": "バス停5",
+                  "coord": { "lat": 36.63964, "lon": 137.21958 }
+                }
+              ]
+            }),
+          });
+
+          const data = await response.json();
+          resultElem.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+          resultElem.textContent = "リクエスト失敗: " + err.message;
+          console.error(err);
+        }
+      }
+    </script>
+  </body>
+</html>
