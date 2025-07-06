@@ -180,6 +180,7 @@ class PtransTracer:
             self._load_time_table_dict()
         )
         self.node_dict: Dict[str, Node] = {}
+        print(">>> PtransTracerのデータロードが完了しました。")
 
     def set_node_dict(self, node_dict: Dict[str, Node]) -> None:
         self.node_dict: Dict[str, Node] = node_dict
@@ -392,6 +393,7 @@ class PtransSearcher:
         self.adjacent_dict: Dict[str, List[AdjacentDictElem]] = (
             self._create_adjacent_edges_dict()
         )
+        print(">>> PtransSearcherのデータロードが完了しました。")
 
     def _load_node_dict(self, stops_file: str) -> Dict[str, Node]:
         stops_df = pandas.read_csv(stops_file)

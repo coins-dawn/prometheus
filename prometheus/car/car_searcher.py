@@ -31,7 +31,7 @@ class CarSearcher:
         self._load_links(CAR_WAY_FILE_PATH)
         self.node_dict = self._load_nodes(CAR_NODE_FILE_PATH)
         self.mesh_dict = self._create_mesh_dict()
-        print(">>> OSMグラフのロードが完了しました。")
+        print(">>> CarSearcherのデータロードが完了しました。")
 
     def _load_links(self, file_path: str) -> None:
         """リンクをロードする。"""
