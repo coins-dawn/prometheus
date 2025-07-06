@@ -3,7 +3,7 @@ from prometheus.coord import Coord
 from prometheus.stop import Stop
 from prometheus.ptrans.network import convert_car_route_2_combus_data
 from prometheus.ptrans.network import CombusEdge, Node, TimeTable
-from prometheus.ptrans.network import Searcher
+from prometheus.ptrans.network import PtransSearcher
 from prometheus.ptrans.network import SearchResult
 
 car_output = CarOutputRoute(
@@ -317,7 +317,7 @@ def test_convert_car_route_2_combus_data():
 
 
 def test_searcher_node_and_edge_dict():
-    searcher = Searcher()
+    searcher = PtransSearcher()
     node_count = len(searcher.node_dict)
     edge_count = len(searcher.edge_dict)
 
@@ -334,12 +334,12 @@ def test_searcher_node_and_edge_dict():
 
 def test_add_combus_to_search_network():
     from prometheus.ptrans.network import (
-        Searcher,
+        PtransSearcher,
         convert_car_route_2_combus_data,
         TransitType,
     )
 
-    searcher = Searcher()
+    searcher = PtransSearcher()
     before_node_ids = set(searcher.node_dict.keys())
     before_edge_keys = set(searcher.edge_dict.keys())
 
@@ -373,7 +373,7 @@ def test_add_combus_to_search_network():
 def test_find_nearest_node():
     from prometheus.ptrans.network import haversine, EntryResult
 
-    searcher = Searcher()
+    searcher = PtransSearcher()
     coord = Coord(lat=36.68936, lon=137.18519)
     entry_results = searcher.find_nearest_node(coord)
     assert len(entry_results) == 10
@@ -391,7 +391,7 @@ def test_find_nearest_node():
 
 
 def test_searcher_search():
-    searcher = Searcher()
+    searcher = PtransSearcher()
     start = Coord(lat=36.689497, lon=137.183761)
     goal = Coord(lat=36.709989, lon=137.262297)
     start_candidates = searcher.find_nearest_node(start)
@@ -403,9 +403,9 @@ def test_searcher_search():
 
 
 def test_tracer_loads():
-    from prometheus.ptrans.network import Tracer
+    from prometheus.ptrans.network import PtransTracer
 
-    tracer = Tracer()
+    tracer = PtransTracer()
     shape_count = len(tracer.shape_dict)
     time_table_count = len(tracer.time_table_dict)
     assert shape_count == 34978
@@ -413,9 +413,9 @@ def test_tracer_loads():
 
 
 def test_add_combus_to_trace_data():
-    from prometheus.ptrans.network import Tracer, convert_car_route_2_combus_data
+    from prometheus.ptrans.network import PtransTracer, convert_car_route_2_combus_data
 
-    tracer = Tracer()
+    tracer = PtransTracer()
     before_shape_count = len(tracer.shape_dict)
     before_time_table_count = len(tracer.time_table_dict)
 
@@ -431,13 +431,13 @@ def test_add_combus_to_trace_data():
 
 def test_tracer_trace():
     from prometheus.ptrans.network import (
-        Searcher,
-        Tracer,
+        PtransSearcher,
+        PtransTracer,
         convert_car_route_2_combus_data,
     )
 
     # Searcherのセットアップ
-    searcher = Searcher()
+    searcher = PtransSearcher()
     combus_edges, combus_nodes = convert_car_route_2_combus_data(car_output)
     searcher.add_combus_to_search_network(combus_nodes, combus_edges)
 
@@ -449,7 +449,7 @@ def test_tracer_trace():
     search_result = searcher.search(start_candidates, goal_candidates)
 
     # Tracerのセットアップ
-    tracer = Tracer()
+    tracer = PtransTracer()
     tracer.set_node_dict(searcher.node_dict)
     start_time = "10:00"
     tracer.add_combus_to_trace_data(combus_edges)

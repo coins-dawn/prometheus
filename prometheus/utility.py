@@ -39,3 +39,12 @@ def add_time(current_time: str, minutes: int) -> str:
     new_hour = (total_minutes // 60) % 24
     new_minute = total_minutes % 60
     return f"{new_hour:02d}:{new_minute:02d}"
+
+
+def sub_time(before_time_str: str, after_time_str: str) -> int:
+    """before_time_str から after_time_str までの分数差を返す。"""
+    before_hour, before_minute = map(int, before_time_str.split(":"))
+    after_hour, after_minute = map(int, after_time_str.split(":"))
+    before_total = before_hour * 60 + before_minute
+    after_total = after_hour * 60 + after_minute
+    return after_total - before_total

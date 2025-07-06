@@ -7,7 +7,7 @@ import itertools
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
-from utility import add_time
+from prometheus.utility import add_time, sub_time
 from prometheus.coord import Coord
 from prometheus.car.car_output import CarOutputRoute
 from prometheus.ptrans.ptrans_output import (
@@ -170,7 +170,7 @@ def find_next_bus_time(current_time: str, time_table: List[str]):
     return None
 
 
-class Tracer:
+class PtransTracer:
     """経路確定後に時刻表を参照してトレースを行うクラス。"""
 
     def __init__(self) -> None:
@@ -335,8 +335,8 @@ class Tracer:
             search_result, start_time, start_coord, goal_coord
         )
         spots = self.create_spots()
-        goal_time = start_time  # ゴール時刻は後で設定
-        duration = 0  # 後で設定
+        goal_time = sections[-1].goal_time
+        duration = sub_time(start_time, goal_time)
 
         return PtransSearchOutput(
             PtransOutputRoute(
@@ -356,7 +356,7 @@ class AdjacentDictElem:
     transit_type: TransitType
 
 
-class Searcher:
+class PtransSearcher:
     """経路探索を行い最適経路を求めるクラス。"""
 
     def __init__(self) -> None:
