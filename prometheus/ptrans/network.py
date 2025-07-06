@@ -173,13 +173,16 @@ def find_next_bus_time(current_time: str, time_table: List[str]):
 class Tracer:
     """経路確定後に時刻表を参照してトレースを行うクラス。"""
 
-    def __init__(self, node_dict: Dict[str, Node]) -> None:
+    def __init__(self) -> None:
         self.shape_dict: Dict[Tuple[str, str], str] = self._load_shape_dict(
             SHAPE_FILE_PATH
         )
         self.time_table_dict: Dict[Tuple[str, str], TimeTable] = (
             self._load_time_table_dict()
         )
+        self.node_dict: Dict[str, Node] = {}
+
+    def set_node_dict(self, node_dict: Dict[str, Node]) -> None:
         self.node_dict: Dict[str, Node] = node_dict
 
     def _load_shape_dict(self, shape_file_path: str) -> dict[tuple[str, str], str]:
