@@ -1,3 +1,4 @@
 convert/input/
 __pycache__/
-route.kml
+*.kml
+/.vscode/

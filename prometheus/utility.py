@@ -1,16 +1,22 @@
 from pydantic import BaseModel
+from collections import OrderedDict
 import math
 
 
 def convert_for_json(obj):
     if isinstance(obj, BaseModel):
-        return obj.dict()
+        # BaseModel.dict()は順序を保持する
+        return OrderedDict(obj.dict())
     elif isinstance(obj, list):
         return [convert_for_json(i) for i in obj]
     elif isinstance(obj, dict):
-        return {k: convert_for_json(v) for k, v in obj.items()}
+        # dictの順序を保持して再帰的に変換
+        return OrderedDict((k, convert_for_json(v)) for k, v in obj.items())
     elif hasattr(obj, "__dataclass_fields__"):
-        return {k: convert_for_json(getattr(obj, k)) for k in obj.__dataclass_fields__}
+        # dataclassも順序を保持
+        return OrderedDict(
+            (k, convert_for_json(getattr(obj, k))) for k in obj.__dataclass_fields__
+        )
     else:
         return obj
 
@@ -18,3 +24,21 @@ def convert_for_json(obj):
 def round_half_up(value: float) -> int:
     """floatを四捨五入して整数にする。"""
     return int(math.floor(value + 0.5))
+
+
+def add_time(current_time: str, minutes: int) -> str:
+    """時刻文字列（例: '10:00'）に分数を加算し、'HH:MM'形式で返す。"""
+    hour, minute = map(int, current_time.split(":"))
+    total_minutes = hour * 60 + minute + minutes
+    new_hour = (total_minutes // 60) % 24
+    new_minute = total_minutes % 60
+    return f"{new_hour:02d}:{new_minute:02d}"
+
+
+def sub_time(before_time_str: str, after_time_str: str) -> int:
+    """before_time_str から after_time_str までの分数差を返す。"""
+    before_hour, before_minute = map(int, before_time_str.split(":"))
+    after_hour, after_minute = map(int, after_time_str.split(":"))
+    before_total = before_hour * 60 + before_minute
+    after_total = after_hour * 60 + after_minute
+    return after_total - before_total

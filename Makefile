@@ -4,7 +4,7 @@ fetch:
 
 .PHONY: format
 format:
-	black prometheus
+	black prometheus test
 
 .PHONY: run-server
 run-server:
@@ -16,6 +16,14 @@ sample-request:
 	-H "Content-Type: application/json" \
 	-d @sample/input.json
 
-.PHONY: singleshot
-singleshot:
-	PYTHONPATH=$$PYTHONPATH:./prometheus python prometheus/car_searcher.py
+.PHONY: car-singleshot
+car-singleshot:
+	PYTHONPATH=$$PYTHONPATH:./prometheus python tool/singleshot/car.py tool/singleshot/car_input.json
+
+.PHONY: ptrans-singleshot
+ptrans-singleshot:
+	PYTHONPATH=$$PYTHONPATH:./prometheus python tool/singleshot/ptrans.py tool/singleshot/ptrans_input.json
+
+.PHONY: test
+test:
+	PYTHONPATH=$$PYTHONPATH:./prometheus pytest -s test
