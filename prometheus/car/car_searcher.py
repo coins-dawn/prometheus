@@ -1,5 +1,4 @@
 import csv
-import json
 import heapq
 from collections import defaultdict
 from functools import reduce
@@ -7,8 +6,13 @@ from polyline import encode
 from prometheus.coord import Coord
 from prometheus.geo_utility import latlon_to_mesh, haversine
 from prometheus.utility import round_half_up
-from prometheus.input import SearchInput
-from prometheus.output import SearchOutout, OutputRoute, OutputSection, OutputStop
+from prometheus.car.car_input import CarSearchInput
+from prometheus.car.car_output import (
+    CarSearchOutput,
+    CarOutputRoute,
+    CarOutputSection,
+    CarOutputStop,
+)
 from datetime import datetime, timedelta
 
 
@@ -27,7 +31,7 @@ class CarSearcher:
         self._load_links(CAR_WAY_FILE_PATH)
         self.node_dict = self._load_nodes(CAR_NODE_FILE_PATH)
         self.mesh_dict = self._create_mesh_dict()
-        print(">>> グラフのロードが完了しました。")
+        print(">>> CarSearcherのデータロードが完了しました。")
 
     def _load_links(self, file_path: str) -> None:
         """リンクをロードする。"""
@@ -78,7 +82,7 @@ class CarSearcher:
                 min_nodeid = nodeid
         return min_nodeid
 
-    def _trace(self, route_node_sequence: list[int]) -> OutputSection:
+    def _trace(self, route_node_sequence: list[int]) -> CarOutputSection:
         """ノード列をトレースしセクションの情報を詰めて返す。"""
         distance_m = 0
         coord_list: list[Coord] = []
@@ -97,13 +101,15 @@ class CarSearcher:
         bus_speed_meter_per_minute = BUS_SPEED_KM_PER_HOUR * 1000 / 60
         duration_m = round_half_up(distance_m / bus_speed_meter_per_minute)
 
-        return OutputSection(
+        return CarOutputSection(
             distance=round_half_up(distance_m),
             duration=duration_m,
             shape=encoded_shape,
         )
 
-    def _dijkstra(self, start, goal, visited_global) -> tuple[OutputSection, list[int]]:
+    def _dijkstra(
+        self, start, goal, visited_global
+    ) -> tuple[CarOutputSection, list[int]]:
         """Dijkstraを実行し最短経路を得る。"""
         queue = [(0, start, [start])]
         visited_local = set()
@@ -126,11 +132,11 @@ class CarSearcher:
 
         return self._trace(route_node_sequence), route_node_sequence
 
-    def _find_route_through_nodes(self, node_sequence) -> list[OutputSection]:
+    def _find_route_through_nodes(self, node_sequence) -> list[CarOutputSection]:
         """指定ノード列を順番にめぐる経路を構築"""
         visited_nodes_list = []
         visited_nodes_set = set()
-        output_section_list: list[OutputSection] = []
+        output_section_list: list[CarOutputSection] = []
         for i in range(len(node_sequence) - 1):
             start = node_sequence[i]
             goal = node_sequence[i + 1]
@@ -150,10 +156,12 @@ class CarSearcher:
         return output_section_list
 
     def _calculate_departure_time_matrix(
-        self, output_section_list: list[OutputSection], start_time: str
+        self, output_section_list: list[CarOutputSection], start_time: str
     ) -> list[list[str]]:
         start_time_obj = datetime.strptime(start_time, "%H:%M")
-        total_duration = sum(section.duration + STAYTIME_PER_STOP for section in output_section_list)
+        total_duration = sum(
+            section.duration + STAYTIME_PER_STOP for section in output_section_list
+        )
         departure_times = []
 
         for i in range(len(output_section_list)):
@@ -167,7 +175,7 @@ class CarSearcher:
 
         return departure_times
 
-    def search(self, search_input: SearchInput) -> SearchOutout:
+    def search(self, search_input: CarSearchInput) -> CarSearchOutput:
         coord_sequence = [stop.coord for stop in search_input.stops]
         stop_node_sequence = [
             self._find_nearest_node(coord) for coord in coord_sequence
@@ -177,67 +185,21 @@ class CarSearcher:
         departure_time_matrix = self._calculate_departure_time_matrix(
             output_section_list, search_input.start_time
         )
-        return SearchOutout(
-            route=OutputRoute(
+        return CarSearchOutput(
+            route=CarOutputRoute(
                 distance=reduce(
                     lambda acc, x: acc + x.distance, output_section_list, 0
                 ),
                 duration=reduce(lambda acc, x: acc + x.duration, output_section_list, 0)
                 + len(search_input.stops) * STAYTIME_PER_STOP,
                 stops=[
-                    OutputStop(stop=stop, stay_time=STAYTIME_PER_STOP, departure_times=departure_time_matrix[i])
+                    CarOutputStop(
+                        stop=stop,
+                        stay_time=STAYTIME_PER_STOP,
+                        departure_times=departure_time_matrix[i],
+                    )
                     for i, stop in enumerate(search_input.stops)
                 ],
                 sections=output_section_list,
             )
         )
-
-if __name__ == "__main__":
-    searcher = CarSearcher()
-    # Example usage
-    input_str="""
-{
-    "route-name": "循環バス",
-    "start-time": "10:00",
-    "stops": [
-        {
-            "name": "バス停1",
-            "coord": {
-                "lat": 36.65742,
-                "lon": 137.17421
-            }
-        },
-        {
-            "name": "バス停2",
-            "coord": {
-                "lat": 36.68936,
-                "lon": 137.18519
-            }
-        },
-        {
-            "name": "バス停3",
-            "coord": {
-                "lat": 36.67738,
-                "lon": 137.23892
-            }
-        },
-        {
-            "name": "バス停4",
-            "coord": {
-                "lat": 36.65493,
-                "lon": 137.24001
-            }
-        },
-        {
-            "name": "バス停5",
-            "coord": {
-                "lat": 36.63964,
-                "lon": 137.21958
-            }
-        }
-    ]
-}
-"""
-    search_input = SearchInput(**json.loads(input_str))
-    result = searcher.search(search_input)
-    print(result)

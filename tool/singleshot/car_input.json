@@ -1,5 +1,6 @@
 {
     "route-name": "循環バス",
+    "start-time": "10:00",
     "stops": [
         {
             "name": "バス停1",
