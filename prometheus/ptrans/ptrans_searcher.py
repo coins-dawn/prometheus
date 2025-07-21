@@ -8,6 +8,7 @@ import pprint
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
+import polyline
 from prometheus.utility import add_time, sub_time
 from prometheus.coord import Coord
 from prometheus.car.car_output import CarOutputRoute
@@ -102,6 +103,36 @@ def haversine(coord1: Coord, coord2: Coord) -> int:
     return int(R * c * 1000)  # m に変換
 
 
+def merge_combus_edges(combus_edges: list[CombusEdge]):
+    org_node_id = combus_edges[0].org_node_id
+    dst_node_id = combus_edges[-1].dst_node_id
+    duration = sum(edge.duration for edge in combus_edges)
+    name = combus_edges[0].name
+    time_tables = combus_edges[0].time_tables
+
+    coords = []
+    for edge in combus_edges:
+        edge_coords = polyline.decode(edge.shape)
+        if coords:
+            # 先頭が重複する場合はスキップ
+            if coords[-1] == edge_coords[0]:
+                coords.extend(edge_coords[1:])
+            else:
+                coords.extend(edge_coords)
+        else:
+            coords.extend(edge_coords)
+    merged_shape = polyline.encode(coords)
+
+    return CombusEdge(
+        org_node_id=org_node_id,
+        dst_node_id=dst_node_id,
+        duration=duration,
+        name=name,
+        shape=merged_shape,
+        time_tables=time_tables,
+    )
+
+
 def convert_car_route_2_combus_data(
     car_output: CarOutputRoute,
 ) -> Tuple[List[CombusEdge], List[Node]]:
@@ -113,7 +144,7 @@ def convert_car_route_2_combus_data(
         nodeid_list.append(new_nodeid)
 
     # エッジの追加
-    combus_edges = []
+    single_combus_edges = []
     for i, section in enumerate(car_output.sections):
         org_nodeid = nodeid_list[i]
         dst_nodeid = nodeid_list[i + 1] if i + 1 < len(nodeid_list) else nodeid_list[0]
@@ -124,7 +155,7 @@ def convert_car_route_2_combus_data(
             weekday_name="コミュニティバス",
             holiday_name="コミュニティバス",
         )
-        combus_edges.append(
+        single_combus_edges.append(
             CombusEdge(
                 org_node_id=org_nodeid,
                 dst_node_id=dst_nodeid,
@@ -134,6 +165,18 @@ def convert_car_route_2_combus_data(
                 time_tables=time_table,
             )
         )
+
+    combus_edges = []
+    for start_index in range(len(single_combus_edges)):
+        merge_target_edges = []
+        for merge_count in range(len(single_combus_edges) - 1):
+            target_index = start_index + merge_count
+            if target_index >= len(single_combus_edges):
+                target_index -= len(single_combus_edges)
+            merge_target_edges.append(single_combus_edges[target_index])
+            merged_edge = merge_combus_edges(merge_target_edges)
+            combus_edges.append(merged_edge)
+        merge_target_edges.clear()
 
     # ノードの追加
     combus_nodes = []
@@ -474,13 +517,15 @@ class PtransSearcher:
                 transit_type=TransitType.COMBUS,
             )
         for edge in combus_edges:
-            self.adjacent_dict[edge.org_node_id] = [
+            if not self.adjacent_dict.get(edge.org_node_id):
+                self.adjacent_dict[edge.org_node_id] = []
+            self.adjacent_dict[edge.org_node_id].append(
                 AdjacentDictElem(
                     node=self.node_dict[edge.dst_node_id],
                     cost=edge.duration,
                     transit_type=TransitType.COMBUS,
                 )
-            ]
+            )
 
         # 既存のバス停から徒歩10分いないなら徒歩エッジを追加
         for combus_node in combus_nodes:
@@ -488,6 +533,8 @@ class PtransSearcher:
                 # node.coordとcombus_node.coordの型をチェック
                 if not isinstance(node, Node) or not isinstance(combus_node, Node):
                     raise TypeError("node and combus_node must be Node instances")
+                if node.node_id == combus_node.node_id:
+                    continue
                 distance_to_add_node = haversine(node.coord, combus_node.coord)
                 walk_time = distance_to_add_node / WALK_SPEED
                 if walk_time < 10:
@@ -538,8 +585,6 @@ class PtransSearcher:
                 return 10
             if prev_mode == TransitType.WALK and next_mode == TransitType.BUS:
                 return 10
-            # if prev_mode == TransitType.COMBUS and next_mode == TransitType.COMBUS:
-            #     return 10
             if prev_mode == TransitType.WALK and next_mode == TransitType.COMBUS:
                 return 10
             return 0
