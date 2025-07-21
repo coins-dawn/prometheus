@@ -4,6 +4,7 @@ import json
 import math
 import heapq
 import itertools
+import pprint
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
@@ -472,6 +473,14 @@ class PtransSearcher:
                 travel_time=edge.duration,
                 transit_type=TransitType.COMBUS,
             )
+        for edge in combus_edges:
+            self.adjacent_dict[edge.org_node_id] = [
+                AdjacentDictElem(
+                    node=self.node_dict[edge.dst_node_id],
+                    cost=edge.duration,
+                    transit_type=TransitType.COMBUS,
+                )
+            ]
 
         # 既存のバス停から徒歩10分いないなら徒歩エッジを追加
         for combus_node in combus_nodes:
@@ -494,6 +503,20 @@ class PtransSearcher:
                         travel_time=walk_time,
                         transit_type=TransitType.WALK,
                     )
+                    self.adjacent_dict[node_id].append(
+                        AdjacentDictElem(
+                            node=self.node_dict[combus_node.node_id],
+                            cost=walk_time,
+                            transit_type=TransitType.WALK,
+                        )
+                    )
+                    self.adjacent_dict[combus_node.node_id].append(
+                        AdjacentDictElem(
+                            node=node,
+                            cost=walk_time,
+                            transit_type=TransitType.WALK,
+                        )
+                    )
 
     def find_nearest_node(self, target_coord: Coord, k: int = 10) -> List[EntryResult]:
         """指定した地点に最も近いノードをk件返す"""
@@ -514,6 +537,10 @@ class PtransSearcher:
             if prev_mode == TransitType.BUS and next_mode == TransitType.BUS:
                 return 10
             if prev_mode == TransitType.WALK and next_mode == TransitType.BUS:
+                return 10
+            # if prev_mode == TransitType.COMBUS and next_mode == TransitType.COMBUS:
+            #     return 10
+            if prev_mode == TransitType.WALK and next_mode == TransitType.COMBUS:
                 return 10
             return 0
 
