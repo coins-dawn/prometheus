@@ -11,6 +11,7 @@ from prometheus.car.car_input import CarSearchInput
 from prometheus.ptrans.ptrans_input import PtransSearchInput
 from prometheus.utility import convert_for_json
 from prometheus.car.car_visualizer import generate_car_route_kml
+from prometheus.ptrans.ptrans_visualizer import generate_ptrans_route_kml
 
 app = Flask(__name__)
 car_searcher = CarSearcher()
@@ -75,6 +76,8 @@ def ptrans_search():
         )
     except Exception as e:
         return jsonify({"status": "NG", "message": str(e)}), 400
+
+    generate_ptrans_route_kml(trace_output.route)
 
     return (
         jsonify(
