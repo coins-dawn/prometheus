@@ -74,12 +74,7 @@ def ptrans_search():
         # Tracerのセットアップ
         ptrans_tracer.set_node_dict(ptrans_searcher.node_dict)
         ptrans_tracer.add_combus_to_trace_data(combus_edges)
-        trace_output = ptrans_tracer.trace(
-            search_result,
-            search_input.start_time,
-            search_input.start,
-            search_input.goal,
-        )
+        trace_output = ptrans_tracer.trace(search_result, search_input.start_time)
     except Exception as e:
         return jsonify({"status": "NG", "message": str(e)}), 400
 
