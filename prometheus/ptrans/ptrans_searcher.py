@@ -321,92 +321,30 @@ class PtransTracer:
         )
 
     def create_sections(
-        self,
-        search_result: SearchResult,
-        start_time: str,
-        start_coord: Coord,
-        goal_coord: Coord,
+        self, search_result: SearchResult, start_time: str
     ) -> List[PtransOutputSection]:
         output_section_list: List[PtransOutputSection] = []
-
-        # 出発地～最初のバス停
-        # first_bus_id = search_result.sections[0].org_node_id
-        # first_bus_node = self.node_dict[first_bus_id]
-        # first_bus_coord = first_bus_node.coord
-        # start_to_first_bus_stop_distance = haversine(start_coord, first_bus_coord)
-        # start_to_first_bus_stop_time = int(
-        #     start_to_first_bus_stop_distance / WALK_SPEED
-        # )
-        # current_time = add_time(start_time, start_to_first_bus_stop_time)
-        # output_section_list.append(
-        #     PtransOutputSection(
-        #         duration=start_to_first_bus_stop_time,
-        #         shape="",
-        #         start_time=start_time,
-        #         goal_time=current_time,
-        #         name="徒歩",
-        #         type=PtransOutputSectionType.WALK,
-        #     )
-        # )
-
         current_time = start_time
-
-        # 最初のバス停～最後のバス停
         for edge in search_result.sections:
             output_section = self.create_output_section(edge, current_time)
             output_section_list.append(output_section)
             current_time = output_section.goal_time
-
-        # 最後のバス停～目的地
-        # last_bus_id = search_result.sections[-1].dst_node_id
-        # last_bus_node = self.node_dict[last_bus_id]
-        # last_bus_coord = last_bus_node.coord
-        # last_bus_stop_to_goal_distance = haversine(last_bus_coord, goal_coord)
-        # last_bus_stop_to_goal_time = int(last_bus_stop_to_goal_distance / WALK_SPEED)
-        # output_section_list.append(
-        #     PtransOutputSection(
-        #         duration=last_bus_stop_to_goal_time,
-        #         shape="",
-        #         start_time=current_time,
-        #         goal_time=add_time(current_time, last_bus_stop_to_goal_time),
-        #         name="徒歩",
-        #         type=PtransOutputSectionType.WALK,
-        #     )
-        # )
-
         return output_section_list
 
-    def create_spots(
-        self, search_result: SearchResult, start_coord: Coord, goal_coord: Coord
-    ) -> List[PtransOutputSpot]:
+    def create_spots(self, search_result: SearchResult) -> List[PtransOutputSpot]:
         spots: List[PtransOutputSpot] = []
 
-        # # 出発地
-        # spots.append(PtransOutputSpot(name="出発地", coord=start_coord))
-
-        # バス停
         for section in search_result.sections:
             bus_stop = self.node_dict[section.org_node_id]
             spots.append(PtransOutputSpot(name=bus_stop.name, coord=bus_stop.coord))
         last_bus = self.node_dict[search_result.sections[-1].dst_node_id]
         spots.append(PtransOutputSpot(name=last_bus.name, coord=last_bus.coord))
 
-        # # 目的地
-        # spots.append(PtransOutputSpot(name="目的地", coord=goal_coord))
-
         return spots
 
-    def trace(
-        self,
-        search_result: SearchResult,
-        start_time: str,
-        start_coord: Coord,
-        goal_coord: Coord,
-    ) -> PtransSearchOutput:
-        sections = self.create_sections(
-            search_result, start_time, start_coord, goal_coord
-        )
-        spots = self.create_spots(search_result, start_coord, goal_coord)
+    def trace(self, search_result: SearchResult, start_time: str) -> PtransSearchOutput:
+        sections = self.create_sections(search_result, start_time)
+        spots = self.create_spots(search_result)
         goal_time = sections[-1].goal_time
         duration = sub_time(start_time, goal_time)
 
@@ -586,6 +524,7 @@ class PtransSearcher:
         start_candidates: List[EntryResult],
         goal_candidates: List[EntryResult],
     ):
+        """出発地->出発地最寄りバス停、目的地最寄りバス停->目的地をNodeとEdgeの一覧に追加"""
         start_node_id = "START"
         goal_node_id = "GOAL"
         self.node_dict[start_node_id] = Node(
@@ -654,9 +593,6 @@ class PtransSearcher:
         while pq:
             curr_cost, node_id, prev_mode = heapq.heappop(pq)
 
-            # !bug
-            # ゴールノードについては最適なものではなく、
-            # 最初に選ばれたものが選ばれている
             if node_id == "GOAL":
                 # 経路をトレースしてエッジ列に変換
                 node_id_list = trace_path(prev_nodes, node_id)
