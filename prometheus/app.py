@@ -20,6 +20,11 @@ ptrans_tracer = PtransTracer()
 CORS(app)
 
 
+@app.route("/ping", methods=["GET"])
+def ping():
+    return "OK"
+
+
 @app.route("/search/car", methods=["POST"])
 def car_search():
     body = request.get_json()
