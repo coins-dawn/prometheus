@@ -66,5 +66,5 @@ class SearchResult:
 @dataclass
 class AdjacentDictElem:
     node: Node
-    cost: int
+    transit_time_minute: int
     transit_type: TransitType
