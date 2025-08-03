@@ -56,33 +56,37 @@ def car_search():
 def ptrans_search():
     body = request.get_json()
 
-    # try:
-    # リクエストのパース
-    search_input = PtransSearchInput(**body)
+    try:
+        # リクエストのパース
+        search_input = PtransSearchInput(**body)
 
-    # searcherの初期化
-    car_output = search_input.car_output
-    combus_edges, combus_nodes = convert_car_route_2_combus_data(car_output.route)
-    ptrans_searcher.add_combus_to_search_network(combus_nodes, combus_edges)
+        # searcherの初期化
+        car_output = search_input.car_output
+        combus_edges, combus_nodes = convert_car_route_2_combus_data(car_output.route)
+        ptrans_searcher.add_combus_to_search_network(combus_nodes, combus_edges)
 
-    # 地点登録、経路探索
-    start_entry_results = ptrans_searcher.find_nearest_node(search_input.start)
-    goal_entry_results = ptrans_searcher.find_nearest_node(search_input.goal)
-    ptrans_searcher.add_entry_results(
-        search_input.start,
-        search_input.goal,
-        start_entry_results,
-        goal_entry_results,
-    )
-    search_result = ptrans_searcher.search(search_input.start_time)
+        # 地点登録、経路探索
+        start_entry_results = ptrans_searcher.find_nearest_node(search_input.start)
+        goal_entry_results = ptrans_searcher.find_nearest_node(search_input.goal)
+        ptrans_searcher.add_entry_results(
+            search_input.start,
+            search_input.goal,
+            start_entry_results,
+            goal_entry_results,
+        )
+        search_result = ptrans_searcher.search(search_input.start_time)
 
-    # Tracerのセットアップ
-    ptrans_tracer.set_node_dict(ptrans_searcher.node_dict)
-    ptrans_tracer.set_time_table_dict(ptrans_searcher.time_table_dict)
-    ptrans_tracer.add_combus_to_trace_data(combus_edges)
-    trace_output = ptrans_tracer.trace(search_result, search_input.start_time)
-    # except Exception as e:
-    #     return jsonify({"status": "NG", "message": str(e)}), 400
+        # Tracerのセットアップ
+        ptrans_tracer.set_node_dict(ptrans_searcher.node_dict)
+        ptrans_tracer.set_time_table_dict(ptrans_searcher.time_table_dict)
+        ptrans_tracer.add_combus_to_trace_data(combus_edges)
+        trace_output = ptrans_tracer.trace(search_result, search_input.start_time)
+
+        # クリア
+        ptrans_searcher.clean()
+        ptrans_tracer.clean()
+    except Exception as e:
+        return jsonify({"status": "NG", "message": str(e)}), 400
 
     generate_ptrans_route_kml(trace_output.route)
 

@@ -147,7 +147,8 @@ def trace_path(prev_nodes: Dict[int, int], goal_node: int) -> List[int]:
     """ゴールノードからスタートノードまでの経路をトレース"""
     node_id_list = []
     node = goal_node
-    while node in prev_nodes:
+    print(prev_nodes.get("START"))
+    while node != "START":
         node_id_list.append(node)
         node = prev_nodes[node]
     node_id_list.append(node)  # スタートノードを追加
@@ -177,6 +178,8 @@ class PtransTracer:
         )
         self.time_table_dict: Dict[Tuple[str, str], TimeTable] = {}
         self.node_dict: Dict[str, Node] = {}
+
+        self.combus_shape_keys: list[Tuple[str, str]] = []
         print(">>> PtransTracerのデータロードが完了しました。")
 
     def set_node_dict(self, node_dict: Dict[str, Node]) -> None:
@@ -219,6 +222,9 @@ class PtransTracer:
         for combus_edge in combus_edges:
             self.shape_dict[(combus_edge.org_node_id, combus_edge.dst_node_id)] = (
                 combus_edge.shape
+            )
+            self.combus_shape_keys.append(
+                (combus_edge.org_node_id, combus_edge.dst_node_id)
             )
 
     def create_output_section(self, edge, current_time: str) -> PtransOutputSection:
@@ -313,6 +319,10 @@ class PtransTracer:
             )
         )
 
+    def clean(self):
+        for shape_key in self.combus_shape_keys:
+            self.shape_dict.pop(shape_key, None)
+
 
 class PtransSearcher:
     """経路探索を行い最適経路を求めるクラス。"""
@@ -328,6 +338,11 @@ class PtransSearcher:
         self.adjacent_dict: Dict[str, List[AdjacentDictElem]] = (
             self._create_adjacent_edges_dict()
         )
+
+        self.combus_node_keys: list[str] = []
+        self.combus_edge_keys: list[Tuple[str, str]] = []
+        self.combus_time_table_keys: list[Tuple[str, str]] = []
+        self.combus_adjacent_keys: list[Tuple[str, str]] = []
         print(">>> PtransSearcherのデータロードが完了しました。")
 
     def _load_node_dict(self, stops_file: str) -> Dict[str, Node]:
@@ -416,6 +431,7 @@ class PtransSearcher:
                 name=node.name,
                 coord=node.coord,
             )
+            self.combus_node_keys.append(node.node_id)
         for edge in combus_edges:
             self.edge_dict[(edge.org_node_id, edge.dst_node_id)] = Edge(
                 org_node_id=edge.org_node_id,
@@ -423,6 +439,7 @@ class PtransSearcher:
                 travel_time=edge.duration,
                 transit_type=TransitType.COMBUS,
             )
+            self.combus_edge_keys.append((edge.org_node_id, edge.dst_node_id))
         for edge in combus_edges:
             if not self.adjacent_dict.get(edge.org_node_id):
                 self.adjacent_dict[edge.org_node_id] = []
@@ -433,6 +450,7 @@ class PtransSearcher:
                     transit_type=TransitType.COMBUS,
                 )
             )
+            self.combus_adjacent_keys.append((edge.org_node_id, edge.dst_node_id))
 
         # 既存のバス停から徒歩10分いないなら徒歩エッジを追加
         for combus_node in combus_nodes:
@@ -451,12 +469,14 @@ class PtransSearcher:
                         travel_time=walk_time,
                         transit_type=TransitType.WALK,
                     )
+                    self.combus_edge_keys.append((node_id, combus_node.node_id))
                     self.edge_dict[(combus_node.node_id, node_id)] = Edge(
                         org_node_id=combus_node.node_id,
                         dst_node_id=node_id,
                         travel_time=walk_time,
                         transit_type=TransitType.WALK,
                     )
+                    self.combus_edge_keys.append((combus_node.node_id, node_id))
                     self.adjacent_dict[node_id].append(
                         AdjacentDictElem(
                             node=self.node_dict[combus_node.node_id],
@@ -464,6 +484,7 @@ class PtransSearcher:
                             transit_type=TransitType.WALK,
                         )
                     )
+                    self.combus_adjacent_keys.append((node_id, combus_node.node_id))
                     self.adjacent_dict[combus_node.node_id].append(
                         AdjacentDictElem(
                             node=node,
@@ -471,11 +492,17 @@ class PtransSearcher:
                             transit_type=TransitType.WALK,
                         )
                     )
+                    self.combus_adjacent_keys.append(
+                        (combus_node.node_id, node.node_id)
+                    )
 
         # 時刻表
         for combus_edge in combus_edges:
             self.time_table_dict[(combus_edge.org_node_id, combus_edge.dst_node_id)] = (
                 combus_edge.time_tables
+            )
+            self.combus_time_table_keys.append(
+                (combus_edge.org_node_id, combus_edge.dst_node_id)
             )
 
     def find_nearest_node(self, target_coord: Coord, k: int = 10) -> List[EntryResult]:
@@ -505,11 +532,13 @@ class PtransSearcher:
             name="出発地",
             coord=start_coord,
         )
+        self.combus_node_keys.append(start_node_id)
         self.node_dict[goal_node_id] = Node(
             node_id=goal_node_id,
             name="目的地",
             coord=goal_coord,
         )
+        self.combus_node_keys.append(goal_node_id)
         for start_candidate in start_candidates:
             self.edge_dict[(start_node_id, start_candidate.node.node_id)] = Edge(
                 org_node_id=start_node_id,
@@ -517,12 +546,16 @@ class PtransSearcher:
                 travel_time=int(start_candidate.distance / WALK_SPEED),
                 transit_type=TransitType.WALK,
             )
+            self.combus_edge_keys.append((start_node_id, start_candidate.node.node_id))
             self.adjacent_dict.setdefault(start_node_id, []).append(
                 AdjacentDictElem(
                     node=start_candidate.node,
                     transit_time_minute=int(start_candidate.distance / WALK_SPEED),
                     transit_type=TransitType.WALK,
                 )
+            )
+            self.combus_adjacent_keys.append(
+                (start_node_id, start_candidate.node.node_id)
             )
         for goal_candidate in goal_candidates:
             self.edge_dict[(goal_candidate.node.node_id, goal_node_id)] = Edge(
@@ -531,6 +564,7 @@ class PtransSearcher:
                 travel_time=int(goal_candidate.distance / WALK_SPEED),
                 transit_type=TransitType.WALK,
             )
+            self.combus_edge_keys.append((goal_candidate.node.node_id, goal_node_id))
             self.adjacent_dict.setdefault(goal_candidate.node.node_id, []).append(
                 AdjacentDictElem(
                     node=self.node_dict[goal_node_id],
@@ -538,15 +572,29 @@ class PtransSearcher:
                     transit_type=TransitType.WALK,
                 )
             )
+            self.combus_adjacent_keys.append(
+                (goal_candidate.node.node_id, goal_node_id)
+            )
+
+    def clean(self) -> None:
+        for node_id in self.combus_node_keys:
+            self.node_dict.pop(node_id, None)
+        for edge_key in self.combus_edge_keys:
+            self.edge_dict.pop(edge_key, None)
+        for time_table_key in self.combus_time_table_keys:
+            self.time_table_dict.pop(time_table_key, None)
+        for org_id, dst_id in self.combus_adjacent_keys:
+            if org_id in self.adjacent_dict:
+                self.adjacent_dict[org_id] = [
+                    elem
+                    for elem in self.adjacent_dict[org_id]
+                    if elem.node.node_id != dst_id
+                ]
 
     def search(self, start_time_str: str) -> SearchResult:
         def calc_additional_cost(prev_mode: TransitType, next_mode: TransitType) -> int:
-            if prev_mode == TransitType.BUS and next_mode == TransitType.BUS:
-                return 10
-            if prev_mode == TransitType.WALK and next_mode == TransitType.BUS:
-                return 10
-            if prev_mode == TransitType.WALK and next_mode == TransitType.COMBUS:
-                return 10
+            if prev_mode == TransitType.WALK and mode == TransitType.WALK:
+                return 10000
             return 0
 
         def calc_wait_time(curr_time_int: int, time_table: TimeTable):
@@ -596,19 +644,15 @@ class PtransSearcher:
                     edge_list.append(edge)
                 return SearchResult(sections=edge_list)
 
-            for adjacent_elem in self.adjacent_dict.get(node_id, []):
+            for i, adjacent_elem in enumerate(self.adjacent_dict.get(node_id, [])):
                 adjacent_node_id = adjacent_elem.node.node_id
                 weight = adjacent_elem.transit_time_minute
                 mode = adjacent_elem.transit_type
-                # 徒歩 -> 徒歩は禁止
-                if prev_mode == TransitType.WALK and mode == TransitType.WALK:
-                    continue
                 time_table = self.time_table_dict.get((node_id, adjacent_node_id))
                 try:
                     wait_time = calc_wait_time(curr_cost, time_table)
                 except Exception as e:
-                    # 終電を逃している場合は採用しない
-                    continue
+                    wait_time = 10000
                 new_cost = (
                     curr_cost
                     + weight
