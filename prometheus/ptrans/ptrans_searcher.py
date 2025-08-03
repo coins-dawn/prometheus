@@ -5,10 +5,9 @@ import math
 import heapq
 import itertools
 import pprint
-from typing import Dict, List, Tuple
-from dataclasses import dataclass
-from enum import Enum
 import polyline
+from typing import Dict, List, Tuple
+
 from prometheus.utility import add_time, sub_time
 from prometheus.coord import Coord
 from prometheus.car.car_output import CarOutputRoute
@@ -19,6 +18,16 @@ from prometheus.ptrans.ptrans_output import (
     PtransOutputSpot,
     PtransOutputSectionType,
 )
+from prometheus.ptrans.ptrans_model import (
+    TransitType,
+    Node,
+    Edge,
+    TimeTable,
+    CombusEdge,
+    EntryResult,
+    SearchResult,
+    AdjacentDictElem,
+)
 
 
 STOP_FILE_PATH = "data/gtfs/stops.txt"
@@ -27,65 +36,6 @@ SHAPE_FILE_PATH = "data/gtfs/shapes.json"
 TRIP_PAIRS_FILE_PATH = "data/gtfs/trip_pairs.json"
 
 WALK_SPEED = 30  # メートル/分。直線距離ベースなので少し遅めにしている
-
-
-class TransitType(Enum):
-    """交通手段の種類を表す列挙型"""
-
-    WALK = "walk"  # 徒歩
-    BUS = "bus"  # バス
-    COMBUS = "combus"  # コミュニティバス
-
-
-@dataclass
-class Node:
-    """ネットワーク中のノードを表すクラス。"""
-
-    node_id: str
-    name: str
-    coord: Coord
-
-
-@dataclass
-class Edge:
-    """ノード間のエッジを表すデータクラス"""
-
-    org_node_id: str
-    dst_node_id: str
-    travel_time: int  # 移動時間[分]
-    transit_type: TransitType  # 交通手段の種類
-
-
-@dataclass
-class TimeTable:
-    """時刻表を表すクラス。"""
-
-    weekday: List[str]  # 平日の時刻表
-    holiday: List[str]  # 休日の時刻表
-    # TODO 名称は時刻表に入っているべきではないので分離する
-    weekday_name: str  # 平日の路線名称
-    holiday_name: str  # 休日の路線名称
-
-
-@dataclass
-class CombusEdge:
-    org_node_id: str
-    dst_node_id: str
-    duration: int
-    name: str
-    shape: str
-    time_tables: TimeTable
-
-
-@dataclass
-class EntryResult:
-    node: Node
-    distance: int
-
-
-@dataclass
-class SearchResult:
-    sections: List[Edge]
 
 
 def haversine(coord1: Coord, coord2: Coord) -> int:
@@ -357,13 +307,6 @@ class PtransTracer:
                 sections=sections,
             )
         )
-
-
-@dataclass
-class AdjacentDictElem:
-    node: Node
-    cost: int
-    transit_type: TransitType
 
 
 class PtransSearcher:
