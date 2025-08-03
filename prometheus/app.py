@@ -63,17 +63,18 @@ def ptrans_search():
         # 地点登録、経路探索
         start_entry_results = ptrans_searcher.find_nearest_node(search_input.start)
         goal_entry_results = ptrans_searcher.find_nearest_node(search_input.goal)
-        search_result = ptrans_searcher.search(start_entry_results, goal_entry_results)
+        ptrans_searcher.add_entry_results(
+            search_input.start,
+            search_input.goal,
+            start_entry_results,
+            goal_entry_results,
+        )
+        search_result = ptrans_searcher.search()
 
         # Tracerのセットアップ
         ptrans_tracer.set_node_dict(ptrans_searcher.node_dict)
         ptrans_tracer.add_combus_to_trace_data(combus_edges)
-        trace_output = ptrans_tracer.trace(
-            search_result,
-            search_input.start_time,
-            search_input.start,
-            search_input.goal,
-        )
+        trace_output = ptrans_tracer.trace(search_result, search_input.start_time)
     except Exception as e:
         return jsonify({"status": "NG", "message": str(e)}), 400
 
