@@ -74,12 +74,17 @@ def ptrans_search():
             start_entry_results,
             goal_entry_results,
         )
-        search_result = ptrans_searcher.search()
+        search_result = ptrans_searcher.search(search_input.start_time)
 
         # Tracerのセットアップ
         ptrans_tracer.set_node_dict(ptrans_searcher.node_dict)
+        ptrans_tracer.set_time_table_dict(ptrans_searcher.time_table_dict)
         ptrans_tracer.add_combus_to_trace_data(combus_edges)
         trace_output = ptrans_tracer.trace(search_result, search_input.start_time)
+
+        # クリア
+        ptrans_searcher.clean()
+        ptrans_tracer.clean()
     except Exception as e:
         return jsonify({"status": "NG", "message": str(e)}), 400
 

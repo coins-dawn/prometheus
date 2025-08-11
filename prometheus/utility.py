@@ -42,3 +42,16 @@ def sub_time(before_time_str: str, after_time_str: str) -> int:
     before_total = before_hour * 60 + before_minute
     after_total = after_hour * 60 + after_minute
     return after_total - before_total
+
+
+def convert_time_int_2_str(time_int: int) -> str:
+    """時刻（00:00からの経過分）を時刻（xx:xx形式の文字列）に変換する。"""
+    hour = (time_int // 60) % 24
+    minute = time_int % 60
+    return f"{hour:02d}:{minute:02d}"
+
+
+def convert_time_str_2_int(time_str: str) -> int:
+    """時刻（xx:xx形式の文字列）から時刻（00:00からの経過分）に変換する。"""
+    hour, minute = map(int, time_str.split(":"))
+    return hour * 60 + minute
