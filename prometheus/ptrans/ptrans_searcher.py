@@ -227,7 +227,7 @@ class PtransTracer:
                 (combus_edge.org_node_id, combus_edge.dst_node_id)
             )
 
-    def create_output_section(self, edge, current_time: str) -> PtransOutputSection:
+    def create_output_section(self, edge: Edge, current_time: str) -> PtransOutputSection:        
         is_edge = isinstance(edge, Edge)
 
         def round_duration(duration: float):
@@ -505,7 +505,7 @@ class PtransSearcher:
                 (combus_edge.org_node_id, combus_edge.dst_node_id)
             )
 
-    def find_nearest_node(self, target_coord: Coord, k: int = 10) -> List[EntryResult]:
+    def find_nearest_node(self, target_coord: Coord, k: int = 20) -> List[EntryResult]:
         """指定した地点に最も近いノードをk件返す"""
         distances = {
             stop_id: haversine(target_coord, node.coord)
