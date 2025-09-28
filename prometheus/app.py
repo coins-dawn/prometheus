@@ -12,6 +12,10 @@ from prometheus.ptrans.ptrans_input import PtransSearchInput
 from prometheus.utility import convert_for_json
 from prometheus.car.car_visualizer import generate_car_route_kml
 from prometheus.ptrans.ptrans_visualizer import generate_ptrans_route_kml
+from prometheus.static_file_loader import (
+    is_valid_request,
+    load_static_area_search_response,
+)
 
 app = Flask(__name__)
 car_searcher = CarSearcher()
@@ -95,6 +99,24 @@ def ptrans_search():
             {
                 "status": "OK",
                 "result": convert_for_json(trace_output),
+            }
+        ),
+        200,
+    )
+
+
+@app.route("/search/area", methods=["POST"])
+def area_search():
+    body = request.get_json()
+    
+    if not is_valid_request(body):
+        return jsonify({"status": "NG", "message": "Invalid request"}), 400
+    
+    return (
+        jsonify(
+            {
+                "status": "OK",
+                "result": load_static_area_search_response(),
             }
         ),
         200,
