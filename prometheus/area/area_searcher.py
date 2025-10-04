@@ -7,7 +7,7 @@ from prometheus.area.area_search_output import (
     AreaSearchOutput,
     AreaSearchResult,
     ReachableArea,
-    Spot
+    Spot,
 )
 from prometheus.area.spot_type import SpotType
 from prometheus.coord import Coord

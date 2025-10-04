@@ -9,7 +9,7 @@ def load_static_area_search_request():
         return json.load(f)
 
 
-def is_valid_request(body: dict) -> bool:
+def is_sample_request(body: dict) -> bool:
     static_request = load_static_area_search_request()
     return body == static_request
 

@@ -13,11 +13,11 @@ from prometheus.utility import convert_for_json
 from prometheus.car.car_visualizer import generate_car_route_kml
 from prometheus.ptrans.ptrans_visualizer import generate_ptrans_route_kml
 from prometheus.static_file_loader import (
-    is_valid_request,
+    is_sample_request,
     load_static_area_search_response,
+    load_static_area_search_request,
 )
 from prometheus.area.area_search_input import AreaSearchInput
-from prometheus.area.area_search_output import AreaSearchOutput
 from prometheus.area.area_searcher import exec_area_search
 
 app = Flask(__name__)
@@ -112,7 +112,7 @@ def ptrans_search():
 def area_search_sample():
     body = request.get_json()
 
-    if not is_valid_request(body):
+    if not is_sample_request(body):
         return jsonify({"status": "NG", "message": "Invalid request"}), 400
 
     return (
@@ -120,6 +120,19 @@ def area_search_sample():
             {
                 "status": "OK",
                 "result": load_static_area_search_response(),
+            }
+        ),
+        200,
+    )
+
+
+@app.route("/search/area/sample_request", methods=["GET"])
+def area_search_sample_request():
+    return (
+        jsonify(
+            {
+                "status": "OK",
+                "result": load_static_area_search_request(),
             }
         ),
         200,
