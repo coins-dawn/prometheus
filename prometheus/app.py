@@ -16,6 +16,9 @@ from prometheus.static_file_loader import (
     is_valid_request,
     load_static_area_search_response,
 )
+from prometheus.area.area_search_input import AreaSearchInput
+from prometheus.area.area_search_output import AreaSearchOutput
+from prometheus.area.area_searcher import exec_area_search
 
 app = Flask(__name__)
 car_searcher = CarSearcher()
@@ -105,18 +108,46 @@ def ptrans_search():
     )
 
 
-@app.route("/search/area", methods=["POST"])
-def area_search():
+@app.route("/search/area/sample", methods=["POST"])
+def area_search_sample():
     body = request.get_json()
-    
+
     if not is_valid_request(body):
         return jsonify({"status": "NG", "message": "Invalid request"}), 400
-    
+
     return (
         jsonify(
             {
                 "status": "OK",
                 "result": load_static_area_search_response(),
+            }
+        ),
+        200,
+    )
+
+
+@app.route("/search/area", methods=["POST"])
+def area_search():
+    try:
+        body = request.get_json()
+    except Exception as e:
+        return jsonify({"status": "NG", "message": f"Jsonが不正です: {str(e)}"}), 400
+
+    try:
+        search_input = AreaSearchInput(body)
+    except Exception as e:
+        return jsonify({"status": "NG", "message": str(e)}), 400
+
+    try:
+        search_output = exec_area_search(search_input)
+    except Exception as e:
+        return jsonify({"status": "NG", "message": str(e)}), 500
+
+    return (
+        jsonify(
+            {
+                "status": "OK",
+                "result": search_output.to_json(),
             }
         ),
         200,
