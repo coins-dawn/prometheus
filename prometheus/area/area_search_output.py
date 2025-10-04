@@ -26,18 +26,18 @@ class ReachableArea:
     def to_json(self) -> dict:
         return {
             "original": self.original.__geo_interface__,
-            "with_comnuter": self.with_comnuter.__geo_interface__ if self.with_comnuter else None,
+            "with_combus": self.with_comnuter.__geo_interface__ if self.with_comnuter else None,
         }
 
 
 @dataclass
 class AreaSearchResult:
-    spots: dict
+    spots: list[Spot]
     reachable: ReachableArea
 
     def to_json(self) -> dict:
         return {
-            "spots": self.spots,
+            "spots": [spot.to_json() for spot in self.spots],
             "reachable": self.reachable.to_json() if self.reachable else None,
         }
 
