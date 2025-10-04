@@ -9,7 +9,7 @@ class Spot:
     coord: Coord
     spot_type: SpotType
     name: str
-    
+
     def to_json(self) -> dict:
         return {
             "coord": self.coord.to_json(),
@@ -22,11 +22,13 @@ class Spot:
 class ReachableArea:
     original: Polygon
     with_comnuter: Polygon
-    
+
     def to_json(self) -> dict:
         return {
             "original": self.original.__geo_interface__,
-            "with_combus": self.with_comnuter.__geo_interface__ if self.with_comnuter else None,
+            "with_combus": (
+                self.with_comnuter.__geo_interface__ if self.with_comnuter else None
+            ),
         }
 
 
