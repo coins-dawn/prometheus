@@ -7,3 +7,4 @@ simplekml
 pydantic
 polyline
 flask-cors
+shapely

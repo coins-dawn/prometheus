@@ -227,7 +227,9 @@ class PtransTracer:
                 (combus_edge.org_node_id, combus_edge.dst_node_id)
             )
 
-    def create_output_section(self, edge: Edge, current_time: str) -> PtransOutputSection:        
+    def create_output_section(
+        self, edge: Edge, current_time: str
+    ) -> PtransOutputSection:
         is_edge = isinstance(edge, Edge)
 
         def round_duration(duration: float):
