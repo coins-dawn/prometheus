@@ -12,6 +12,7 @@ from prometheus.static_file_loader import (
 from prometheus.area.area_search_input import AreaSearchInput
 from prometheus.area.area_searcher import exec_area_search
 from prometheus.data_loader import load_spot_list
+from prometheus.data_loader import load_combus_stop_list
 
 app = Flask(__name__)
 car_searcher = CarSearcher()
@@ -51,6 +52,22 @@ def combus_search():
             {
                 "status": "OK",
                 "result": convert_for_json(search_output),
+            }
+        ),
+        200,
+    )
+
+
+@app.route("/combus/stops", methods=["GET"])
+def combus_stops():
+    """
+    コミュニティバスのバス停一覧を取得する。
+    """
+    return (
+        jsonify(
+            {
+                "status": "OK",
+                "result": load_combus_stop_list(),
             }
         ),
         200,
