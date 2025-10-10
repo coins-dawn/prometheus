@@ -26,6 +26,20 @@ def calc_target_time_limit(original_max_minute: int) -> int:
     return (original_max_minute // 10) * 10
 
 
+def merge_polygon(base_polygon: Polygon, append_polygon: Polygon):
+    assert append_polygon
+    assert base_polygon is None or base_polygon.is_valid
+
+    if not append_polygon.is_valid:
+        append_polygon = append_polygon.buffer(0)
+    if base_polygon is None:
+        merged_polygon = append_polygon
+    else:
+        merged_polygon = base_polygon.union(append_polygon)
+
+    return merged_polygon
+
+
 def exec_single_spot_type(
     spot_type: SpotType, all_spot_list: dict, target_max_limit: int
 ) -> AreaSearchResult:
@@ -33,12 +47,12 @@ def exec_single_spot_type(
     指定されたスポットタイプに対してエリア検索を実行する。
     """
     spot_list = all_spot_list.get(spot_type.value, [])
-    polygon = Polygon()
+    merged_polygon = None
     for spot in spot_list:
         geojson_dict = load_geojson(spot["id"], target_max_limit)
         geojson_obj = shape(geojson_dict)
-        polygon = polygon.union(geojson_obj)
-    reachable_area = ReachableArea(original=polygon, with_comnuter=None)
+        merged_polygon = merge_polygon(merged_polygon, geojson_obj)
+    reachable_area = ReachableArea(original=merged_polygon, with_comnuter=None)
     spot_list = [
         Spot(
             coord=Coord(lat=spot["lat"], lon=spot["lon"]),
