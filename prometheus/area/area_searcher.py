@@ -92,19 +92,33 @@ def merge_polygon(base_polygon: Polygon, append_polygon: Polygon):
     return merged_polygon
 
 
-def exec_single_spot_type(
-    spot_type: SpotType, all_spot_list: dict, target_max_limit: int
-) -> AreaSearchResult:
-    """
-    指定されたスポットタイプに対してエリア検索を実行する。
-    """
-    spot_list = all_spot_list.get(spot_type.value, [])
+def calc_original_reachable_polygon(spot_list: dict, target_max_limit: int) -> Polygon:
     merged_polygon = None
     for spot in spot_list:
         geojson_dict = load_geojson(spot["id"], target_max_limit)
         geojson_obj = shape(geojson_dict)
         merged_polygon = merge_polygon(merged_polygon, geojson_obj)
-    reachable_area = ReachableArea(original=merged_polygon, with_comnuter=None)
+    return merged_polygon
+
+
+def calc_with_combus_reachable_polygon() -> Polygon:
+    return None
+
+
+def exec_single_spot_type(
+    spot_type: SpotType, spot_list: dict, target_max_limit: int
+) -> AreaSearchResult:
+    """
+    指定されたスポットタイプに対してエリア検索を実行する。
+    """
+    original_reachable_polygon = calc_original_reachable_polygon(
+        spot_list, target_max_limit
+    )
+    with_combus_reachable_polygon = calc_with_combus_reachable_polygon()
+    reachable_area = ReachableArea(
+        original=original_reachable_polygon, with_comnuter=with_combus_reachable_polygon
+    )
+
     spot_list = [
         Spot(
             coord=Coord(lat=spot["lat"], lon=spot["lon"]),
@@ -113,6 +127,7 @@ def exec_single_spot_type(
         )
         for spot in spot_list
     ]
+
     return AreaSearchResult(spots=spot_list, reachable=reachable_area)
 
 
@@ -192,7 +207,7 @@ def exec_area_search(search_input: AreaSearchInput) -> AreaSearchOutput:
     result_dict: dict[SpotType, AreaSearchResult] = {}
     for spot_type in search_input.target_spots:
         area_search_result = exec_single_spot_type(
-            spot_type, all_spot_list, target_max_limit
+            spot_type, all_spot_list[spot_type.value], target_max_limit
         )
         result_dict[spot_type] = area_search_result
 
