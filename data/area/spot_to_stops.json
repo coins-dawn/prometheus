@@ -1,0 +1,1516 @@
+{
+    "spot-to-stops": [
+        {
+            "from": "hos1",
+            "to": "comstop1",
+            "duration_m": 68,
+            "walk_distance_m": 1194
+        },
+        {
+            "from": "hos1",
+            "to": "comstop2",
+            "duration_m": 49,
+            "walk_distance_m": 996
+        },
+        {
+            "from": "hos1",
+            "to": "comstop3",
+            "duration_m": 54,
+            "walk_distance_m": 1047
+        },
+        {
+            "from": "hos1",
+            "to": "comstop4",
+            "duration_m": 52,
+            "walk_distance_m": 1056
+        },
+        {
+            "from": "hos1",
+            "to": "comstop5",
+            "duration_m": 75,
+            "walk_distance_m": 969
+        },
+        {
+            "from": "hos1",
+            "to": "comstop6",
+            "duration_m": 20,
+            "walk_distance_m": 736
+        },
+        {
+            "from": "hos1",
+            "to": "comstop7",
+            "duration_m": 104,
+            "walk_distance_m": 468
+        },
+        {
+            "from": "hos1",
+            "to": "comstop8",
+            "duration_m": 20,
+            "walk_distance_m": 921
+        },
+        {
+            "from": "hos1",
+            "to": "comstop10",
+            "duration_m": 71,
+            "walk_distance_m": 1087
+        },
+        {
+            "from": "hos1",
+            "to": "comstop11",
+            "duration_m": 178,
+            "walk_distance_m": 725
+        },
+        {
+            "from": "hos1",
+            "to": "comstop12",
+            "duration_m": 225,
+            "walk_distance_m": 633
+        },
+        {
+            "from": "hos1",
+            "to": "comstop13",
+            "duration_m": 82,
+            "walk_distance_m": 396
+        },
+        {
+            "from": "hos1",
+            "to": "comstop14",
+            "duration_m": 228,
+            "walk_distance_m": 1113
+        },
+        {
+            "from": "hos1",
+            "to": "comstop15",
+            "duration_m": 52,
+            "walk_distance_m": 411
+        },
+        {
+            "from": "hos1",
+            "to": "comstop16",
+            "duration_m": 90,
+            "walk_distance_m": 1068
+        },
+        {
+            "from": "hos1",
+            "to": "comstop18",
+            "duration_m": 18,
+            "walk_distance_m": 566
+        },
+        {
+            "from": "hos1",
+            "to": "comstop19",
+            "duration_m": 50,
+            "walk_distance_m": 287
+        },
+        {
+            "from": "hos1",
+            "to": "comstop20",
+            "duration_m": 32,
+            "walk_distance_m": 479
+        },
+        {
+            "from": "hos1",
+            "to": "comstop21",
+            "duration_m": 67,
+            "walk_distance_m": 562
+        },
+        {
+            "from": "hos1",
+            "to": "comstop22",
+            "duration_m": 39,
+            "walk_distance_m": 427
+        },
+        {
+            "from": "hos1",
+            "to": "comstop23",
+            "duration_m": 100,
+            "walk_distance_m": 229
+        },
+        {
+            "from": "hos1",
+            "to": "comstop24",
+            "duration_m": 107,
+            "walk_distance_m": 896
+        },
+        {
+            "from": "hos1",
+            "to": "comstop26",
+            "duration_m": 39,
+            "walk_distance_m": 941
+        },
+        {
+            "from": "hos1",
+            "to": "comstop27",
+            "duration_m": 117,
+            "walk_distance_m": 371
+        },
+        {
+            "from": "hos1",
+            "to": "comstop28",
+            "duration_m": 23,
+            "walk_distance_m": 549
+        },
+        {
+            "from": "hos1",
+            "to": "comstop29",
+            "duration_m": 29,
+            "walk_distance_m": 555
+        },
+        {
+            "from": "hos1",
+            "to": "comstop30",
+            "duration_m": 34,
+            "walk_distance_m": 942
+        },
+        {
+            "from": "hos1",
+            "to": "comstop31",
+            "duration_m": 64,
+            "walk_distance_m": 716
+        },
+        {
+            "from": "hos1",
+            "to": "comstop32",
+            "duration_m": 33,
+            "walk_distance_m": 888
+        },
+        {
+            "from": "hos1",
+            "to": "comstop33",
+            "duration_m": 86,
+            "walk_distance_m": 756
+        },
+        {
+            "from": "hos1",
+            "to": "comstop34",
+            "duration_m": 99,
+            "walk_distance_m": 780
+        },
+        {
+            "from": "hos1",
+            "to": "comstop35",
+            "duration_m": 40,
+            "walk_distance_m": 757
+        },
+        {
+            "from": "hos1",
+            "to": "comstop37",
+            "duration_m": 85,
+            "walk_distance_m": 874
+        },
+        {
+            "from": "hos1",
+            "to": "comstop38",
+            "duration_m": 23,
+            "walk_distance_m": 755
+        },
+        {
+            "from": "hos1",
+            "to": "comstop39",
+            "duration_m": 53,
+            "walk_distance_m": 551
+        },
+        {
+            "from": "hos1",
+            "to": "comstop40",
+            "duration_m": 45,
+            "walk_distance_m": 734
+        },
+        {
+            "from": "hos1",
+            "to": "comstop41",
+            "duration_m": 115,
+            "walk_distance_m": 853
+        },
+        {
+            "from": "hos1",
+            "to": "comstop43",
+            "duration_m": 31,
+            "walk_distance_m": 521
+        },
+        {
+            "from": "hos1",
+            "to": "comstop45",
+            "duration_m": 229,
+            "walk_distance_m": 843
+        },
+        {
+            "from": "hos1",
+            "to": "comstop47",
+            "duration_m": 43,
+            "walk_distance_m": 163
+        },
+        {
+            "from": "hos1",
+            "to": "comstop48",
+            "duration_m": 31,
+            "walk_distance_m": 422
+        },
+        {
+            "from": "hos1",
+            "to": "comstop50",
+            "duration_m": 99,
+            "walk_distance_m": 1095
+        },
+        {
+            "from": "hos2",
+            "to": "comstop1",
+            "duration_m": 117,
+            "walk_distance_m": 1211
+        },
+        {
+            "from": "hos2",
+            "to": "comstop2",
+            "duration_m": 28,
+            "walk_distance_m": 1006
+        },
+        {
+            "from": "hos2",
+            "to": "comstop3",
+            "duration_m": 65,
+            "walk_distance_m": 1821
+        },
+        {
+            "from": "hos2",
+            "to": "comstop4",
+            "duration_m": 99,
+            "walk_distance_m": 1832
+        },
+        {
+            "from": "hos2",
+            "to": "comstop5",
+            "duration_m": 32,
+            "walk_distance_m": 1140
+        },
+        {
+            "from": "hos2",
+            "to": "comstop6",
+            "duration_m": 63,
+            "walk_distance_m": 1376
+        },
+        {
+            "from": "hos2",
+            "to": "comstop7",
+            "duration_m": 29,
+            "walk_distance_m": 1114
+        },
+        {
+            "from": "hos2",
+            "to": "comstop8",
+            "duration_m": 37,
+            "walk_distance_m": 1689
+        },
+        {
+            "from": "hos2",
+            "to": "comstop10",
+            "duration_m": 118,
+            "walk_distance_m": 1862
+        },
+        {
+            "from": "hos2",
+            "to": "comstop11",
+            "duration_m": 99,
+            "walk_distance_m": 1499
+        },
+        {
+            "from": "hos2",
+            "to": "comstop12",
+            "duration_m": 20,
+            "walk_distance_m": 673
+        },
+        {
+            "from": "hos2",
+            "to": "comstop13",
+            "duration_m": 68,
+            "walk_distance_m": 1171
+        },
+        {
+            "from": "hos2",
+            "to": "comstop14",
+            "duration_m": 41,
+            "walk_distance_m": 1480
+        },
+        {
+            "from": "hos2",
+            "to": "comstop15",
+            "duration_m": 70,
+            "walk_distance_m": 828
+        },
+        {
+            "from": "hos2",
+            "to": "comstop16",
+            "duration_m": 76,
+            "walk_distance_m": 1842
+        },
+        {
+            "from": "hos2",
+            "to": "comstop18",
+            "duration_m": 74,
+            "walk_distance_m": 1485
+        },
+        {
+            "from": "hos2",
+            "to": "comstop19",
+            "duration_m": 68,
+            "walk_distance_m": 703
+        },
+        {
+            "from": "hos2",
+            "to": "comstop20",
+            "duration_m": 49,
+            "walk_distance_m": 971
+        },
+        {
+            "from": "hos2",
+            "to": "comstop21",
+            "duration_m": 116,
+            "walk_distance_m": 580
+        },
+        {
+            "from": "hos2",
+            "to": "comstop22",
+            "duration_m": 17,
+            "walk_distance_m": 437
+        },
+        {
+            "from": "hos2",
+            "to": "comstop23",
+            "duration_m": 56,
+            "walk_distance_m": 830
+        },
+        {
+            "from": "hos2",
+            "to": "comstop24",
+            "duration_m": 59,
+            "walk_distance_m": 1012
+        },
+        {
+            "from": "hos2",
+            "to": "comstop26",
+            "duration_m": 14,
+            "walk_distance_m": 815
+        },
+        {
+            "from": "hos2",
+            "to": "comstop27",
+            "duration_m": 223,
+            "walk_distance_m": 1166
+        },
+        {
+            "from": "hos2",
+            "to": "comstop28",
+            "duration_m": 39,
+            "walk_distance_m": 1363
+        },
+        {
+            "from": "hos2",
+            "to": "comstop29",
+            "duration_m": 94,
+            "walk_distance_m": 1475
+        },
+        {
+            "from": "hos2",
+            "to": "comstop30",
+            "duration_m": 92,
+            "walk_distance_m": 1561
+        },
+        {
+            "from": "hos2",
+            "to": "comstop31",
+            "duration_m": 81,
+            "walk_distance_m": 1132
+        },
+        {
+            "from": "hos2",
+            "to": "comstop32",
+            "duration_m": 49,
+            "walk_distance_m": 1702
+        },
+        {
+            "from": "hos2",
+            "to": "comstop33",
+            "duration_m": 72,
+            "walk_distance_m": 1530
+        },
+        {
+            "from": "hos2",
+            "to": "comstop34",
+            "duration_m": 33,
+            "walk_distance_m": 788
+        },
+        {
+            "from": "hos2",
+            "to": "comstop35",
+            "duration_m": 19,
+            "walk_distance_m": 767
+        },
+        {
+            "from": "hos2",
+            "to": "comstop37",
+            "duration_m": 71,
+            "walk_distance_m": 1649
+        },
+        {
+            "from": "hos2",
+            "to": "comstop38",
+            "duration_m": 40,
+            "walk_distance_m": 1516
+        },
+        {
+            "from": "hos2",
+            "to": "comstop39",
+            "duration_m": 159,
+            "walk_distance_m": 1325
+        },
+        {
+            "from": "hos2",
+            "to": "comstop40",
+            "duration_m": 24,
+            "walk_distance_m": 744
+        },
+        {
+            "from": "hos2",
+            "to": "comstop41",
+            "duration_m": 24,
+            "walk_distance_m": 608
+        },
+        {
+            "from": "hos2",
+            "to": "comstop43",
+            "duration_m": 8,
+            "walk_distance_m": 356
+        },
+        {
+            "from": "hos2",
+            "to": "comstop45",
+            "duration_m": 154,
+            "walk_distance_m": 1489
+        },
+        {
+            "from": "hos2",
+            "to": "comstop47",
+            "duration_m": 63,
+            "walk_distance_m": 937
+        },
+        {
+            "from": "hos2",
+            "to": "comstop48",
+            "duration_m": 130,
+            "walk_distance_m": 1040
+        },
+        {
+            "from": "hos2",
+            "to": "comstop50",
+            "duration_m": 85,
+            "walk_distance_m": 1869
+        },
+        {
+            "from": "sho1",
+            "to": "comstop1",
+            "duration_m": 127,
+            "walk_distance_m": 1865
+        },
+        {
+            "from": "sho1",
+            "to": "comstop2",
+            "duration_m": 27,
+            "walk_distance_m": 946
+        },
+        {
+            "from": "sho1",
+            "to": "comstop3",
+            "duration_m": 63,
+            "walk_distance_m": 1644
+        },
+        {
+            "from": "sho1",
+            "to": "comstop4",
+            "duration_m": 97,
+            "walk_distance_m": 1654
+        },
+        {
+            "from": "sho1",
+            "to": "comstop5",
+            "duration_m": 28,
+            "walk_distance_m": 1431
+        },
+        {
+            "from": "sho1",
+            "to": "comstop6",
+            "duration_m": 61,
+            "walk_distance_m": 1198
+        },
+        {
+            "from": "sho1",
+            "to": "comstop7",
+            "duration_m": 27,
+            "walk_distance_m": 931
+        },
+        {
+            "from": "sho1",
+            "to": "comstop8",
+            "duration_m": 35,
+            "walk_distance_m": 1511
+        },
+        {
+            "from": "sho1",
+            "to": "comstop10",
+            "duration_m": 116,
+            "walk_distance_m": 1685
+        },
+        {
+            "from": "sho1",
+            "to": "comstop11",
+            "duration_m": 97,
+            "walk_distance_m": 1321
+        },
+        {
+            "from": "sho1",
+            "to": "comstop12",
+            "duration_m": 24,
+            "walk_distance_m": 737
+        },
+        {
+            "from": "sho1",
+            "to": "comstop13",
+            "duration_m": 66,
+            "walk_distance_m": 993
+        },
+        {
+            "from": "sho1",
+            "to": "comstop14",
+            "duration_m": 39,
+            "walk_distance_m": 1296
+        },
+        {
+            "from": "sho1",
+            "to": "comstop15",
+            "duration_m": 65,
+            "walk_distance_m": 510
+        },
+        {
+            "from": "sho1",
+            "to": "comstop16",
+            "duration_m": 74,
+            "walk_distance_m": 1665
+        },
+        {
+            "from": "sho1",
+            "to": "comstop18",
+            "duration_m": 72,
+            "walk_distance_m": 1308
+        },
+        {
+            "from": "sho1",
+            "to": "comstop19",
+            "duration_m": 64,
+            "walk_distance_m": 385
+        },
+        {
+            "from": "sho1",
+            "to": "comstop20",
+            "duration_m": 45,
+            "walk_distance_m": 653
+        },
+        {
+            "from": "sho1",
+            "to": "comstop21",
+            "duration_m": 126,
+            "walk_distance_m": 1234
+        },
+        {
+            "from": "sho1",
+            "to": "comstop22",
+            "duration_m": 17,
+            "walk_distance_m": 377
+        },
+        {
+            "from": "sho1",
+            "to": "comstop23",
+            "duration_m": 23,
+            "walk_distance_m": 691
+        },
+        {
+            "from": "sho1",
+            "to": "comstop24",
+            "duration_m": 63,
+            "walk_distance_m": 1076
+        },
+        {
+            "from": "sho1",
+            "to": "comstop26",
+            "duration_m": 18,
+            "walk_distance_m": 879
+        },
+        {
+            "from": "sho1",
+            "to": "comstop27",
+            "duration_m": 221,
+            "walk_distance_m": 988
+        },
+        {
+            "from": "sho1",
+            "to": "comstop28",
+            "duration_m": 37,
+            "walk_distance_m": 1186
+        },
+        {
+            "from": "sho1",
+            "to": "comstop29",
+            "duration_m": 92,
+            "walk_distance_m": 1298
+        },
+        {
+            "from": "sho1",
+            "to": "comstop30",
+            "duration_m": 90,
+            "walk_distance_m": 1383
+        },
+        {
+            "from": "sho1",
+            "to": "comstop31",
+            "duration_m": 77,
+            "walk_distance_m": 815
+        },
+        {
+            "from": "sho1",
+            "to": "comstop32",
+            "duration_m": 47,
+            "walk_distance_m": 1525
+        },
+        {
+            "from": "sho1",
+            "to": "comstop33",
+            "duration_m": 70,
+            "walk_distance_m": 1352
+        },
+        {
+            "from": "sho1",
+            "to": "comstop34",
+            "duration_m": 37,
+            "walk_distance_m": 852
+        },
+        {
+            "from": "sho1",
+            "to": "comstop35",
+            "duration_m": 18,
+            "walk_distance_m": 707
+        },
+        {
+            "from": "sho1",
+            "to": "comstop37",
+            "duration_m": 69,
+            "walk_distance_m": 1471
+        },
+        {
+            "from": "sho1",
+            "to": "comstop38",
+            "duration_m": 37,
+            "walk_distance_m": 1339
+        },
+        {
+            "from": "sho1",
+            "to": "comstop39",
+            "duration_m": 157,
+            "walk_distance_m": 1147
+        },
+        {
+            "from": "sho1",
+            "to": "comstop40",
+            "duration_m": 24,
+            "walk_distance_m": 684
+        },
+        {
+            "from": "sho1",
+            "to": "comstop41",
+            "duration_m": 27,
+            "walk_distance_m": 672
+        },
+        {
+            "from": "sho1",
+            "to": "comstop43",
+            "duration_m": 12,
+            "walk_distance_m": 420
+        },
+        {
+            "from": "sho1",
+            "to": "comstop45",
+            "duration_m": 152,
+            "walk_distance_m": 1306
+        },
+        {
+            "from": "sho1",
+            "to": "comstop47",
+            "duration_m": 61,
+            "walk_distance_m": 760
+        },
+        {
+            "from": "sho1",
+            "to": "comstop48",
+            "duration_m": 127,
+            "walk_distance_m": 863
+        },
+        {
+            "from": "sho1",
+            "to": "comstop50",
+            "duration_m": 83,
+            "walk_distance_m": 1691
+        },
+        {
+            "from": "sho2",
+            "to": "comstop1",
+            "duration_m": 62,
+            "walk_distance_m": 1136
+        },
+        {
+            "from": "sho2",
+            "to": "comstop2",
+            "duration_m": 47,
+            "walk_distance_m": 742
+        },
+        {
+            "from": "sho2",
+            "to": "comstop3",
+            "duration_m": 24,
+            "walk_distance_m": 1014
+        },
+        {
+            "from": "sho2",
+            "to": "comstop4",
+            "duration_m": 36,
+            "walk_distance_m": 1025
+        },
+        {
+            "from": "sho2",
+            "to": "comstop5",
+            "duration_m": 43,
+            "walk_distance_m": 936
+        },
+        {
+            "from": "sho2",
+            "to": "comstop6",
+            "duration_m": 30,
+            "walk_distance_m": 562
+        },
+        {
+            "from": "sho2",
+            "to": "comstop7",
+            "duration_m": 42,
+            "walk_distance_m": 436
+        },
+        {
+            "from": "sho2",
+            "to": "comstop8",
+            "duration_m": 13,
+            "walk_distance_m": 464
+        },
+        {
+            "from": "sho2",
+            "to": "comstop10",
+            "duration_m": 55,
+            "walk_distance_m": 1055
+        },
+        {
+            "from": "sho2",
+            "to": "comstop11",
+            "duration_m": 32,
+            "walk_distance_m": 692
+        },
+        {
+            "from": "sho2",
+            "to": "comstop12",
+            "duration_m": 133,
+            "walk_distance_m": 1417
+        },
+        {
+            "from": "sho2",
+            "to": "comstop13",
+            "duration_m": 26,
+            "walk_distance_m": 364
+        },
+        {
+            "from": "sho2",
+            "to": "comstop14",
+            "duration_m": 167,
+            "walk_distance_m": 1081
+        },
+        {
+            "from": "sho2",
+            "to": "comstop15",
+            "duration_m": 24,
+            "walk_distance_m": 985
+        },
+        {
+            "from": "sho2",
+            "to": "comstop16",
+            "duration_m": 34,
+            "walk_distance_m": 1035
+        },
+        {
+            "from": "sho2",
+            "to": "comstop18",
+            "duration_m": 32,
+            "walk_distance_m": 679
+        },
+        {
+            "from": "sho2",
+            "to": "comstop19",
+            "duration_m": 17,
+            "walk_distance_m": 520
+        },
+        {
+            "from": "sho2",
+            "to": "comstop20",
+            "duration_m": 15,
+            "walk_distance_m": 344
+        },
+        {
+            "from": "sho2",
+            "to": "comstop21",
+            "duration_m": 61,
+            "walk_distance_m": 504
+        },
+        {
+            "from": "sho2",
+            "to": "comstop22",
+            "duration_m": 37,
+            "walk_distance_m": 173
+        },
+        {
+            "from": "sho2",
+            "to": "comstop23",
+            "duration_m": 38,
+            "walk_distance_m": 196
+        },
+        {
+            "from": "sho2",
+            "to": "comstop24",
+            "duration_m": 46,
+            "walk_distance_m": 864
+        },
+        {
+            "from": "sho2",
+            "to": "comstop26",
+            "duration_m": 37,
+            "walk_distance_m": 687
+        },
+        {
+            "from": "sho2",
+            "to": "comstop27",
+            "duration_m": 90,
+            "walk_distance_m": 299
+        },
+        {
+            "from": "sho2",
+            "to": "comstop28",
+            "duration_m": 16,
+            "walk_distance_m": 493
+        },
+        {
+            "from": "sho2",
+            "to": "comstop29",
+            "duration_m": 42,
+            "walk_distance_m": 668
+        },
+        {
+            "from": "sho2",
+            "to": "comstop30",
+            "duration_m": 45,
+            "walk_distance_m": 754
+        },
+        {
+            "from": "sho2",
+            "to": "comstop31",
+            "duration_m": 30,
+            "walk_distance_m": 950
+        },
+        {
+            "from": "sho2",
+            "to": "comstop32",
+            "duration_m": 27,
+            "walk_distance_m": 891
+        },
+        {
+            "from": "sho2",
+            "to": "comstop33",
+            "duration_m": 30,
+            "walk_distance_m": 737
+        },
+        {
+            "from": "sho2",
+            "to": "comstop34",
+            "duration_m": 68,
+            "walk_distance_m": 891
+        },
+        {
+            "from": "sho2",
+            "to": "comstop35",
+            "duration_m": 38,
+            "walk_distance_m": 503
+        },
+        {
+            "from": "sho2",
+            "to": "comstop37",
+            "duration_m": 30,
+            "walk_distance_m": 842
+        },
+        {
+            "from": "sho2",
+            "to": "comstop38",
+            "duration_m": 17,
+            "walk_distance_m": 698
+        },
+        {
+            "from": "sho2",
+            "to": "comstop39",
+            "duration_m": 23,
+            "walk_distance_m": 635
+        },
+        {
+            "from": "sho2",
+            "to": "comstop40",
+            "duration_m": 44,
+            "walk_distance_m": 480
+        },
+        {
+            "from": "sho2",
+            "to": "comstop41",
+            "duration_m": 53,
+            "walk_distance_m": 698
+        },
+        {
+            "from": "sho2",
+            "to": "comstop43",
+            "duration_m": 29,
+            "walk_distance_m": 267
+        },
+        {
+            "from": "sho2",
+            "to": "comstop45",
+            "duration_m": 167,
+            "walk_distance_m": 811
+        },
+        {
+            "from": "sho2",
+            "to": "comstop47",
+            "duration_m": 13,
+            "walk_distance_m": 247
+        },
+        {
+            "from": "sho2",
+            "to": "comstop48",
+            "duration_m": 42,
+            "walk_distance_m": 234
+        },
+        {
+            "from": "sho2",
+            "to": "comstop50",
+            "duration_m": 33,
+            "walk_distance_m": 461
+        },
+        {
+            "from": "sho3",
+            "to": "comstop1",
+            "duration_m": 146,
+            "walk_distance_m": 1344
+        },
+        {
+            "from": "sho3",
+            "to": "comstop2",
+            "duration_m": 104,
+            "walk_distance_m": 915
+        },
+        {
+            "from": "sho3",
+            "to": "comstop3",
+            "duration_m": 57,
+            "walk_distance_m": 1202
+        },
+        {
+            "from": "sho3",
+            "to": "comstop4",
+            "duration_m": 56,
+            "walk_distance_m": 1243
+        },
+        {
+            "from": "sho3",
+            "to": "comstop5",
+            "duration_m": 78,
+            "walk_distance_m": 1144
+        },
+        {
+            "from": "sho3",
+            "to": "comstop6",
+            "duration_m": 50,
+            "walk_distance_m": 770
+        },
+        {
+            "from": "sho3",
+            "to": "comstop7",
+            "duration_m": 107,
+            "walk_distance_m": 644
+        },
+        {
+            "from": "sho3",
+            "to": "comstop8",
+            "duration_m": 16,
+            "walk_distance_m": 589
+        },
+        {
+            "from": "sho3",
+            "to": "comstop10",
+            "duration_m": 75,
+            "walk_distance_m": 1274
+        },
+        {
+            "from": "sho3",
+            "to": "comstop11",
+            "duration_m": 53,
+            "walk_distance_m": 880
+        },
+        {
+            "from": "sho3",
+            "to": "comstop12",
+            "duration_m": 208,
+            "walk_distance_m": 818
+        },
+        {
+            "from": "sho3",
+            "to": "comstop13",
+            "duration_m": 85,
+            "walk_distance_m": 572
+        },
+        {
+            "from": "sho3",
+            "to": "comstop14",
+            "duration_m": 232,
+            "walk_distance_m": 1289
+        },
+        {
+            "from": "sho3",
+            "to": "comstop15",
+            "duration_m": 55,
+            "walk_distance_m": 936
+        },
+        {
+            "from": "sho3",
+            "to": "comstop16",
+            "duration_m": 93,
+            "walk_distance_m": 1223
+        },
+        {
+            "from": "sho3",
+            "to": "comstop18",
+            "duration_m": 31,
+            "walk_distance_m": 1513
+        },
+        {
+            "from": "sho3",
+            "to": "comstop19",
+            "duration_m": 54,
+            "walk_distance_m": 811
+        },
+        {
+            "from": "sho3",
+            "to": "comstop20",
+            "duration_m": 35,
+            "walk_distance_m": 654
+        },
+        {
+            "from": "sho3",
+            "to": "comstop21",
+            "duration_m": 146,
+            "walk_distance_m": 712
+        },
+        {
+            "from": "sho3",
+            "to": "comstop22",
+            "duration_m": 104,
+            "walk_distance_m": 722
+        },
+        {
+            "from": "sho3",
+            "to": "comstop23",
+            "duration_m": 103,
+            "walk_distance_m": 405
+        },
+        {
+            "from": "sho3",
+            "to": "comstop24",
+            "duration_m": 111,
+            "walk_distance_m": 1072
+        },
+        {
+            "from": "sho3",
+            "to": "comstop26",
+            "duration_m": 101,
+            "walk_distance_m": 895
+        },
+        {
+            "from": "sho3",
+            "to": "comstop27",
+            "duration_m": 75,
+            "walk_distance_m": 373
+        },
+        {
+            "from": "sho3",
+            "to": "comstop28",
+            "duration_m": 13,
+            "walk_distance_m": 626
+        },
+        {
+            "from": "sho3",
+            "to": "comstop29",
+            "duration_m": 51,
+            "walk_distance_m": 1503
+        },
+        {
+            "from": "sho3",
+            "to": "comstop30",
+            "duration_m": 110,
+            "walk_distance_m": 962
+        },
+        {
+            "from": "sho3",
+            "to": "comstop31",
+            "duration_m": 67,
+            "walk_distance_m": 1240
+        },
+        {
+            "from": "sho3",
+            "to": "comstop32",
+            "duration_m": 12,
+            "walk_distance_m": 964
+        },
+        {
+            "from": "sho3",
+            "to": "comstop33",
+            "duration_m": 89,
+            "walk_distance_m": 911
+        },
+        {
+            "from": "sho3",
+            "to": "comstop34",
+            "duration_m": 162,
+            "walk_distance_m": 885
+        },
+        {
+            "from": "sho3",
+            "to": "comstop35",
+            "duration_m": 99,
+            "walk_distance_m": 730
+        },
+        {
+            "from": "sho3",
+            "to": "comstop37",
+            "duration_m": 86,
+            "walk_distance_m": 944
+        },
+        {
+            "from": "sho3",
+            "to": "comstop38",
+            "duration_m": 36,
+            "walk_distance_m": 916
+        },
+        {
+            "from": "sho3",
+            "to": "comstop39",
+            "duration_m": 56,
+            "walk_distance_m": 726
+        },
+        {
+            "from": "sho3",
+            "to": "comstop40",
+            "duration_m": 101,
+            "walk_distance_m": 724
+        },
+        {
+            "from": "sho3",
+            "to": "comstop41",
+            "duration_m": 118,
+            "walk_distance_m": 705
+        },
+        {
+            "from": "sho3",
+            "to": "comstop43",
+            "duration_m": 93,
+            "walk_distance_m": 475
+        },
+        {
+            "from": "sho3",
+            "to": "comstop45",
+            "duration_m": 232,
+            "walk_distance_m": 1019
+        },
+        {
+            "from": "sho3",
+            "to": "comstop47",
+            "duration_m": 46,
+            "walk_distance_m": 339
+        },
+        {
+            "from": "sho3",
+            "to": "comstop48",
+            "duration_m": 84,
+            "walk_distance_m": 442
+        },
+        {
+            "from": "sho3",
+            "to": "comstop50",
+            "duration_m": 102,
+            "walk_distance_m": 1250
+        },
+        {
+            "from": "pub1",
+            "to": "comstop1",
+            "duration_m": 61,
+            "walk_distance_m": 1217
+        },
+        {
+            "from": "pub1",
+            "to": "comstop2",
+            "duration_m": 46,
+            "walk_distance_m": 835
+        },
+        {
+            "from": "pub1",
+            "to": "comstop3",
+            "duration_m": 23,
+            "walk_distance_m": 1094
+        },
+        {
+            "from": "pub1",
+            "to": "comstop4",
+            "duration_m": 36,
+            "walk_distance_m": 1106
+        },
+        {
+            "from": "pub1",
+            "to": "comstop5",
+            "duration_m": 42,
+            "walk_distance_m": 1029
+        },
+        {
+            "from": "pub1",
+            "to": "comstop6",
+            "duration_m": 29,
+            "walk_distance_m": 648
+        },
+        {
+            "from": "pub1",
+            "to": "comstop7",
+            "duration_m": 42,
+            "walk_distance_m": 528
+        },
+        {
+            "from": "pub1",
+            "to": "comstop8",
+            "duration_m": 13,
+            "walk_distance_m": 989
+        },
+        {
+            "from": "pub1",
+            "to": "comstop10",
+            "duration_m": 55,
+            "walk_distance_m": 1136
+        },
+        {
+            "from": "pub1",
+            "to": "comstop11",
+            "duration_m": 32,
+            "walk_distance_m": 772
+        },
+        {
+            "from": "pub1",
+            "to": "comstop12",
+            "duration_m": 132,
+            "walk_distance_m": 1509
+        },
+        {
+            "from": "pub1",
+            "to": "comstop13",
+            "duration_m": 24,
+            "walk_distance_m": 445
+        },
+        {
+            "from": "pub1",
+            "to": "comstop14",
+            "duration_m": 166,
+            "walk_distance_m": 1173
+        },
+        {
+            "from": "pub1",
+            "to": "comstop15",
+            "duration_m": 31,
+            "walk_distance_m": 1532
+        },
+        {
+            "from": "pub1",
+            "to": "comstop16",
+            "duration_m": 32,
+            "walk_distance_m": 1115
+        },
+        {
+            "from": "pub1",
+            "to": "comstop18",
+            "duration_m": 31,
+            "walk_distance_m": 766
+        },
+        {
+            "from": "pub1",
+            "to": "comstop19",
+            "duration_m": 22,
+            "walk_distance_m": 1084
+        },
+        {
+            "from": "pub1",
+            "to": "comstop20",
+            "duration_m": 23,
+            "walk_distance_m": 891
+        },
+        {
+            "from": "pub1",
+            "to": "comstop21",
+            "duration_m": 60,
+            "walk_distance_m": 585
+        },
+        {
+            "from": "pub1",
+            "to": "comstop22",
+            "duration_m": 36,
+            "walk_distance_m": 266
+        },
+        {
+            "from": "pub1",
+            "to": "comstop23",
+            "duration_m": 37,
+            "walk_distance_m": 289
+        },
+        {
+            "from": "pub1",
+            "to": "comstop24",
+            "duration_m": 45,
+            "walk_distance_m": 957
+        },
+        {
+            "from": "pub1",
+            "to": "comstop26",
+            "duration_m": 36,
+            "walk_distance_m": 780
+        },
+        {
+            "from": "pub1",
+            "to": "comstop27",
+            "duration_m": 89,
+            "walk_distance_m": 431
+        },
+        {
+            "from": "pub1",
+            "to": "comstop28",
+            "duration_m": 17,
+            "walk_distance_m": 624
+        },
+        {
+            "from": "pub1",
+            "to": "comstop29",
+            "duration_m": 40,
+            "walk_distance_m": 755
+        },
+        {
+            "from": "pub1",
+            "to": "comstop30",
+            "duration_m": 44,
+            "walk_distance_m": 855
+        },
+        {
+            "from": "pub1",
+            "to": "comstop31",
+            "duration_m": 35,
+            "walk_distance_m": 1513
+        },
+        {
+            "from": "pub1",
+            "to": "comstop32",
+            "duration_m": 28,
+            "walk_distance_m": 1021
+        },
+        {
+            "from": "pub1",
+            "to": "comstop33",
+            "duration_m": 29,
+            "walk_distance_m": 817
+        },
+        {
+            "from": "pub1",
+            "to": "comstop34",
+            "duration_m": 67,
+            "walk_distance_m": 983
+        },
+        {
+            "from": "pub1",
+            "to": "comstop35",
+            "duration_m": 37,
+            "walk_distance_m": 596
+        },
+        {
+            "from": "pub1",
+            "to": "comstop37",
+            "duration_m": 29,
+            "walk_distance_m": 923
+        },
+        {
+            "from": "pub1",
+            "to": "comstop38",
+            "duration_m": 16,
+            "walk_distance_m": 779
+        },
+        {
+            "from": "pub1",
+            "to": "comstop39",
+            "duration_m": 30,
+            "walk_distance_m": 746
+        },
+        {
+            "from": "pub1",
+            "to": "comstop40",
+            "duration_m": 43,
+            "walk_distance_m": 572
+        },
+        {
+            "from": "pub1",
+            "to": "comstop41",
+            "duration_m": 52,
+            "walk_distance_m": 791
+        },
+        {
+            "from": "pub1",
+            "to": "comstop43",
+            "duration_m": 28,
+            "walk_distance_m": 360
+        },
+        {
+            "from": "pub1",
+            "to": "comstop45",
+            "duration_m": 166,
+            "walk_distance_m": 903
+        },
+        {
+            "from": "pub1",
+            "to": "comstop47",
+            "duration_m": 28,
+            "walk_distance_m": 468
+        },
+        {
+            "from": "pub1",
+            "to": "comstop48",
+            "duration_m": 41,
+            "walk_distance_m": 335
+        },
+        {
+            "from": "pub1",
+            "to": "comstop50",
+            "duration_m": 32,
+            "walk_distance_m": 541
+        }
+    ]
+}

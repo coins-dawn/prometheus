@@ -26,9 +26,7 @@ class ReachableArea:
     def to_json(self) -> dict:
         return {
             "original": self.original.__geo_interface__,
-            "with-combus": (
-                self.with_comnuter.__geo_interface__ if self.with_comnuter else None
-            ),
+            "with-combus": self.with_comnuter.__geo_interface__,
         }
 
 
