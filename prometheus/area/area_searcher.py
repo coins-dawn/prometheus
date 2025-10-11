@@ -1,5 +1,7 @@
 from shapely.geometry import shape
 from shapely.geometry.polygon import Polygon
+from dataclasses import dataclass
+from pprint import pprint
 
 from prometheus.area.area_search_input import AreaSearchInput
 from prometheus.area.area_search_output import (
@@ -11,10 +13,59 @@ from prometheus.area.area_search_output import (
 from prometheus.data_loader import (
     load_spot_list,
     load_geojson,
-    SPOT_LIST_FILE_PATH,
+    load_combus_stop_dict,
+    load_combus_route_dict,
 )
 from prometheus.area.spot_type import SpotType
 from prometheus.coord import Coord
+
+
+@dataclass
+class CombusStop:
+    """
+    コミュニティバスのバス停を表すクラス。
+    """
+
+    id: str = ""
+    name: str = ""
+    coord: Coord = None
+
+    def to_json(self):
+        return {"id": self.id, "name": self.name, "coord": self.coord.to_json()}
+
+
+@dataclass
+class CombusSection:
+    """
+    コミュニティバスのセクション（バス停からバス停まで）を表すクラス。
+    """
+
+    duration_m: float = 0.0
+    distance_km: float = 0.0
+    geometry: str = ""
+
+    def to_json(self):
+        return {
+            "duration-m": self.duration_m,
+            "distance-km": self.distance_km,
+            "geometry": self.geometry,
+        }
+
+
+@dataclass
+class CombusRoute:
+    """
+    コミュニティバスの経路を表すクラス。
+    """
+
+    stop_list: list[CombusStop]
+    section_list: list[CombusSection]
+
+    def to_json(self):
+        return {
+            "stop-list": [stop.to_json() for stop in self.stop_list],
+            "section-list": [section.to_json() for section in self.section_list],
+        }
 
 
 def calc_target_time_limit(original_max_minute: int) -> int:
@@ -64,16 +115,83 @@ def exec_single_spot_type(
     return AreaSearchResult(spots=spot_list, reachable=reachable_area)
 
 
+def create_combus_route(
+    stop_id_list: list[str], combus_stop_dict: dict, combus_route_dict: dict
+) -> CombusRoute:
+    """
+    コミュニティバスの経路を作成する。
+    """
+    # バス停のリストを作成
+    stop_list = []
+    for stop_id in stop_id_list:
+        stop_info = combus_stop_dict.get(stop_id)
+        if not stop_info:
+            # これは本当は400番エラーだがめんどいので500で返す
+            raise Exception(f"存在しないバス停IDが指定されています。{stop_id}")
+        stop_list.append(
+            CombusStop(
+                id=stop_id,
+                name=stop_info["name"],
+                coord=Coord(lat=stop_info["lat"], lon=stop_info["lon"]),
+            )
+        )
+
+    # 区間のリストを作成
+    section_list = []
+    for i in range(len(stop_id_list) - 1):
+        from_id = stop_id_list[i]
+        to_id = stop_id_list[i + 1]
+        route_info = combus_route_dict.get((from_id, to_id))
+        if not route_info:
+            raise Exception(
+                f"指定されたバス停ペアの経路が存在しません。{from_id} -> {to_id}"
+            )
+        section_list.append(
+            CombusSection(
+                duration_m=route_info["duration_m"],
+                distance_km=route_info["distance_km"],
+                geometry=route_info["geometry"],
+            )
+        )
+
+    # 最後のバス停から最初のバス停に戻る区間を追加
+    from_id = stop_id_list[-1]
+    to_id = stop_id_list[0]
+    route_info = combus_route_dict.get((from_id, to_id))
+    if not route_info:
+        raise Exception(
+            f"指定されたバス停ペアの経路が存在しません。{from_id} -> {to_id}"
+        )
+    section_list.append(
+        CombusSection(
+            duration_m=route_info["duration_m"],
+            distance_km=route_info["distance_km"],
+            geometry=route_info["geometry"],
+        )
+    )
+
+    return CombusRoute(stop_list=stop_list, section_list=section_list)
+
+
 def exec_area_search(search_input: AreaSearchInput) -> AreaSearchOutput:
     """
     到達圏検索を実行する。
     """
-    target_max_limit = calc_target_time_limit(search_input.max_minute)
+    # 各種データのロード
     all_spot_list = load_spot_list()
+    combus_stop_dict = load_combus_stop_dict()
+    combus_route_dict = load_combus_route_dict()
+
+    combus_route = create_combus_route(
+        search_input.combus_stops, combus_stop_dict, combus_route_dict
+    )
+    target_max_limit = calc_target_time_limit(search_input.max_minute)
+
     result_dict: dict[SpotType, AreaSearchResult] = {}
     for spot_type in search_input.target_spots:
         area_search_result = exec_single_spot_type(
             spot_type, all_spot_list, target_max_limit
         )
         result_dict[spot_type] = area_search_result
+
     return AreaSearchOutput(result_dict=result_dict)
