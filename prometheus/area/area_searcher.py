@@ -15,6 +15,7 @@ from prometheus.data_loader import (
     load_geojson,
     load_combus_stop_dict,
     load_combus_route_dict,
+    load_spot_to_stops_dict,
 )
 from prometheus.area.spot_type import SpotType
 from prometheus.coord import Coord
@@ -181,6 +182,7 @@ def exec_area_search(search_input: AreaSearchInput) -> AreaSearchOutput:
     all_spot_list = load_spot_list()
     combus_stop_dict = load_combus_stop_dict()
     combus_route_dict = load_combus_route_dict()
+    spot_to_stops_dict = load_spot_to_stops_dict()
 
     combus_route = create_combus_route(
         search_input.combus_stops, combus_stop_dict, combus_route_dict
