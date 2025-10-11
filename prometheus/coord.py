@@ -1,7 +1,8 @@
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 
-class Coord(BaseModel):
+@dataclass
+class Coord:
     lat: float
     lon: float
 
