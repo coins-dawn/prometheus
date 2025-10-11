@@ -1,10 +1,5 @@
-import pprint
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from prometheus.car.car_searcher import CarSearcher
-from prometheus.car.car_input import CarSearchInput
-from prometheus.utility import convert_for_json
-from prometheus.car.car_visualizer import generate_car_route_kml
 from prometheus.static_file_loader import (
     is_sample_request,
     load_static_area_search_response,
@@ -15,7 +10,6 @@ from prometheus.data_loader import load_spot_list
 from prometheus.data_loader import load_combus_stop_list
 
 app = Flask(__name__)
-car_searcher = CarSearcher()
 CORS(app)
 
 
@@ -25,37 +19,6 @@ def ping():
     ヘルスチェック用エンドポイント。
     """
     return "OK"
-
-
-@app.route("/combus/search", methods=["POST"])
-@app.route("/search/car", methods=["POST"])  # エイリアス
-def combus_search():
-    """
-    コミュニティバスのルートを検索する。
-    """
-    body = request.get_json()
-
-    try:
-        search_input = CarSearchInput(**body)
-    except Exception as e:
-        return jsonify({"status": "NG", "message": str(e)}), 400
-
-    try:
-        search_output = car_searcher.search(search_input)
-    except Exception as e:
-        return jsonify({"status": "NG", "message": str(e)}), 500
-
-    # generate_car_route_kml(search_output)
-
-    return (
-        jsonify(
-            {
-                "status": "OK",
-                "result": convert_for_json(search_output),
-            }
-        ),
-        200,
-    )
 
 
 @app.route("/combus/stops", methods=["GET"])
