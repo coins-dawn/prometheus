@@ -31,5 +31,12 @@ class AreaSearchInput:
             raise Exception("max-minute は0から120の間の正の整数で指定してください。")
         self.max_minute = int(max_minute_str)
 
-        # combus
-        self.combus = None
+        # combus_stops
+        if "combus-stops" not in data:
+            raise Exception("combus-stopが存在しません")
+        combus_stops = data["combus-stops"]
+        if not isinstance(combus_stops, list):
+            raise Exception("combus-stopsはリスト形式で指定してください")
+        if not all(isinstance(stop, str) for stop in combus_stops):
+            raise Exception("combus-stopsの要素は全て文字列で指定してください")
+        self.combus_stops = combus_stops
