@@ -60,7 +60,7 @@ def load_combus_route_dict():
         to_id = combus_route["to"]
         combus_route_dict[(from_id, to_id)] = {
             "distance_km": float(combus_route["distance_km"]),
-            "duration_m": float(combus_route["duration_m"]),
+            "duration_m": int(combus_route["duration_m"]),
             "geometry": combus_route["geometry"],
         }
     return combus_route_dict

@@ -1,5 +1,5 @@
 from shapely.geometry import shape
-from shapely.geometry.polygon import Polygon
+from shapely.geometry.multipolygon import MultiPolygon
 from dataclasses import dataclass
 from pprint import pprint
 
@@ -41,7 +41,7 @@ class CombusSection:
     コミュニティバスのセクション（バス停からバス停まで）を表すクラス。
     """
 
-    duration_m: float = 0.0
+    duration_m: int = 0
     distance_km: float = 0.0
     geometry: str = ""
 
@@ -73,15 +73,16 @@ def calc_target_time_limit(original_max_minute: int) -> int:
     """
     指定された最大時間から、10分刻みの最大時間を計算する。
     """
-    assert original_max_minute > 0
-    assert original_max_minute <= 120
     return (original_max_minute // 10) * 10
 
 
-def merge_polygon(base_polygon: Polygon, append_polygon: Polygon):
-    assert append_polygon
-    assert base_polygon is None or base_polygon.is_valid
+def merge_polygon(base_polygon: MultiPolygon, append_polygon: MultiPolygon):
+    assert (
+        base_polygon is None or base_polygon.is_valid
+    ), "マージ元のPolygonが不正です。"
 
+    if append_polygon.is_empty:
+        return base_polygon
     if not append_polygon.is_valid:
         append_polygon = append_polygon.buffer(0)
     if base_polygon is None:
@@ -92,8 +93,13 @@ def merge_polygon(base_polygon: Polygon, append_polygon: Polygon):
     return merged_polygon
 
 
-def calc_original_reachable_polygon(spot_list: dict, target_max_limit: int) -> Polygon:
-    merged_polygon = None
+def calc_original_reachable_polygon(
+    spot_list: dict, target_max_limit: int
+) -> MultiPolygon:
+    """
+    既存の公共交通＋徒歩で到達可能な範囲を計算する。
+    """
+    merged_polygon = MultiPolygon()
     for spot in spot_list:
         geojson_dict = load_geojson(spot["id"], target_max_limit)
         geojson_obj = shape(geojson_dict)
@@ -101,12 +107,107 @@ def calc_original_reachable_polygon(spot_list: dict, target_max_limit: int) -> P
     return merged_polygon
 
 
-def calc_with_combus_reachable_polygon() -> Polygon:
-    return None
+def calc_with_combus_reachable_polygon_for_single_spot_and_stop(
+    remaining_time: int, stop_index: int, combus_route: CombusRoute
+):
+    current_stop_index = stop_index
+    current_remaining_time = remaining_time
+    merged_polygon = MultiPolygon()
+
+    def calc_next_stop_index(current_index: int, stop_list_size: int):
+        if current_index == stop_list_size - 1:
+            return 0
+        return current_index + 1
+    
+    while True:
+        # 次のバス停に移動した場合に時間が残っているか確認
+        section = combus_route.section_list[current_stop_index]
+        current_remaining_time -= section.duration_m
+        current_remaining_time = calc_target_time_limit(current_remaining_time)
+        if current_remaining_time <= 0:
+            break
+
+        # 時間が残っている場合はpolygonを取得してマージする
+        next_stop_index = calc_next_stop_index(
+            current_stop_index, len(combus_route.stop_list)
+        )
+        next_stop = combus_route.stop_list[next_stop_index]
+        next_geojson_dict = load_geojson(next_stop.id, current_remaining_time)
+        next_geojson_obj = shape(next_geojson_dict)
+        merged_polygon = merge_polygon(merged_polygon, next_geojson_obj)
+
+        # 次のバス停に移動する
+        current_stop_index = next_stop_index
+
+    return merged_polygon
+
+
+def calc_with_combus_reachable_polygon_for_single_spot(
+    spot: dict,
+    target_max_limit: int,
+    spot_to_stops_dict: dict,
+    combus_route: CombusRoute,
+):
+    """
+    特定のスポットからコミュニティバスを利用した場合に到達可能な範囲を検索する。
+    """
+    upper_walk_distance = 1000  # [m]
+    merged_polygon = MultiPolygon()
+    stop_id_list = [stop.id for stop in combus_route.stop_list]
+
+    # NOTE
+    # spot_to_stops_dictのデータ構造は効率が悪い。
+    # PFに課題があるようなら、spot_id -> stop_id -> value
+    # のdictでデータを保持しておくと多少は良くなるかも。
+    for key, value in spot_to_stops_dict.items():
+        spot_id, stop_id = key
+        # 関係ないspotならcontinue
+        if spot_id != spot["id"]:
+            continue
+        # コミュニティバスに含まれないバス停ならcontinue
+        if stop_id not in stop_id_list:
+            continue
+        stop_index = stop_id_list.index(stop_id)
+        # 徒歩距離がしきい値を超える場合にはcontinue
+        walk_distance_m = value["walk_distance_m"]
+        if walk_distance_m > upper_walk_distance:
+            continue
+        # 上限時間を超えている場合にはcontinue
+        duration_m = value["duration_m"]
+        remaining_time = target_max_limit - duration_m
+        if remaining_time <= 0:
+            continue
+        polygon = calc_with_combus_reachable_polygon_for_single_spot_and_stop(
+            remaining_time, stop_index, combus_route
+        )
+        merged_polygon = merge_polygon(merged_polygon, polygon)
+    return merged_polygon
+
+
+def calc_with_combus_reachable_polygon(
+    spot_list: dict,
+    target_max_limit: int,
+    spot_to_stops_dict: dict,
+    combus_route: CombusRoute,
+) -> MultiPolygon:
+    """
+    コミュニティバスを利用した場合に到達可能な範囲を検索する。
+    """
+    merged_polygon = MultiPolygon()
+    for spot in spot_list:
+        polygon = calc_with_combus_reachable_polygon_for_single_spot(
+            spot, target_max_limit, spot_to_stops_dict, combus_route
+        )
+        merged_polygon = merge_polygon(merged_polygon, polygon)
+    return merged_polygon
 
 
 def exec_single_spot_type(
-    spot_type: SpotType, spot_list: dict, target_max_limit: int
+    spot_type: SpotType,
+    spot_list: dict,
+    target_max_limit: int,
+    spot_to_stops_dict: dict,
+    combus_route: CombusRoute,
 ) -> AreaSearchResult:
     """
     指定されたスポットタイプに対してエリア検索を実行する。
@@ -114,7 +215,9 @@ def exec_single_spot_type(
     original_reachable_polygon = calc_original_reachable_polygon(
         spot_list, target_max_limit
     )
-    with_combus_reachable_polygon = calc_with_combus_reachable_polygon()
+    with_combus_reachable_polygon = calc_with_combus_reachable_polygon(
+        spot_list, target_max_limit, spot_to_stops_dict, combus_route
+    )
     reachable_area = ReachableArea(
         original=original_reachable_polygon, with_comnuter=with_combus_reachable_polygon
     )
@@ -207,7 +310,11 @@ def exec_area_search(search_input: AreaSearchInput) -> AreaSearchOutput:
     result_dict: dict[SpotType, AreaSearchResult] = {}
     for spot_type in search_input.target_spots:
         area_search_result = exec_single_spot_type(
-            spot_type, all_spot_list[spot_type.value], target_max_limit
+            spot_type,
+            all_spot_list[spot_type.value],
+            target_max_limit,
+            spot_to_stops_dict,
+            combus_route,
         )
         result_dict[spot_type] = area_search_result
 
