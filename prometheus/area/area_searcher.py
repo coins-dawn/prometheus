@@ -118,7 +118,7 @@ def calc_with_combus_reachable_polygon_for_single_spot_and_stop(
         if current_index == stop_list_size - 1:
             return 0
         return current_index + 1
-    
+
     while True:
         # 次のバス停に移動した場合に時間が残っているか確認
         section = combus_route.section_list[current_stop_index]
