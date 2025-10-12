@@ -5,6 +5,54 @@ from shapely.geometry.polygon import Polygon
 
 
 @dataclass
+class CombusStop:
+    """
+    コミュニティバスのバス停を表すクラス。
+    """
+
+    id: str = ""
+    name: str = ""
+    coord: Coord = None
+
+    def to_json(self):
+        return {"id": self.id, "name": self.name, "coord": self.coord.to_json()}
+
+
+@dataclass
+class CombusSection:
+    """
+    コミュニティバスのセクション（バス停からバス停まで）を表すクラス。
+    """
+
+    duration_m: int = 0
+    distance_km: float = 0.0
+    geometry: str = ""
+
+    def to_json(self):
+        return {
+            "duration-m": self.duration_m,
+            "distance-km": self.distance_km,
+            "geometry": self.geometry,
+        }
+
+
+@dataclass
+class CombusRoute:
+    """
+    コミュニティバスの経路を表すクラス。
+    """
+
+    stop_list: list[CombusStop]
+    section_list: list[CombusSection]
+
+    def to_json(self):
+        return {
+            "stop-list": [stop.to_json() for stop in self.stop_list],
+            "section-list": [section.to_json() for section in self.section_list],
+        }
+
+
+@dataclass
 class Spot:
     coord: Coord
     spot_type: SpotType

@@ -33,7 +33,8 @@ class AreaSearchInput:
 
         # combus_stops
         if "combus-stops" not in data:
-            raise Exception("combus-stopが存在しません")
+            self.combus_stops = []
+            return
         combus_stops = data["combus-stops"]
         if not isinstance(combus_stops, list):
             raise Exception("combus-stopsはリスト形式で指定してください")
