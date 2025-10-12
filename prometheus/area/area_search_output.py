@@ -93,9 +93,13 @@ class AreaSearchResult:
 @dataclass
 class AreaSearchOutput:
     result_dict: dict[SpotType, AreaSearchResult]
+    combus_route: CombusRoute = NotImplementedError
 
     def to_json(self) -> dict:
         return {
-            spot_type.value: result.to_json()
-            for spot_type, result in self.result_dict.items()
+            "area": {
+                spot_type.value: result.to_json()
+                for spot_type, result in self.result_dict.items()
+            },
+            "combus": self.combus_route.to_json(),
         }
