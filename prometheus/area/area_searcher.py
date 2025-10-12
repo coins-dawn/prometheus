@@ -278,4 +278,4 @@ def exec_area_search(search_input: AreaSearchInput) -> AreaSearchOutput:
         )
         result_dict[spot_type] = area_search_result
 
-    return AreaSearchOutput(result_dict=result_dict)
+    return AreaSearchOutput(result_dict=result_dict, combus_route=combus_route)
