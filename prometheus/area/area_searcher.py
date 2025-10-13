@@ -47,6 +47,21 @@ def merge_polygon(base_polygon: MultiPolygon, append_polygon: MultiPolygon):
     return merged_polygon
 
 
+def calc_diff_polygon(base_polygon: MultiPolygon, diff_polygon: MultiPolygon):
+    assert base_polygon is None or base_polygon.is_valid, "差分元のPolygonが不正です。"
+
+    if diff_polygon.is_empty:
+        return base_polygon
+    if not diff_polygon.is_valid:
+        diff_polygon = diff_polygon.buffer(0)
+    if base_polygon is None:
+        return None
+    else:
+        result_polygon = base_polygon.difference(diff_polygon)
+
+    return result_polygon
+
+
 def calc_original_reachable_polygon(
     spot_list: dict, target_max_limit: int
 ) -> MultiPolygon:
@@ -176,8 +191,11 @@ def exec_single_spot_type(
     with_combus_reachable_polygon = calc_with_combus_reachable_polygon(
         spot_list, target_max_limit, spot_to_stops_dict, combus_route
     )
+    diff_polygon = calc_diff_polygon(
+        with_combus_reachable_polygon, original_reachable_polygon
+    )
     reachable_area = ReachableArea(
-        original=original_reachable_polygon, with_comnuter=with_combus_reachable_polygon
+        original=original_reachable_polygon, with_combus=diff_polygon
     )
 
     spot_list = [

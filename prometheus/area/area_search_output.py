@@ -69,12 +69,12 @@ class Spot:
 @dataclass
 class ReachableArea:
     original: Polygon
-    with_comnuter: Polygon
+    with_combus: Polygon
 
     def to_json(self) -> dict:
         return {
             "original": self.original.__geo_interface__,
-            "with-combus": self.with_comnuter.__geo_interface__,
+            "with-combus": self.with_combus.__geo_interface__,
         }
 
 
