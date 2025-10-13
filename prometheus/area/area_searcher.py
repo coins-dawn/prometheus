@@ -1,7 +1,5 @@
 from shapely.geometry import shape
 from shapely.geometry.multipolygon import MultiPolygon
-from dataclasses import dataclass
-from pprint import pprint
 
 from prometheus.area.area_search_input import AreaSearchInput
 from prometheus.area.area_search_output import (
@@ -9,6 +7,9 @@ from prometheus.area.area_search_output import (
     AreaSearchResult,
     ReachableArea,
     Spot,
+    CombusStop,
+    CombusSection,
+    CombusRoute,
 )
 from prometheus.data_loader import (
     load_spot_list,
@@ -19,54 +20,7 @@ from prometheus.data_loader import (
 )
 from prometheus.area.spot_type import SpotType
 from prometheus.coord import Coord
-
-
-@dataclass
-class CombusStop:
-    """
-    コミュニティバスのバス停を表すクラス。
-    """
-
-    id: str = ""
-    name: str = ""
-    coord: Coord = None
-
-    def to_json(self):
-        return {"id": self.id, "name": self.name, "coord": self.coord.to_json()}
-
-
-@dataclass
-class CombusSection:
-    """
-    コミュニティバスのセクション（バス停からバス停まで）を表すクラス。
-    """
-
-    duration_m: int = 0
-    distance_km: float = 0.0
-    geometry: str = ""
-
-    def to_json(self):
-        return {
-            "duration-m": self.duration_m,
-            "distance-km": self.distance_km,
-            "geometry": self.geometry,
-        }
-
-
-@dataclass
-class CombusRoute:
-    """
-    コミュニティバスの経路を表すクラス。
-    """
-
-    stop_list: list[CombusStop]
-    section_list: list[CombusSection]
-
-    def to_json(self):
-        return {
-            "stop-list": [stop.to_json() for stop in self.stop_list],
-            "section-list": [section.to_json() for section in self.section_list],
-        }
+from prometheus.area.area_visualizer import output_visualize_data
 
 
 def calc_target_time_limit(original_max_minute: int) -> int:
@@ -194,6 +148,10 @@ def calc_with_combus_reachable_polygon(
     コミュニティバスを利用した場合に到達可能な範囲を検索する。
     """
     merged_polygon = MultiPolygon()
+
+    if not combus_route:
+        return merged_polygon
+
     for spot in spot_list:
         polygon = calc_with_combus_reachable_polygon_for_single_spot(
             spot, target_max_limit, spot_to_stops_dict, combus_route
@@ -240,6 +198,9 @@ def create_combus_route(
     """
     コミュニティバスの経路を作成する。
     """
+    if len(stop_id_list) == 0:
+        return None
+
     # バス停のリストを作成
     stop_list = []
     for stop_id in stop_id_list:
@@ -316,6 +277,9 @@ def exec_area_search(search_input: AreaSearchInput) -> AreaSearchOutput:
             spot_to_stops_dict,
             combus_route,
         )
+
+        # output_visualize_data(area_search_result, spot_type, combus_route)
+
         result_dict[spot_type] = area_search_result
 
-    return AreaSearchOutput(result_dict=result_dict)
+    return AreaSearchOutput(result_dict=result_dict, combus_route=combus_route)
