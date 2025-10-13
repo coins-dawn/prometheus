@@ -278,7 +278,7 @@ def exec_area_search(search_input: AreaSearchInput) -> AreaSearchOutput:
             combus_route,
         )
 
-        output_visualize_data(area_search_result, spot_type, combus_route)
+        # output_visualize_data(area_search_result, spot_type, combus_route)
 
         result_dict[spot_type] = area_search_result
 
