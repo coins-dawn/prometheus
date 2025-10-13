@@ -2,3 +2,4 @@ convert/input/
 __pycache__/
 *.kml
 /.vscode/
+/visualize/

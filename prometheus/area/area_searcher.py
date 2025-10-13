@@ -1,3 +1,4 @@
+import json
 from shapely.geometry import shape
 from shapely.geometry.multipolygon import MultiPolygon
 
@@ -252,6 +253,80 @@ def create_combus_route(
     return CombusRoute(stop_list=stop_list, section_list=section_list)
 
 
+def output_visualize_data(area_search_result: AreaSearchResult, spot_type: SpotType):
+    base_dir = "visualize/"
+
+    # originalポリゴンを保存
+    if not area_search_result.reachable.original.is_empty:
+        original_features = []
+
+        # ポリゴンの追加
+        for polygon in area_search_result.reachable.original.geoms:
+            feature = {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [[coord[0], coord[1]] for coord in polygon.exterior.coords]
+                    ],
+                },
+                "properties": {"type": "original", "spot_type": spot_type.value},
+            }
+            original_features.append(feature)
+
+        # スポットの追加
+        for spot in area_search_result.spots:
+            feature = {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [spot.coord.lon, spot.coord.lat],
+                },
+                "properties": {"name": spot.name, "spot_type": spot_type.value},
+            }
+            original_features.append(feature)
+
+        geojson = {"type": "FeatureCollection", "features": original_features}
+
+        with open(f"{base_dir}/original_{spot_type.value}.geojson", "w") as f:
+            json.dump(geojson, f)
+
+    # with_combuserポリゴンを保存
+    if not area_search_result.reachable.with_comnuter.is_empty:
+        with_combus_features = []
+
+        # ポリゴンの追加
+        for polygon in area_search_result.reachable.with_comnuter.geoms:
+            feature = {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [[coord[0], coord[1]] for coord in polygon.exterior.coords]
+                    ],
+                },
+                "properties": {"type": "with_combus", "spot_type": spot_type.value},
+            }
+            with_combus_features.append(feature)
+
+        # スポットの追加
+        for spot in area_search_result.spots:
+            feature = {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [spot.coord.lon, spot.coord.lat],
+                },
+                "properties": {"name": spot.name, "spot_type": spot_type.value},
+            }
+            with_combus_features.append(feature)
+
+        geojson = {"type": "FeatureCollection", "features": with_combus_features}
+
+        with open(f"{base_dir}/with_combus_{spot_type.value}.geojson", "w") as f:
+            json.dump(geojson, f)
+
+
 def exec_area_search(search_input: AreaSearchInput) -> AreaSearchOutput:
     """
     到達圏検索を実行する。
@@ -276,6 +351,9 @@ def exec_area_search(search_input: AreaSearchInput) -> AreaSearchOutput:
             spot_to_stops_dict,
             combus_route,
         )
+
+        output_visualize_data(area_search_result, spot_type)
+
         result_dict[spot_type] = area_search_result
 
     return AreaSearchOutput(result_dict=result_dict, combus_route=combus_route)
