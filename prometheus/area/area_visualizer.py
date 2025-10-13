@@ -75,7 +75,7 @@ def _save_with_combus_polygon(
 ):
     """コミュニティバスありの到達圏ポリゴンを保存"""
     _save_polygon_geojson(
-        area_search_result.reachable.with_comnuter,
+        area_search_result.reachable.with_combus,
         area_search_result.spots,
         "with_combus",
         spot_type.value,
