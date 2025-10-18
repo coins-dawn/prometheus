@@ -3,19 +3,13 @@ import simplekml
 import polyline
 from prometheus.area.area_search_output import AreaSearchResult, CombusRoute
 from prometheus.area.spot_type import SpotType
-from shapely.geometry import MultiPolygon
-
+from shapely.geometry import MultiPolygon, Polygon, mapping
 
 def _create_polygon_feature(polygon, feature_type: str, spot_type: str):
     """ポリゴンのGeoJSON Featureを作成"""
     return {
         "type": "Feature",
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [
-                [[coord[0], coord[1]] for coord in polygon.exterior.coords]
-            ],
-        },
+        "geometry": mapping(polygon),
         "properties": {"type": feature_type, "spot_type": spot_type},
     }
 
