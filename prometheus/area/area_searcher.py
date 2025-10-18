@@ -12,11 +12,8 @@ from prometheus.area.area_search_output import (
     CombusRoute,
 )
 from prometheus.data_loader import (
-    load_spot_list,
     load_geojson,
-    load_combus_stop_dict,
-    load_combus_route_dict,
-    load_spot_to_stops_dict,
+    DataAccessor,
 )
 from prometheus.area.spot_type import SpotType
 from prometheus.coord import Coord
@@ -58,7 +55,7 @@ def calc_diff_polygon(base_polygon: MultiPolygon, diff_polygon: MultiPolygon):
         return None
     else:
         result_polygon = base_polygon.difference(diff_polygon)
-        if result_polygon.geom_type == 'Polygon':
+        if result_polygon.geom_type == "Polygon":
             result_polygon = MultiPolygon([result_polygon])
 
     return result_polygon
@@ -273,15 +270,16 @@ def create_combus_route(
     return CombusRoute(stop_list=stop_list, section_list=section_list)
 
 
-def exec_area_search(search_input: AreaSearchInput) -> AreaSearchOutput:
+def exec_area_search(
+    search_input: AreaSearchInput, data_accessor: DataAccessor
+) -> AreaSearchOutput:
     """
     到達圏検索を実行する。
     """
-    # 各種データのロード
-    all_spot_list = load_spot_list()
-    combus_stop_dict = load_combus_stop_dict()
-    combus_route_dict = load_combus_route_dict()
-    spot_to_stops_dict = load_spot_to_stops_dict()
+    all_spot_list = data_accessor.spot_list
+    combus_stop_dict = data_accessor.combus_stop_dict
+    combus_route_dict = data_accessor.combus_route_dict
+    spot_to_stops_dict = data_accessor.spot_to_stops_dict
 
     combus_route = create_combus_route(
         search_input.combus_stops, combus_stop_dict, combus_route_dict
