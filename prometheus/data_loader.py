@@ -1,4 +1,5 @@
 import json
+import pickle
 
 
 SPOT_LIST_FILE_PATH = "data/area/toyama_spot_list.json"
@@ -42,9 +43,9 @@ def load_geojson(id_str: str, max_minute: int):
     """
     指定されたIDと最大時間に対応するGeoJSONをロードする。
     """
-    file_path = f"data/area/geojson/{id_str}_{max_minute}.geojson"
-    with open(file_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    file_path = f"data/area/geojson/{id_str}_{max_minute}.bin"
+    with open(file_path, "rb") as f:
+        return pickle.load(f)
 
 
 def load_combus_route_dict():
