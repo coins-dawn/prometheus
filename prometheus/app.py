@@ -6,11 +6,13 @@ from prometheus.static_file_loader import (
 )
 from prometheus.area.area_search_input import AreaSearchInput
 from prometheus.area.area_searcher import exec_area_search
-from prometheus.data_loader import load_spot_list
-from prometheus.data_loader import load_combus_stop_list
+from prometheus.data_loader import DataAccessor
+from prometheus.arrange_data import unzip_geojson
 
 app = Flask(__name__)
 CORS(app)
+data_accessor = DataAccessor()
+unzip_geojson()
 
 
 @app.route("/", methods=["GET"])
@@ -30,7 +32,7 @@ def combus_stops():
         jsonify(
             {
                 "status": "OK",
-                "result": load_combus_stop_list(),
+                "result": data_accessor.combus_stop_list,
             }
         ),
         200,
@@ -75,7 +77,7 @@ def area_search():
         return jsonify({"status": "NG", "message": str(e)}), 400
 
     try:
-        search_output = exec_area_search(search_input)
+        search_output = exec_area_search(search_input, data_accessor)
     except Exception as e:
         return jsonify({"status": "NG", "message": str(e)}), 500
 
@@ -95,7 +97,7 @@ def area_spots():
     """
     到達圏検索で指定可能なスポット一覧を取得する。
     """
-    spot_dict = load_spot_list()
+    spot_dict = data_accessor.spot_list
     spots = []
     for key, items in spot_dict.items():
         for item in items:
