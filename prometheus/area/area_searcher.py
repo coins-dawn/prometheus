@@ -11,20 +11,10 @@ from prometheus.area.area_search_output import (
     CombusSection,
     CombusRoute,
 )
-from prometheus.data_loader import (
-    load_geojson,
-    DataAccessor,
-)
+from prometheus.data_loader import DataAccessor
 from prometheus.area.spot_type import SpotType
 from prometheus.coord import Coord
 from prometheus.area.area_visualizer import output_visualize_data
-
-
-def calc_target_time_limit(original_max_minute: int) -> int:
-    """
-    指定された最大時間から、10分刻みの最大時間を計算する。
-    """
-    return (original_max_minute // 10) * 10
 
 
 def merge_polygon(base_polygon: MultiPolygon, append_polygon: MultiPolygon):
@@ -62,21 +52,24 @@ def calc_diff_polygon(base_polygon: MultiPolygon, diff_polygon: MultiPolygon):
 
 
 def calc_original_reachable_polygon(
-    spot_list: dict, target_max_limit: int
+    spot_list: dict, target_max_limit: int, data_accessor: DataAccessor
 ) -> MultiPolygon:
     """
     既存の公共交通＋徒歩で到達可能な範囲を計算する。
     """
     merged_polygon = MultiPolygon()
     for spot in spot_list:
-        geojson_dict = load_geojson(spot["id"], target_max_limit)
+        geojson_dict = data_accessor.load_geojson(spot["id"], target_max_limit)
         geojson_obj = shape(geojson_dict)
         merged_polygon = merge_polygon(merged_polygon, geojson_obj)
     return merged_polygon
 
 
 def calc_with_combus_reachable_polygon_for_single_spot_and_stop(
-    remaining_time: int, stop_index: int, combus_route: CombusRoute
+    remaining_time: int,
+    stop_index: int,
+    combus_route: CombusRoute,
+    data_accessor: DataAccessor,
 ):
     current_stop_index = stop_index
     current_remaining_time = remaining_time
@@ -91,8 +84,7 @@ def calc_with_combus_reachable_polygon_for_single_spot_and_stop(
         # 次のバス停に移動した場合に時間が残っているか確認
         section = combus_route.section_list[current_stop_index]
         current_remaining_time -= section.duration_m
-        current_remaining_time = calc_target_time_limit(current_remaining_time)
-        if current_remaining_time <= 0:
+        if current_remaining_time < 10:
             break
 
         # 時間が残っている場合はpolygonを取得してマージする
@@ -100,7 +92,9 @@ def calc_with_combus_reachable_polygon_for_single_spot_and_stop(
             current_stop_index, len(combus_route.stop_list)
         )
         next_stop = combus_route.stop_list[next_stop_index]
-        next_geojson_dict = load_geojson(next_stop.id, current_remaining_time)
+        next_geojson_dict = data_accessor.load_geojson(
+            next_stop.id, current_remaining_time
+        )
         next_geojson_obj = shape(next_geojson_dict)
         merged_polygon = merge_polygon(merged_polygon, next_geojson_obj)
 
@@ -115,6 +109,7 @@ def calc_with_combus_reachable_polygon_for_single_spot(
     target_max_limit: int,
     spot_to_stops_dict: dict,
     combus_route: CombusRoute,
+    data_accessor: DataAccessor,
 ):
     """
     特定のスポットからコミュニティバスを利用した場合に到達可能な範囲を検索する。
@@ -146,7 +141,7 @@ def calc_with_combus_reachable_polygon_for_single_spot(
         if remaining_time <= 0:
             continue
         polygon = calc_with_combus_reachable_polygon_for_single_spot_and_stop(
-            remaining_time, stop_index, combus_route
+            remaining_time, stop_index, combus_route, data_accessor
         )
         merged_polygon = merge_polygon(merged_polygon, polygon)
     return merged_polygon
@@ -157,6 +152,7 @@ def calc_with_combus_reachable_polygon(
     target_max_limit: int,
     spot_to_stops_dict: dict,
     combus_route: CombusRoute,
+    data_accessor: DataAccessor,
 ) -> MultiPolygon:
     """
     コミュニティバスを利用した場合に到達可能な範囲を検索する。
@@ -168,7 +164,7 @@ def calc_with_combus_reachable_polygon(
 
     for spot in spot_list:
         polygon = calc_with_combus_reachable_polygon_for_single_spot(
-            spot, target_max_limit, spot_to_stops_dict, combus_route
+            spot, target_max_limit, spot_to_stops_dict, combus_route, data_accessor
         )
         merged_polygon = merge_polygon(merged_polygon, polygon)
     return merged_polygon
@@ -180,15 +176,16 @@ def exec_single_spot_type(
     target_max_limit: int,
     spot_to_stops_dict: dict,
     combus_route: CombusRoute,
+    data_accessor: DataAccessor,
 ) -> AreaSearchResult:
     """
     指定されたスポットタイプに対してエリア検索を実行する。
     """
     original_reachable_polygon = calc_original_reachable_polygon(
-        spot_list, target_max_limit
+        spot_list, target_max_limit, data_accessor
     )
     with_combus_reachable_polygon = calc_with_combus_reachable_polygon(
-        spot_list, target_max_limit, spot_to_stops_dict, combus_route
+        spot_list, target_max_limit, spot_to_stops_dict, combus_route, data_accessor
     )
     diff_polygon = calc_diff_polygon(
         with_combus_reachable_polygon, original_reachable_polygon
@@ -284,19 +281,19 @@ def exec_area_search(
     combus_route = create_combus_route(
         search_input.combus_stops, combus_stop_dict, combus_route_dict
     )
-    target_max_limit = calc_target_time_limit(search_input.max_minute)
 
     result_dict: dict[SpotType, AreaSearchResult] = {}
     for spot_type in search_input.target_spots:
         area_search_result = exec_single_spot_type(
             spot_type,
             all_spot_list[spot_type.value],
-            target_max_limit,
+            search_input.max_minute,
             spot_to_stops_dict,
             combus_route,
+            data_accessor,
         )
 
-        # output_visualize_data(area_search_result, spot_type, combus_route)
+        output_visualize_data(area_search_result, spot_type, combus_route)
 
         result_dict[spot_type] = area_search_result
 
