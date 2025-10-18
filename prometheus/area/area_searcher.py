@@ -1,5 +1,7 @@
 from shapely.geometry import shape
 from shapely.geometry.multipolygon import MultiPolygon
+# from shapely.validation import make_valid
+from shapely import make_valid
 
 from prometheus.area.area_search_input import AreaSearchInput
 from prometheus.area.area_search_output import (
@@ -25,7 +27,7 @@ def merge_polygon(base_polygon: MultiPolygon, append_polygon: MultiPolygon):
     if append_polygon.is_empty:
         return base_polygon
     if not append_polygon.is_valid:
-        append_polygon = append_polygon.buffer(0)
+        append_polygon = make_valid(append_polygon, method='structure')
     if base_polygon is None:
         merged_polygon = append_polygon
     else:
@@ -40,7 +42,7 @@ def calc_diff_polygon(base_polygon: MultiPolygon, diff_polygon: MultiPolygon):
     if diff_polygon.is_empty:
         return base_polygon
     if not diff_polygon.is_valid:
-        diff_polygon = diff_polygon.buffer(0)
+        diff_polygon = make_valid(diff_polygon, method='structure')
     if base_polygon is None:
         return None
     else:
