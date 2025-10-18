@@ -58,6 +58,8 @@ def calc_diff_polygon(base_polygon: MultiPolygon, diff_polygon: MultiPolygon):
         return None
     else:
         result_polygon = base_polygon.difference(diff_polygon)
+        if result_polygon.geom_type == 'Polygon':
+            result_polygon = MultiPolygon([result_polygon])
 
     return result_polygon
 
