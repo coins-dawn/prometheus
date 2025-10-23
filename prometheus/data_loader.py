@@ -8,6 +8,7 @@ class DataAccessor:
     COMBUS_ROUTES_FILE_PATH = "data/area/combus_routes.json"
     SPOT_TO_STOPS_FILE_PATH = "data/area/spot_to_stops.json"
     ALL_GEOJSON_FILE_PATH = "data/area/all_geojsons.txt"
+    MESH_FILE_PATH = "data/area/mesh.json"
 
     def __init__(self):
         self.spot_list = DataAccessor.load_spot_list()
@@ -16,6 +17,7 @@ class DataAccessor:
         self.combus_route_dict = DataAccessor.load_combus_route_dict()
         self.spot_to_stops_dict = DataAccessor.load_spot_to_stops_dict()
         self.geojson_name_set = DataAccessor.load_geojson_name_set()
+        self.mesh_dict = DataAccessor.load_mesh_dict()
         print("データのロードが完了しました。")
 
     @classmethod
@@ -99,6 +101,24 @@ class DataAccessor:
                 name = line.strip()
                 all_geojson_name_set.add(name)
         return all_geojson_name_set
+
+    @classmethod
+    def load_mesh_dict(cls):
+        """
+        メッシュ情報をロードしdictで返却する。
+        """
+        mesh_list = []
+        with open(cls.MESH_FILE_PATH, "r", encoding="utf-8") as f:
+            mesh_list = json.load(f)["mesh"]
+        mesh_dict = {
+            mesh["mesh_code"]: {
+                "mesh_code": mesh["mesh_code"],
+                "population": mesh["population"],
+                # geometryは必要に応じて追加
+            }
+            for mesh in mesh_list
+        }
+        return mesh_dict
 
     def load_geojson(self, id_str: str, max_minute: int):
         """
