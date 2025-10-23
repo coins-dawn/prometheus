@@ -1,6 +1,5 @@
 from shapely.geometry import shape
 from shapely.geometry.multipolygon import MultiPolygon
-# from shapely.validation import make_valid
 from shapely import make_valid
 
 from prometheus.area.area_search_input import AreaSearchInput
@@ -27,7 +26,7 @@ def merge_polygon(base_polygon: MultiPolygon, append_polygon: MultiPolygon):
     if append_polygon.is_empty:
         return base_polygon
     if not append_polygon.is_valid:
-        append_polygon = make_valid(append_polygon, method='structure')
+        append_polygon = make_valid(append_polygon)
     if base_polygon is None:
         merged_polygon = append_polygon
     else:
@@ -42,7 +41,7 @@ def calc_diff_polygon(base_polygon: MultiPolygon, diff_polygon: MultiPolygon):
     if diff_polygon.is_empty:
         return base_polygon
     if not diff_polygon.is_valid:
-        diff_polygon = make_valid(diff_polygon, method='structure')
+        diff_polygon = make_valid(diff_polygon)
     if base_polygon is None:
         return None
     else:
@@ -62,8 +61,8 @@ def calc_original_reachable_polygon(
     merged_polygon = MultiPolygon()
     for spot in spot_list:
         geojson_dict = data_accessor.load_geojson(spot["id"], target_max_limit)
-        geojson_obj = shape(geojson_dict)
-        merged_polygon = merge_polygon(merged_polygon, geojson_obj)
+        geometry_obj = shape(geojson_dict["geometry"])
+        merged_polygon = merge_polygon(merged_polygon, geometry_obj)
     return merged_polygon
 
 
@@ -97,8 +96,8 @@ def calc_with_combus_reachable_polygon_for_single_spot_and_stop(
         next_geojson_dict = data_accessor.load_geojson(
             next_stop.id, current_remaining_time
         )
-        next_geojson_obj = shape(next_geojson_dict)
-        merged_polygon = merge_polygon(merged_polygon, next_geojson_obj)
+        next_geometry_obj = shape(next_geojson_dict["geometry"])
+        merged_polygon = merge_polygon(merged_polygon, next_geometry_obj)
 
         # 次のバス停に移動する
         current_stop_index = next_stop_index
@@ -295,7 +294,7 @@ def exec_area_search(
             data_accessor,
         )
 
-        # output_visualize_data(area_search_result, spot_type, combus_route)
+        output_visualize_data(area_search_result, spot_type, combus_route)
 
         result_dict[spot_type] = area_search_result
 
