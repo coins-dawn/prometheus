@@ -18,6 +18,16 @@ from prometheus.coord import Coord
 from prometheus.area.area_visualizer import output_visualize_data
 
 
+class GeoJson:
+    def __init__(
+        self, polygon: MultiPolygon = None, reachable_mesh_codes: set[str] = None
+    ):
+        self.polygon: MultiPolygon = polygon if polygon else MultiPolygon()
+        self.reachable_mesh_codes: set[str] = (
+            reachable_mesh_codes if reachable_mesh_codes else set()
+        )
+
+
 def merge_polygon(base_polygon: MultiPolygon, append_polygon: MultiPolygon):
     assert (
         base_polygon is None or base_polygon.is_valid
@@ -33,6 +43,17 @@ def merge_polygon(base_polygon: MultiPolygon, append_polygon: MultiPolygon):
         merged_polygon = base_polygon.union(append_polygon)
 
     return merged_polygon
+
+
+def merge_geojson(base_geojson: GeoJson, append_geojson: GeoJson):
+    merged_polygon = merge_polygon(base_geojson.polygon, append_geojson.polygon)
+    merged_reachable_mesh_codes = base_geojson.reachable_mesh_codes.union(
+        append_geojson.reachable_mesh_codes
+    )
+    merged_geojson = GeoJson()
+    merged_geojson.polygon = merged_polygon
+    merged_geojson.reachable_mesh_codes = merged_reachable_mesh_codes
+    return merged_geojson
 
 
 def calc_diff_polygon(base_polygon: MultiPolygon, diff_polygon: MultiPolygon):
@@ -52,18 +73,21 @@ def calc_diff_polygon(base_polygon: MultiPolygon, diff_polygon: MultiPolygon):
     return result_polygon
 
 
-def calc_original_reachable_polygon(
+def calc_original_reachable_geojson(
     spot_list: dict, target_max_limit: int, data_accessor: DataAccessor
-) -> MultiPolygon:
+) -> GeoJson:
     """
     既存の公共交通＋徒歩で到達可能な範囲を計算する。
     """
-    merged_polygon = MultiPolygon()
+    merged_geojson = GeoJson()
     for spot in spot_list:
         geojson_dict = data_accessor.load_geojson(spot["id"], target_max_limit)
-        geometry_obj = shape(geojson_dict["geometry"])
-        merged_polygon = merge_polygon(merged_polygon, geometry_obj)
-    return merged_polygon
+        geojson = GeoJson(
+            polygon=shape(geojson_dict["geometry"]),
+            reachable_mesh_codes=set(geojson_dict["properties"]["reachable-mesh"]),
+        )
+        merged_geojson = merge_geojson(merged_geojson, geojson)
+    return merged_geojson
 
 
 def calc_with_combus_reachable_polygon_for_single_spot_and_stop(
@@ -171,6 +195,16 @@ def calc_with_combus_reachable_polygon(
     return merged_polygon
 
 
+def calc_score(data_accessor: DataAccessor, mesh_codes: set[str]) -> int:
+    mesh_dict = data_accessor.mesh_dict
+    score = 0
+    for mesh_code in mesh_codes:
+        mesh_info = mesh_dict.get(mesh_code)
+        if mesh_info:
+            score += mesh_info["population"]
+    return score
+
+
 def exec_single_spot_type(
     spot_type: SpotType,
     spot_list: dict,
@@ -182,9 +216,11 @@ def exec_single_spot_type(
     """
     指定されたスポットタイプに対してエリア検索を実行する。
     """
-    original_reachable_polygon = calc_original_reachable_polygon(
+    original_reachable_geojson = calc_original_reachable_geojson(
         spot_list, target_max_limit, data_accessor
     )
+    # 暫定対応
+    original_reachable_polygon = original_reachable_geojson.polygon
     with_combus_reachable_polygon = calc_with_combus_reachable_polygon(
         spot_list, target_max_limit, spot_to_stops_dict, combus_route, data_accessor
     )
@@ -192,7 +228,11 @@ def exec_single_spot_type(
         with_combus_reachable_polygon, original_reachable_polygon
     )
     reachable_area = ReachableArea(
-        original=original_reachable_polygon, with_combus=diff_polygon
+        original=original_reachable_polygon,
+        with_combus=diff_polygon,
+        original_score=calc_score(
+            data_accessor, original_reachable_geojson.reachable_mesh_codes
+        ),
     )
 
     spot_list = [
