@@ -1,4 +1,5 @@
 import json
+import os
 import simplekml
 import polyline
 from prometheus.area.area_search_output import AreaSearchResult, CombusRoute
@@ -110,6 +111,9 @@ def output_visualize_data(
 ):
     """可視化データを出力"""
     base_dir = "visualize/"
+    
+    if not os.path.exists(base_dir):
+        return
 
     _save_original_polygon(area_search_result, spot_type, base_dir)
     _save_with_combus_polygon(area_search_result, spot_type, base_dir)
