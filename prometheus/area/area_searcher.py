@@ -1,6 +1,5 @@
 from shapely.geometry import shape
 from shapely.geometry.multipolygon import MultiPolygon
-# from shapely.validation import make_valid
 from shapely import make_valid
 
 from prometheus.area.area_search_input import AreaSearchInput
@@ -19,6 +18,16 @@ from prometheus.coord import Coord
 from prometheus.area.area_visualizer import output_visualize_data
 
 
+class GeoJson:
+    def __init__(
+        self, polygon: MultiPolygon = None, reachable_mesh_codes: set[str] = None
+    ):
+        self.polygon: MultiPolygon = polygon if polygon else MultiPolygon()
+        self.reachable_mesh_codes: set[str] = (
+            reachable_mesh_codes if reachable_mesh_codes else set()
+        )
+
+
 def merge_polygon(base_polygon: MultiPolygon, append_polygon: MultiPolygon):
     assert (
         base_polygon is None or base_polygon.is_valid
@@ -27,7 +36,7 @@ def merge_polygon(base_polygon: MultiPolygon, append_polygon: MultiPolygon):
     if append_polygon.is_empty:
         return base_polygon
     if not append_polygon.is_valid:
-        append_polygon = make_valid(append_polygon, method='structure')
+        append_polygon = make_valid(append_polygon)
     if base_polygon is None:
         merged_polygon = append_polygon
     else:
@@ -36,13 +45,24 @@ def merge_polygon(base_polygon: MultiPolygon, append_polygon: MultiPolygon):
     return merged_polygon
 
 
+def merge_geojson(base_geojson: GeoJson, append_geojson: GeoJson):
+    merged_polygon = merge_polygon(base_geojson.polygon, append_geojson.polygon)
+    merged_reachable_mesh_codes = base_geojson.reachable_mesh_codes.union(
+        append_geojson.reachable_mesh_codes
+    )
+    merged_geojson = GeoJson()
+    merged_geojson.polygon = merged_polygon
+    merged_geojson.reachable_mesh_codes = merged_reachable_mesh_codes
+    return merged_geojson
+
+
 def calc_diff_polygon(base_polygon: MultiPolygon, diff_polygon: MultiPolygon):
     assert base_polygon is None or base_polygon.is_valid, "差分元のPolygonが不正です。"
 
     if diff_polygon.is_empty:
         return base_polygon
     if not diff_polygon.is_valid:
-        diff_polygon = make_valid(diff_polygon, method='structure')
+        diff_polygon = make_valid(diff_polygon)
     if base_polygon is None:
         return None
     else:
@@ -53,29 +73,32 @@ def calc_diff_polygon(base_polygon: MultiPolygon, diff_polygon: MultiPolygon):
     return result_polygon
 
 
-def calc_original_reachable_polygon(
+def calc_original_reachable_geojson(
     spot_list: dict, target_max_limit: int, data_accessor: DataAccessor
-) -> MultiPolygon:
+) -> GeoJson:
     """
     既存の公共交通＋徒歩で到達可能な範囲を計算する。
     """
-    merged_polygon = MultiPolygon()
+    merged_geojson = GeoJson()
     for spot in spot_list:
         geojson_dict = data_accessor.load_geojson(spot["id"], target_max_limit)
-        geojson_obj = shape(geojson_dict)
-        merged_polygon = merge_polygon(merged_polygon, geojson_obj)
-    return merged_polygon
+        geojson = GeoJson(
+            polygon=shape(geojson_dict["geometry"]),
+            reachable_mesh_codes=set(geojson_dict["properties"]["reachable-mesh"]),
+        )
+        merged_geojson = merge_geojson(merged_geojson, geojson)
+    return merged_geojson
 
 
-def calc_with_combus_reachable_polygon_for_single_spot_and_stop(
+def calc_with_combus_reachable_geojson_for_single_spot_and_stop(
     remaining_time: int,
     stop_index: int,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
-):
+) -> GeoJson:
     current_stop_index = stop_index
     current_remaining_time = remaining_time
-    merged_polygon = MultiPolygon()
+    merged_geojson = GeoJson()
 
     def calc_next_stop_index(current_index: int, stop_list_size: int):
         if current_index == stop_list_size - 1:
@@ -97,27 +120,30 @@ def calc_with_combus_reachable_polygon_for_single_spot_and_stop(
         next_geojson_dict = data_accessor.load_geojson(
             next_stop.id, current_remaining_time
         )
-        next_geojson_obj = shape(next_geojson_dict)
-        merged_polygon = merge_polygon(merged_polygon, next_geojson_obj)
+        next_geojson = GeoJson(
+            polygon=shape(next_geojson_dict["geometry"]),
+            reachable_mesh_codes=set(next_geojson_dict["properties"]["reachable-mesh"]),
+        )
+        merged_geojson = merge_geojson(merged_geojson, next_geojson)
 
         # 次のバス停に移動する
         current_stop_index = next_stop_index
 
-    return merged_polygon
+    return merged_geojson
 
 
-def calc_with_combus_reachable_polygon_for_single_spot(
+def calc_with_combus_reachable_geojson_for_single_spot(
     spot: dict,
     target_max_limit: int,
     spot_to_stops_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
-):
+) -> GeoJson:
     """
     特定のスポットからコミュニティバスを利用した場合に到達可能な範囲を検索する。
     """
     upper_walk_distance = 1000  # [m]
-    merged_polygon = MultiPolygon()
+    merged_geojson = GeoJson()
     stop_id_list = [stop.id for stop in combus_route.stop_list]
 
     # NOTE
@@ -142,34 +168,44 @@ def calc_with_combus_reachable_polygon_for_single_spot(
         remaining_time = target_max_limit - duration_m
         if remaining_time <= 0:
             continue
-        polygon = calc_with_combus_reachable_polygon_for_single_spot_and_stop(
+        geojson = calc_with_combus_reachable_geojson_for_single_spot_and_stop(
             remaining_time, stop_index, combus_route, data_accessor
         )
-        merged_polygon = merge_polygon(merged_polygon, polygon)
-    return merged_polygon
+        merged_geojson = merge_geojson(merged_geojson, geojson)
+    return merged_geojson
 
 
-def calc_with_combus_reachable_polygon(
+def calc_with_combus_reachable_geojson(
     spot_list: dict,
     target_max_limit: int,
     spot_to_stops_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
-) -> MultiPolygon:
+) -> GeoJson:
     """
     コミュニティバスを利用した場合に到達可能な範囲を検索する。
     """
-    merged_polygon = MultiPolygon()
+    merged_geojson = GeoJson()
 
     if not combus_route:
-        return merged_polygon
+        return merged_geojson
 
     for spot in spot_list:
-        polygon = calc_with_combus_reachable_polygon_for_single_spot(
+        geojson = calc_with_combus_reachable_geojson_for_single_spot(
             spot, target_max_limit, spot_to_stops_dict, combus_route, data_accessor
         )
-        merged_polygon = merge_polygon(merged_polygon, polygon)
-    return merged_polygon
+        merged_geojson = merge_geojson(merged_geojson, geojson)
+    return merged_geojson
+
+
+def calc_score(data_accessor: DataAccessor, mesh_codes: set[str]) -> int:
+    mesh_dict = data_accessor.mesh_dict
+    score = 0
+    for mesh_code in mesh_codes:
+        mesh_info = mesh_dict.get(mesh_code)
+        if mesh_info:
+            score += mesh_info["population"]
+    return score
 
 
 def exec_single_spot_type(
@@ -183,17 +219,28 @@ def exec_single_spot_type(
     """
     指定されたスポットタイプに対してエリア検索を実行する。
     """
-    original_reachable_polygon = calc_original_reachable_polygon(
+    original_reachable_geojson = calc_original_reachable_geojson(
         spot_list, target_max_limit, data_accessor
     )
-    with_combus_reachable_polygon = calc_with_combus_reachable_polygon(
+    original_score = calc_score(
+        data_accessor, original_reachable_geojson.reachable_mesh_codes
+    )
+    with_combus_reachable_geojson = calc_with_combus_reachable_geojson(
         spot_list, target_max_limit, spot_to_stops_dict, combus_route, data_accessor
     )
     diff_polygon = calc_diff_polygon(
-        with_combus_reachable_polygon, original_reachable_polygon
+        with_combus_reachable_geojson.polygon, original_reachable_geojson.polygon
     )
+    diff_reachable_meshes = (
+        with_combus_reachable_geojson.reachable_mesh_codes
+        - original_reachable_geojson.reachable_mesh_codes
+    )
+    diff_score = calc_score(data_accessor, diff_reachable_meshes)
     reachable_area = ReachableArea(
-        original=original_reachable_polygon, with_combus=diff_polygon
+        original=original_reachable_geojson.polygon,
+        with_combus=diff_polygon,
+        original_score=original_score,
+        with_combus_score=diff_score,
     )
 
     spot_list = [
@@ -295,7 +342,7 @@ def exec_area_search(
             data_accessor,
         )
 
-        # output_visualize_data(area_search_result, spot_type, combus_route)
+        output_visualize_data(area_search_result, spot_type, combus_route)
 
         result_dict[spot_type] = area_search_result
 
