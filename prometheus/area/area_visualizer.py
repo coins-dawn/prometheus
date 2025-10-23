@@ -5,6 +5,7 @@ from prometheus.area.area_search_output import AreaSearchResult, CombusRoute
 from prometheus.area.spot_type import SpotType
 from shapely.geometry import MultiPolygon, Polygon, mapping
 
+
 def _create_polygon_feature(polygon, feature_type: str, spot_type: str):
     """ポリゴンのGeoJSON Featureを作成"""
     return {

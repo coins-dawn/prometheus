@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from prometheus.coord import Coord
 from prometheus.area.spot_type import SpotType
-from shapely.geometry.polygon import Polygon
+from shapely.geometry import MultiPolygon
 
 
 @dataclass
@@ -68,13 +68,17 @@ class Spot:
 
 @dataclass
 class ReachableArea:
-    original: Polygon
-    with_combus: Polygon
+    original: MultiPolygon
+    with_combus: MultiPolygon
+    original_score: int = 0
+    with_combus_score: int = 0
 
     def to_json(self) -> dict:
         return {
             "original": self.original.__geo_interface__,
             "with-combus": self.with_combus.__geo_interface__,
+            "original-score": self.original_score,
+            "with-combus-score": self.with_combus_score,
         }
 
 
