@@ -111,7 +111,7 @@ def output_visualize_data(
 ):
     """可視化データを出力"""
     base_dir = "visualize/"
-    
+
     if not os.path.exists(base_dir):
         return
 
