@@ -39,8 +39,25 @@ def combus_stops():
     )
 
 
+@app.route("/combus/stop-sequences", methods=["GET"])
+def combus_stop_sequences():
+    """
+    spot type, 上限時間ごとの最適なバス停の列を返却する。
+    """
+    ret_list = []
+    for key, stop_sequence in data_accessor.best_combus_stop_sequence_dict.items():
+        spot_type, time_limit = key
+        ret_list.append(
+            {
+                "spot-type": spot_type,
+                "time-limit": time_limit,
+                "stop-sequence": stop_sequence,
+            }
+        )
+    return jsonify({"status": "OK", "result": ret_list})
+
+
 @app.route("/area/search/sample", methods=["POST"])
-@app.route("/search/area", methods=["POST"])  # エイリアス
 def area_search_sample():
     """
     到達圏検索のサンプルレスポンスを返す。
