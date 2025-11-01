@@ -22,7 +22,6 @@ class DataAccessor:
         self.best_combus_stop_sequence_dict = (
             DataAccessor.load_best_combus_stop_sequences()
         )
-        print(self.best_combus_stop_sequence_dict)
         print("データのロードが完了しました。")
 
     @classmethod
