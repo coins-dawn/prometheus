@@ -9,6 +9,7 @@ class DataAccessor:
     SPOT_TO_STOPS_FILE_PATH = "data/area/spot_to_stops.json"
     ALL_GEOJSON_FILE_PATH = "data/area/all_geojsons.txt"
     MESH_FILE_PATH = "data/area/mesh.json"
+    BEST_COMBUS_STOP_SEQUENCE_FILE_PATH = "data/area/best_combus_stop_sequences.json"
 
     def __init__(self):
         self.spot_list = DataAccessor.load_spot_list()
@@ -18,6 +19,10 @@ class DataAccessor:
         self.spot_to_stops_dict = DataAccessor.load_spot_to_stops_dict()
         self.geojson_name_set = DataAccessor.load_geojson_name_set()
         self.mesh_dict = DataAccessor.load_mesh_dict()
+        self.best_combus_stop_sequence_dict = (
+            DataAccessor.load_best_combus_stop_sequences()
+        )
+        print(self.best_combus_stop_sequence_dict)
         print("データのロードが完了しました。")
 
     @classmethod
@@ -119,6 +124,17 @@ class DataAccessor:
             for mesh in mesh_list
         }
         return mesh_dict
+
+    @classmethod
+    def load_best_combus_stop_sequences(cls):
+        """最適なバス停列を辞書形式で返却する。"""
+        result_dict = {}
+        with open(cls.BEST_COMBUS_STOP_SEQUENCE_FILE_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            for sequence in data["best-combus-stop-sequences"]:
+                key = (sequence["spot-type"], sequence["duration-limit-m"])
+                result_dict[key] = sequence["stop-sequence"]
+        return result_dict
 
     def load_geojson(self, id_str: str, max_minute: int):
         """

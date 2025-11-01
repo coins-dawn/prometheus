@@ -1,0 +1,273 @@
+{
+    "best-combus-stop-sequences": [
+        {
+            "spot-type": "hospital",
+            "duration-limit-m": 60,
+            "stop-sequence": [
+                "comstop25",
+                "comstop38",
+                "comstop43"
+            ],
+            "score": 20145
+        },
+        {
+            "spot-type": "hospital",
+            "duration-limit-m": 70,
+            "stop-sequence": [
+                "comstop38",
+                "comstop12",
+                "comstop43",
+                "comstop13"
+            ],
+            "score": 25826
+        },
+        {
+            "spot-type": "hospital",
+            "duration-limit-m": 80,
+            "stop-sequence": [
+                "comstop37",
+                "comstop13",
+                "comstop47",
+                "comstop40",
+                "comstop43"
+            ],
+            "score": 21937
+        },
+        {
+            "spot-type": "hospital",
+            "duration-limit-m": 90,
+            "stop-sequence": [
+                "comstop43",
+                "comstop13",
+                "comstop18",
+                "comstop12"
+            ],
+            "score": 25826
+        },
+        {
+            "spot-type": "hospital",
+            "duration-limit-m": 100,
+            "stop-sequence": [
+                "comstop48",
+                "comstop35",
+                "comstop43",
+                "comstop38",
+                "comstop47",
+                "comstop39",
+                "comstop44",
+                "comstop30"
+            ],
+            "score": 35349
+        },
+        {
+            "spot-type": "hospital",
+            "duration-limit-m": 110,
+            "stop-sequence": [
+                "comstop25",
+                "comstop38",
+                "comstop39",
+                "comstop10",
+                "comstop48",
+                "comstop40",
+                "comstop43"
+            ],
+            "score": 30232
+        },
+        {
+            "spot-type": "hospital",
+            "duration-limit-m": 120,
+            "stop-sequence": [
+                "comstop38",
+                "comstop39",
+                "comstop31",
+                "comstop15",
+                "comstop20",
+                "comstop28",
+                "comstop8",
+                "comstop9",
+                "comstop48",
+                "comstop43"
+            ],
+            "score": 30893
+        },
+        {
+            "spot-type": "shopping",
+            "duration-limit-m": 60,
+            "stop-sequence": [
+                "comstop7",
+                "comstop30",
+                "comstop40",
+                "comstop2",
+                "comstop5",
+                "comstop23"
+            ],
+            "score": 6299
+        },
+        {
+            "spot-type": "shopping",
+            "duration-limit-m": 70,
+            "stop-sequence": [
+                "comstop9",
+                "comstop23",
+                "comstop7",
+                "comstop14",
+                "comstop26"
+            ],
+            "score": 4984
+        },
+        {
+            "spot-type": "shopping",
+            "duration-limit-m": 80,
+            "stop-sequence": [
+                "comstop23",
+                "comstop7",
+                "comstop5",
+                "comstop41",
+                "comstop6"
+            ],
+            "score": 5898
+        },
+        {
+            "spot-type": "shopping",
+            "duration-limit-m": 90,
+            "stop-sequence": [
+                "comstop1",
+                "comstop49",
+                "comstop33",
+                "comstop11",
+                "comstop28",
+                "comstop8",
+                "comstop38"
+            ],
+            "score": 4926
+        },
+        {
+            "spot-type": "shopping",
+            "duration-limit-m": 100,
+            "stop-sequence": [
+                "comstop23",
+                "comstop24",
+                "comstop28",
+                "comstop19",
+                "comstop20"
+            ],
+            "score": 8401
+        },
+        {
+            "spot-type": "shopping",
+            "duration-limit-m": 110,
+            "stop-sequence": [
+                "comstop32",
+                "comstop11",
+                "comstop19",
+                "comstop20",
+                "comstop21",
+                "comstop34",
+                "comstop5"
+            ],
+            "score": 11709
+        },
+        {
+            "spot-type": "shopping",
+            "duration-limit-m": 120,
+            "stop-sequence": [
+                "comstop7",
+                "comstop24",
+                "comstop35",
+                "comstop32",
+                "comstop11",
+                "comstop16",
+                "comstop17"
+            ],
+            "score": 7235
+        },
+        {
+            "spot-type": "public-facility",
+            "duration-limit-m": 60,
+            "stop-sequence": [
+                "comstop11",
+                "comstop15",
+                "comstop28",
+                "comstop3"
+            ],
+            "score": 14941
+        },
+        {
+            "spot-type": "public-facility",
+            "duration-limit-m": 70,
+            "stop-sequence": [
+                "comstop31",
+                "comstop11",
+                "comstop28"
+            ],
+            "score": 12471
+        },
+        {
+            "spot-type": "public-facility",
+            "duration-limit-m": 80,
+            "stop-sequence": [
+                "comstop28",
+                "comstop19",
+                "comstop31",
+                "comstop32",
+                "comstop18"
+            ],
+            "score": 14800
+        },
+        {
+            "spot-type": "public-facility",
+            "duration-limit-m": 90,
+            "stop-sequence": [
+                "comstop28",
+                "comstop19",
+                "comstop11",
+                "comstop33",
+                "comstop2"
+            ],
+            "score": 16614
+        },
+        {
+            "spot-type": "public-facility",
+            "duration-limit-m": 100,
+            "stop-sequence": [
+                "comstop15",
+                "comstop19",
+                "comstop47",
+                "comstop34",
+                "comstop26",
+                "comstop20"
+            ],
+            "score": 14650
+        },
+        {
+            "spot-type": "public-facility",
+            "duration-limit-m": 110,
+            "stop-sequence": [
+                "comstop30",
+                "comstop39",
+                "comstop20",
+                "comstop19",
+                "comstop13",
+                "comstop10",
+                "comstop1",
+                "comstop43"
+            ],
+            "score": 15191
+        },
+        {
+            "spot-type": "public-facility",
+            "duration-limit-m": 120,
+            "stop-sequence": [
+                "comstop7",
+                "comstop30",
+                "comstop28",
+                "comstop33",
+                "comstop11",
+                "comstop19",
+                "comstop38",
+                "comstop24"
+            ],
+            "score": 15950
+        }
+    ]
+}
