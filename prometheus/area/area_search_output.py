@@ -107,3 +107,27 @@ class AreaSearchOutput:
             },
             "combus": self.combus_route.to_json(),
         }
+
+
+@dataclass
+class AllAreaSearchResult:
+    spot_type: SpotType
+    time_limit: int
+    polygon: MultiPolygon
+    score: int
+
+    def to_json(self) -> dict:
+        return {
+            "spot-type": self.spot_type,
+            "time-limit": self.time_limit,
+            "polygon": self.polygon.__geo_interface__,
+            "score": self.score,
+        }
+
+
+@dataclass
+class AllAreaSearchOutput:
+    result_list: list[AllAreaSearchResult]
+
+    def to_json(self) -> dict:
+        return {"reachables": [result.to_json() for result in self.result_list]}
