@@ -11,6 +11,8 @@ from prometheus.area.area_search_output import (
     CombusStop,
     CombusSection,
     CombusRoute,
+    AllAreaSearchOutput,
+    AllAreaSearchResult,
 )
 from prometheus.data_loader import DataAccessor
 from prometheus.area.spot_type import SpotType
@@ -347,3 +349,28 @@ def exec_area_search(
         result_dict[spot_type] = area_search_result
 
     return AreaSearchOutput(result_dict=result_dict, combus_route=combus_route)
+
+
+def exec_area_search_all(data_accessor: DataAccessor) -> AllAreaSearchOutput:
+    """
+    すべての上限時間・スポットタイプで到達圏探索を実行する。
+    """
+    all_spot_list = data_accessor.spot_list
+    time_limit_list = [time_m for time_m in range(30, 130, 10)]
+    result_list: list[AllAreaSearchResult] = []
+    for spot_type, spot_list in data_accessor.spot_list.items():
+        for time_limit in time_limit_list:
+            spot_list = all_spot_list[spot_type]
+            reachable_geojson = calc_original_reachable_geojson(
+                spot_list, time_limit, data_accessor
+            )
+            score = calc_score(data_accessor, reachable_geojson.reachable_mesh_codes)
+            result_list.append(
+                AllAreaSearchResult(
+                    spot_type=spot_type,
+                    time_limit=time_limit,
+                    polygon=reachable_geojson.polygon,
+                    score=score,
+                )
+            )
+    return AllAreaSearchOutput(result_list=result_list)
