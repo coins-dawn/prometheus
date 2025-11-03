@@ -1,9 +1,5 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from prometheus.static_file_loader import (
-    is_sample_request,
-    load_static_area_search_response,
-)
 from prometheus.area.area_search_input import AreaSearchInput
 from prometheus.area.area_searcher import exec_area_search, exec_area_search_all
 from prometheus.data_loader import DataAccessor
@@ -55,27 +51,6 @@ def combus_stop_sequences():
             }
         )
     return jsonify({"status": "OK", "result": ret_list})
-
-
-@app.route("/area/search/sample", methods=["POST"])
-def area_search_sample():
-    """
-    到達圏検索のサンプルレスポンスを返す。
-    """
-    body = request.get_json()
-
-    if not is_sample_request(body):
-        return jsonify({"status": "NG", "message": "Invalid request"}), 400
-
-    return (
-        jsonify(
-            {
-                "status": "OK",
-                "result": load_static_area_search_response(),
-            }
-        ),
-        200,
-    )
 
 
 @app.route("/area/search", methods=["POST"])
