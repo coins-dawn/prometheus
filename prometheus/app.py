@@ -5,7 +5,7 @@ from prometheus.static_file_loader import (
     load_static_area_search_response,
 )
 from prometheus.area.area_search_input import AreaSearchInput
-from prometheus.area.area_searcher import exec_area_search
+from prometheus.area.area_searcher import exec_area_search, exec_area_search_all
 from prometheus.data_loader import DataAccessor
 from prometheus.arrange_data import unzip_geojson
 
@@ -104,6 +104,19 @@ def area_search():
                 "status": "OK",
                 "result": search_output.to_json(),
             }
+        ),
+        200,
+    )
+
+
+@app.route("/area/search/all", methods=["GET"])
+def area_search_all():
+    """
+    すべての上限時間・スポットタイプにおいて到達圏探索を実行する。
+    """
+    return (
+        jsonify(
+            {"status": "OK", "result": exec_area_search_all(data_accessor).to_json()}
         ),
         200,
     )
