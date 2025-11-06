@@ -120,5 +120,13 @@ def area_spots():
     return jsonify({"status": "OK", "result": spot_list}), 200
 
 
+@app.route("/target-region", methods=["GET"])
+def target_region():
+    """
+    ターゲットリージョンを取得する。
+    """
+    return jsonify({"status": "OK", "result": data_accessor.target_region_dict})
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)

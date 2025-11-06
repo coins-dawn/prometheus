@@ -10,6 +10,7 @@ class DataAccessor:
     ALL_GEOJSON_FILE_PATH = "data/archive/all_geojsons.txt"
     MESH_FILE_PATH = "data/archive/mesh.json"
     BEST_COMBUS_STOP_SEQUENCE_FILE_PATH = "data/archive/best_combus_stop_sequences.json"
+    TARGET_REGION_FILE_PATH = "data/archive/target_region.json"
 
     def __init__(self):
         self.spot_list = DataAccessor.load_spot_list()
@@ -22,6 +23,7 @@ class DataAccessor:
         self.best_combus_stop_sequence_dict = (
             DataAccessor.load_best_combus_stop_sequences()
         )
+        self.target_region_dict = DataAccessor.load_target_region()
         print("データのロードが完了しました。")
 
     @classmethod
@@ -134,6 +136,12 @@ class DataAccessor:
                 key = (sequence["spot-type"], sequence["duration-limit-m"])
                 result_dict[key] = sequence["stop-sequence"]
         return result_dict
+
+    @classmethod
+    def load_target_region(cls):
+        """ターゲットリージョンを辞書型式で返却する。"""
+        with open(cls.TARGET_REGION_FILE_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
 
     def load_geojson(self, id_str: str, max_minute: int):
         """
