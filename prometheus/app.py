@@ -3,12 +3,12 @@ from flask_cors import CORS
 from prometheus.area.area_search_input import AreaSearchInput
 from prometheus.area.area_searcher import exec_area_search, exec_area_search_all
 from prometheus.data_loader import DataAccessor
-from prometheus.arrange_data import unzip_geojson
+from prometheus.arrange_data import arrange_data
 
 app = Flask(__name__)
 CORS(app)
+arrange_data()
 data_accessor = DataAccessor()
-unzip_geojson()
 
 
 @app.route("/", methods=["GET"])

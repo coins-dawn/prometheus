@@ -3,13 +3,13 @@ import pickle
 
 
 class DataAccessor:
-    SPOT_LIST_FILE_PATH = "data/area/toyama_spot_list.json"
-    COMBUS_STOP_LIST_FILE_PATH = "data/area/combus_stops.json"
-    COMBUS_ROUTES_FILE_PATH = "data/area/combus_routes.json"
-    SPOT_TO_STOPS_FILE_PATH = "data/area/spot_to_stops.json"
-    ALL_GEOJSON_FILE_PATH = "data/area/all_geojsons.txt"
-    MESH_FILE_PATH = "data/area/mesh.json"
-    BEST_COMBUS_STOP_SEQUENCE_FILE_PATH = "data/area/best_combus_stop_sequences.json"
+    SPOT_LIST_FILE_PATH = "data/archive/toyama_spot_list.json"
+    COMBUS_STOP_LIST_FILE_PATH = "data/archive/combus_stops.json"
+    COMBUS_ROUTES_FILE_PATH = "data/archive/combus_routes.json"
+    SPOT_TO_STOPS_FILE_PATH = "data/archive/spot_to_stops.json"
+    ALL_GEOJSON_FILE_PATH = "data/archive/all_geojsons.txt"
+    MESH_FILE_PATH = "data/archive/mesh.json"
+    BEST_COMBUS_STOP_SEQUENCE_FILE_PATH = "data/archive/best_combus_stop_sequences.json"
 
     def __init__(self):
         self.spot_list = DataAccessor.load_spot_list()
@@ -146,7 +146,7 @@ class DataAccessor:
             if file_name not in self.geojson_name_set:
                 current_max_minute -= 1
                 continue
-            file_path = f"data/area/geojson/{file_name}"
+            file_path = f"data/archive/geojson/{file_name}"
             with open(file_path, "rb") as f:
                 return pickle.load(f)
         return None
