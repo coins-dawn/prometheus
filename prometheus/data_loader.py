@@ -120,7 +120,7 @@ class DataAccessor:
             mesh["mesh_code"]: {
                 "mesh_code": mesh["mesh_code"],
                 "population": mesh["population"],
-                # geometryは必要に応じて追加
+                "geometry": mesh["geometry"],
             }
             for mesh in mesh_list
         }

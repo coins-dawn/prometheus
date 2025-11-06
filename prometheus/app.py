@@ -120,12 +120,22 @@ def area_spots():
     return jsonify({"status": "OK", "result": spot_list}), 200
 
 
-@app.route("/target-region", methods=["GET"])
+@app.route("/target/region", methods=["GET"])
 def target_region():
     """
     ターゲットリージョンを取得する。
     """
     return jsonify({"status": "OK", "result": data_accessor.target_region_dict})
+
+
+@app.route("/target/mesh", methods=["GET"])
+def mesh():
+    """
+    ターゲットリージョン中のメッシュ情報を返却する。
+    """
+    return jsonify(
+        {"statis": "OK", "result": [mesh for mesh in data_accessor.mesh_dict.values()]}
+    )
 
 
 if __name__ == "__main__":
