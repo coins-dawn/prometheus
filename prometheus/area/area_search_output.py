@@ -72,6 +72,8 @@ class ReachableArea:
     with_combus: MultiPolygon
     original_score: int = 0
     with_combus_score: int = 0
+    original_score_rate: int = 0
+    with_combus_score_rate: int = 0
 
     def to_json(self) -> dict:
         return {
@@ -79,6 +81,8 @@ class ReachableArea:
             "with-combus": self.with_combus.__geo_interface__,
             "original-score": self.original_score,
             "with-combus-score": self.with_combus_score,
+            "original-score-rate": self.original_score_rate,
+            "with-combus-score-rate": self.with_combus_score_rate,
         }
 
 

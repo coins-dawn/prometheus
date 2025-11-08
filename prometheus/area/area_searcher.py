@@ -221,12 +221,14 @@ def exec_single_spot_type(
     """
     指定されたスポットタイプに対してエリア検索を実行する。
     """
+    score_max = sum(mesh["population"] for mesh in data_accessor.mesh_dict.values())
     original_reachable_geojson = calc_original_reachable_geojson(
         spot_list, target_max_limit, data_accessor
     )
     original_score = calc_score(
         data_accessor, original_reachable_geojson.reachable_mesh_codes
     )
+    original_score_rate = int(original_score * 100 / score_max)
     with_combus_reachable_geojson = calc_with_combus_reachable_geojson(
         spot_list, target_max_limit, spot_to_stops_dict, combus_route, data_accessor
     )
@@ -238,11 +240,14 @@ def exec_single_spot_type(
         - original_reachable_geojson.reachable_mesh_codes
     )
     diff_score = calc_score(data_accessor, diff_reachable_meshes)
+    diff_score_rate = int(diff_score * 100 / score_max)
     reachable_area = ReachableArea(
         original=original_reachable_geojson.polygon,
         with_combus=diff_polygon,
         original_score=original_score,
         with_combus_score=diff_score,
+        original_score_rate=original_score_rate,
+        with_combus_score_rate=diff_score_rate,
     )
 
     spot_list = [
