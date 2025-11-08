@@ -7,6 +7,8 @@ class DataAccessor:
     COMBUS_STOP_LIST_FILE_PATH = "data/archive/combus_stops.json"
     COMBUS_ROUTES_FILE_PATH = "data/archive/combus_routes.json"
     SPOT_TO_STOPS_FILE_PATH = "data/archive/spot_to_stops.json"
+    SPOT_TO_REFPOINTS_FILE_PATH = "data/archive/spot_to_refpoints.json"
+    STPO_TO_REFPOINTS_FILE_PATH = "data/archive/stop_to_refpoints.json"
     ALL_GEOJSON_FILE_PATH = "data/archive/all_geojsons.txt"
     MESH_FILE_PATH = "data/archive/mesh.json"
     BEST_COMBUS_STOP_SEQUENCE_FILE_PATH = "data/archive/best_combus_stop_sequences.json"
@@ -17,7 +19,15 @@ class DataAccessor:
         self.combus_stop_list = DataAccessor.load_combus_stop_list()
         self.combus_stop_dict = DataAccessor.load_combus_stop_dict()
         self.combus_route_dict = DataAccessor.load_combus_route_dict()
-        self.spot_to_stops_dict = DataAccessor.load_spot_to_stops_dict()
+        self.spot_to_stops_dict = DataAccessor.load_route_dict(
+            DataAccessor.SPOT_TO_STOPS_FILE_PATH, "spot_to_stops"
+        )
+        self.spot_to_refpoints_dict = DataAccessor.load_route_dict(
+            DataAccessor.SPOT_TO_REFPOINTS_FILE_PATH, "spot_to_refpoints"
+        )
+        self.stop_to_refpoints_dict = DataAccessor.load_route_dict(
+            DataAccessor.STPO_TO_REFPOINTS_FILE_PATH, "stop_to_refpoints"
+        )
         self.geojson_name_set = DataAccessor.load_geojson_name_set()
         self.mesh_dict = DataAccessor.load_mesh_dict()
         self.best_combus_stop_sequence_dict = (
@@ -76,25 +86,27 @@ class DataAccessor:
             }
         return combus_route_dict
 
-    @classmethod
-    def load_spot_to_stops_dict(cls):
+    @staticmethod
+    def load_route_dict(file_path: str, key: str):
         """
-        スポットからバス停までの経路情報をロードしdict型式で返却する。
+        経路情報をロードしdict型式で返却する。
         """
-        spot_to_stops_list = []
-        spot_to_stops_dict = {}
-        with open(cls.SPOT_TO_STOPS_FILE_PATH, "r", encoding="utf-8") as f:
-            spot_to_stops_list = json.load(f)["spot-to-stops"]
+        point_to_point_list = []
+        point_to_point_dict = {}
+        with open(file_path, "r", encoding="utf-8") as f:
+            point_to_point_list = json.load(f)[key]
 
-        for spot_to_stop in spot_to_stops_list:
-            from_id = spot_to_stop["from"]
-            to_id = spot_to_stop["to"]
-            walk_distance_m = int(spot_to_stop["walk_distance_m"])
-            spot_to_stops_dict[(from_id, to_id)] = {
-                "duration_m": int(spot_to_stop["duration_m"]),
+        for point_to_point in point_to_point_list:
+            from_id = point_to_point["from"]
+            to_id = point_to_point["to"]
+            walk_distance_m = int(point_to_point["walk_distance_m"])
+            point_to_point_dict[(from_id, to_id)] = {
+                "duration_m": int(point_to_point["duration_m"]),
                 "walk_distance_m": walk_distance_m,
+                "geometry": point_to_point["geometry"],
+                "sections": point_to_point["sections"],
             }
-        return spot_to_stops_dict
+        return point_to_point_dict
 
     @classmethod
     def load_geojson_name_set(cls):
