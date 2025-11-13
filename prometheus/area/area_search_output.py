@@ -87,14 +87,75 @@ class ReachableArea:
 
 
 @dataclass
+class RoutePoint:
+    name: str
+    coord: Coord
+
+    def to_json(self) -> dict:
+        return {"name": self.name, "coord": self.coord.to_json()}
+
+
+@dataclass
+class RouteSection:
+    mode: str
+    from_point: RoutePoint
+    to_point: RoutePoint
+    duration_m: int
+    distance_m: int
+
+    def to_json(self) -> dict:
+        return {
+            "mode": self.mode,
+            "from": self.from_point.to_json(),
+            "to": self.to_point.to_json(),
+            "duration_m": self.duration_m,
+            "distance_m": self.distance_m,
+        }
+
+
+@dataclass
+class Route:
+    from_point: RoutePoint
+    to_point: RoutePoint
+    duration_m: int
+    walk_distance_m: int
+    geometry: str
+    sections: list[RouteSection]
+
+    def to_json(self) -> dict:
+        return {
+            "from": self.from_point.to_json(),
+            "to": self.to_point.to_json(),
+            "duration_m": self.duration_m,
+            "walk_distance_m": self.walk_distance_m,
+            "geometry": self.geometry,
+            "sections": [section.to_json() for section in self.sections],
+        }
+
+
+@dataclass
+class RoutePair:
+    original: Route
+    with_combus: Route
+
+    def to_json(self) -> dict:
+        return {
+            "original": self.original.to_json(),
+            "with-combus": self.with_combus.to_json(),
+        }
+
+
+@dataclass
 class AreaSearchResult:
     spots: list[Spot]
     reachable: ReachableArea
+    route_pairs: list[RoutePair]
 
     def to_json(self) -> dict:
         return {
             "spots": [spot.to_json() for spot in self.spots],
             "reachable": self.reachable.to_json() if self.reachable else None,
+            "route-pairs": [route.to_json() for route in self.route_pairs],
         }
 
 

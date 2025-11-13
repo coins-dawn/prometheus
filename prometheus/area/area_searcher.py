@@ -13,6 +13,10 @@ from prometheus.area.area_search_output import (
     CombusRoute,
     AllAreaSearchOutput,
     AllAreaSearchResult,
+    Route,
+    RoutePair,
+    RoutePoint,
+    RouteSection,
 )
 from prometheus.data_loader import DataAccessor
 from prometheus.area.spot_type import SpotType
@@ -210,6 +214,50 @@ def calc_score(data_accessor: DataAccessor, mesh_codes: set[str]) -> int:
     return score
 
 
+def calculate_route_pairs() -> list[RoutePair]:
+    """ダミーのRoutePairリストを返却"""
+    # 出発点 / 到着点
+    p_from = RoutePoint(name="出発地", coord=Coord(lat=36.7000, lon=137.2100))
+    p_to = RoutePoint(name="到着地", coord=Coord(lat=36.7020, lon=137.2120))
+
+    # オリジナル（徒歩のみ）
+    sec_orig = RouteSection(
+        mode="walk",
+        from_point=p_from,
+        to_point=p_to,
+        duration_m=10,
+        distance_m=800,
+    )
+    route_orig = Route(
+        from_point=p_from,
+        to_point=p_to,
+        duration_m=10,
+        walk_distance_m=800,
+        geometry="",
+        sections=[sec_orig],
+    )
+
+    # コミュニティバスあり（徒歩＋バスの区間）
+    p_stop = RoutePoint(name="バス停", coord=Coord(lat=36.7010, lon=137.2110))
+    sec_walk = RouteSection(
+        mode="walk", from_point=p_from, to_point=p_stop, duration_m=5, distance_m=400
+    )
+    sec_bus = RouteSection(
+        mode="bus", from_point=p_stop, to_point=p_to, duration_m=3, distance_m=600
+    )
+    route_with_combus = Route(
+        from_point=p_from,
+        to_point=p_to,
+        duration_m=8,
+        walk_distance_m=400,
+        geometry="",
+        sections=[sec_walk, sec_bus],
+    )
+
+    pair = RoutePair(original=route_orig, with_combus=route_with_combus)
+    return [pair]
+
+
 def exec_single_spot_type(
     spot_type: SpotType,
     spot_list: dict,
@@ -259,7 +307,11 @@ def exec_single_spot_type(
         for spot in spot_list
     ]
 
-    return AreaSearchResult(spots=spot_list, reachable=reachable_area)
+    route_pairs = calculate_route_pairs()
+
+    return AreaSearchResult(
+        spots=spot_list, reachable=reachable_area, route_pairs=route_pairs
+    )
 
 
 def create_combus_route(
