@@ -5,6 +5,7 @@ import pickle
 class DataAccessor:
     SPOT_LIST_FILE_PATH = "data/archive/toyama_spot_list.json"
     COMBUS_STOP_LIST_FILE_PATH = "data/archive/combus_stops.json"
+    REF_POINTS_LIST_FILE_PATH = "data/archive/ref_points.json"
     COMBUS_ROUTES_FILE_PATH = "data/archive/combus_routes.json"
     SPOT_TO_STOPS_FILE_PATH = "data/archive/spot_to_stops.json"
     SPOT_TO_REFPOINTS_FILE_PATH = "data/archive/spot_to_refpoints.json"
@@ -18,6 +19,7 @@ class DataAccessor:
         self.spot_list = DataAccessor.load_spot_list()
         self.combus_stop_list = DataAccessor.load_combus_stop_list()
         self.combus_stop_dict = DataAccessor.load_combus_stop_dict()
+        self.ref_point_list = DataAccessor.load_ref_point_list()
         self.combus_route_dict = DataAccessor.load_combus_route_dict()
         self.spot_to_stops_dict = DataAccessor.load_route_dict(
             DataAccessor.SPOT_TO_STOPS_FILE_PATH, "spot_to_stops"
@@ -66,6 +68,14 @@ class DataAccessor:
             }
             for combus_stop in combus_stop_list["combus-stops"]
         }
+
+    @classmethod
+    def load_ref_point_list(cls):
+        """
+        参照地点一覧をロードしlist型式で返却する。
+        """
+        with open(cls.REF_POINTS_LIST_FILE_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
 
     @classmethod
     def load_combus_route_dict(cls):
