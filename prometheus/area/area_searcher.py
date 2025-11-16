@@ -325,6 +325,12 @@ def merge_routes(
     combus_geometry: str,
     combus_distance: int,
 ) -> Route:
+    """
+    3つの経路を結合して1つの経路を作成する。
+    1. スポット -> 乗りバス停
+    2. コミュニティバス
+    3. 降りバス停 -> 目的地
+    """
     sections: list[RouteSection] = []
 
     # スポット -> 乗りバス停
@@ -368,6 +374,10 @@ def calculate_with_combus_route_for_single_spot_and_stop(
     combus_route: CombusRoute,
     start_stop_index: int,
 ) -> Route:
+    """
+    コミュニティバスを利用した経路を返却する。
+    1つのスポットおよび乗りバス停に対して、コミュニティバスを利用した最適な経路を探索する。
+    """
     spot_to_stop_route = convert_to_route(spot_to_stop_route_dict)
     current_stop_index = start_stop_index
     combus_duration = 0
