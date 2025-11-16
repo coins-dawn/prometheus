@@ -24,6 +24,9 @@ from prometheus.coord import Coord
 from prometheus.area.area_visualizer import output_visualize_data
 
 
+MAX_WALK_DISTANCE_M = 1000  # 徒歩の最大距離[m]
+
+
 class GeoJson:
     def __init__(
         self, polygon: MultiPolygon = None, reachable_mesh_codes: set[str] = None
@@ -148,7 +151,7 @@ def calc_with_combus_reachable_geojson_for_single_spot(
     """
     特定のスポットからコミュニティバスを利用した場合に到達可能な範囲を検索する。
     """
-    upper_walk_distance = 1000  # [m]
+    MAX_WALK_DISTANCE_M = 1000  # [m]
     merged_geojson = GeoJson()
     stop_id_list = [stop.id for stop in combus_route.stop_list]
 
@@ -167,7 +170,7 @@ def calc_with_combus_reachable_geojson_for_single_spot(
         stop_index = stop_id_list.index(stop_id)
         # 徒歩距離がしきい値を超える場合にはcontinue
         walk_distance_m = value["walk_distance_m"]
-        if walk_distance_m > upper_walk_distance:
+        if walk_distance_m > MAX_WALK_DISTANCE_M:
             continue
         # 上限時間を超えている場合にはcontinue
         duration_m = value["duration_m"]
@@ -214,7 +217,316 @@ def calc_score(data_accessor: DataAccessor, mesh_codes: set[str]) -> int:
     return score
 
 
-def calculate_route_pairs() -> list[RoutePair]:
+def filter_ref_points_in_diff_polygon(
+    ref_point_list: list[dict], diff_polygon: MultiPolygon
+):
+    filtered_ref_points = []
+    for ref_point in ref_point_list:
+        point = shape(
+            {
+                "type": "Point",
+                "coordinates": [ref_point["lon"], ref_point["lat"]],
+            }
+        )
+        if diff_polygon.contains(point):
+            filtered_ref_points.append(ref_point)
+    return filtered_ref_points
+
+
+def convert_to_route(route_dict: dict) -> Route:
+    """
+    route_dictをRouteオブジェクトに変換する。
+    """
+    # 出発点と到着点を取得
+    first_section = route_dict["sections"][0]
+    last_section = route_dict["sections"][-1]
+
+    from_point = RoutePoint(
+        name=first_section["from"]["name"],
+        coord=Coord(lat=first_section["from"]["lat"], lon=first_section["from"]["lon"]),
+    )
+
+    to_point = RoutePoint(
+        name=last_section["to"]["name"],
+        coord=Coord(lat=last_section["to"]["lat"], lon=last_section["to"]["lon"]),
+    )
+
+    # セクションのリストを作成
+    sections = []
+    for section_dict in route_dict["sections"]:
+        section = RouteSection(
+            mode=section_dict["mode"].lower(),
+            from_point=RoutePoint(
+                name=section_dict["from"]["name"],
+                coord=Coord(
+                    lat=section_dict["from"]["lat"], lon=section_dict["from"]["lon"]
+                ),
+            ),
+            to_point=RoutePoint(
+                name=section_dict["to"]["name"],
+                coord=Coord(
+                    lat=section_dict["to"]["lat"], lon=section_dict["to"]["lon"]
+                ),
+            ),
+            duration_m=section_dict["duration_m"],
+            distance_m=section_dict["distance_m"],
+        )
+        sections.append(section)
+
+    # 徒歩距離を計算（WALKセクションの距離の合計）
+    walk_distance_m = sum(
+        section_dict["distance_m"]
+        for section_dict in route_dict["sections"]
+        if section_dict["mode"] == "WALK"
+    )
+
+    route = Route(
+        from_point=from_point,
+        to_point=to_point,
+        duration_m=route_dict["duration_m"],
+        walk_distance_m=walk_distance_m,
+        geometry=route_dict["geometry"],
+        sections=sections,
+    )
+
+    return route
+
+
+def calculate_original_route(
+    ref_point: dict, spot_list: dict, data_accessor: DataAccessor
+) -> Route:
+    """
+    コミュニティバスを使わない経路を返却する。
+    """
+    ref_point_id = ref_point["id"]
+    spot_to_refpoint_dict = data_accessor.spot_to_refpoints_dict
+    best_duration = 9999
+    best_route = None
+    for spot in spot_list:
+        spot_id = spot["id"]
+        route_dict = spot_to_refpoint_dict.get((spot_id, ref_point_id))
+        if not route_dict:
+            continue
+        route: Route = convert_to_route(route_dict)
+        if route.duration_m < best_duration:
+            best_duration = route.duration_m
+            best_route = route
+    return best_route
+
+
+def merge_geometry(geom1: str, geom2: str, geom3: str) -> str:
+    return ""
+
+
+def merge_routes(
+    spot_to_stop_route: Route,
+    stop_to_refpoint_route: Route,
+    combus_duration: int,
+    combus_geometry: str,
+    combus_distance: int,
+) -> Route:
+    sections: list[RouteSection] = []
+
+    # スポット -> 乗りバス停
+    sections.extend(spot_to_stop_route.sections)
+
+    # コミュニティバス
+    sections.append(
+        RouteSection(
+            mode="combus",
+            from_point=stop_to_refpoint_route.from_point,
+            to_point=stop_to_refpoint_route.to_point,
+            duration_m=combus_duration,
+            distance_m=combus_distance,
+        )
+    )
+
+    # 降りバス停 -> 目的地
+    sections.extend(stop_to_refpoint_route.sections)
+
+    return Route(
+        from_point=spot_to_stop_route.from_point,
+        to_point=stop_to_refpoint_route.to_point,
+        duration_m=spot_to_stop_route.duration_m
+        + combus_duration
+        + stop_to_refpoint_route.duration_m,
+        walk_distance_m=spot_to_stop_route.walk_distance_m
+        + stop_to_refpoint_route.walk_distance_m,
+        geometry=merge_geometry(
+            spot_to_stop_route.geometry,
+            combus_geometry,
+            stop_to_refpoint_route.geometry,
+        ),
+        sections=sections,
+    )
+
+
+def calculate_with_combus_route_for_single_spot_and_stop(
+    ref_point: dict,
+    spot_to_stop_route_dict: dict,
+    data_accessor: DataAccessor,
+    combus_route: CombusRoute,
+    start_stop_index: int,
+) -> Route:
+    spot_to_stop_route = convert_to_route(spot_to_stop_route_dict)
+    current_stop_index = start_stop_index
+    combus_duration = 0
+
+    def calc_next_stop_index(current_index: int, stop_list_size: int):
+        if current_index == stop_list_size - 1:
+            return 0
+        return current_index + 1
+
+    best_duration = 9999
+    best_route = None
+    while True:
+        current_stop_index = calc_next_stop_index(
+            current_stop_index, len(combus_route.stop_list)
+        )
+        if current_stop_index == start_stop_index:
+            break
+        combus_duration += combus_route.section_list[current_stop_index].duration_m
+        stop_to_refpoint_route_dict = data_accessor.stop_to_refpoints_dict.get(
+            (combus_route.stop_list[current_stop_index].id, ref_point["id"])
+        )
+        current_stop_index = current_stop_index
+        if not stop_to_refpoint_route_dict:
+            continue
+        stop_to_refpont_route = convert_to_route(stop_to_refpoint_route_dict)
+        merged_route = merge_routes(
+            spot_to_stop_route,
+            stop_to_refpont_route,
+            combus_duration,
+            "",  # geometryをちゃんとセットする
+            0,  # distanceをちゃんとセットする
+        )
+        if merged_route.walk_distance_m > MAX_WALK_DISTANCE_M:
+            continue
+        if merged_route.duration_m < best_duration:
+            best_duration = merged_route.duration_m
+            best_route = merged_route
+    return best_route
+
+
+def calculate_with_combus_route_for_single_spot(
+    ref_point: dict,
+    data_accessor: DataAccessor,
+    combus_route: CombusRoute,
+    spot: dict,
+) -> Route:
+    """
+    コミュニティバスを利用した経路を返却する。
+    """
+    stop_id_list = [stop.id for stop in combus_route.stop_list]
+
+    best_duration = 9999
+    best_route = None
+    for key, route_dict in data_accessor.spot_to_stops_dict.items():
+        spot_id, stop_id = key
+        # 関係ないspotならcontinue
+        if spot_id != spot["id"]:
+            continue
+        # コミュニティバスに含まれないバス停ならcontinue
+        if stop_id not in stop_id_list:
+            continue
+        stop_index = stop_id_list.index(stop_id)
+        # 徒歩距離がしきい値を超える場合にはcontinue
+        walk_distance_m = route_dict["walk_distance_m"]
+        if walk_distance_m > MAX_WALK_DISTANCE_M:
+            continue
+        # 上限時間を超えている場合にはcontinue
+        duration_m = route_dict["duration_m"]
+        remaining_time = 9999  # とりあえず大きな値を入れておく
+        remaining_time -= duration_m
+        if remaining_time <= 0:
+            continue
+        # 当該のバス停で乗る最適経路を計算
+        route = calculate_with_combus_route_for_single_spot_and_stop(
+            ref_point, route_dict, data_accessor, combus_route, stop_index
+        )
+        if route is None:
+            continue
+        if route.duration_m < best_duration:
+            best_duration = route.duration_m
+            best_route = route
+    return best_route
+
+
+def calculate_with_combus_route(
+    ref_point: dict,
+    spot_list: dict,
+    data_accessor: DataAccessor,
+    combus_route: CombusRoute,
+) -> Route:
+    """
+    コミュニティバスを利用した経路を返却する。
+    複数のスポットについて経路を得て、最も所要時間が短い経路を返却する。
+    """
+    best_duration = 9999
+    best_route = None
+    for spot in spot_list:
+        route = calculate_with_combus_route_for_single_spot(
+            ref_point, data_accessor, combus_route, spot
+        )
+        if route is None:
+            continue
+        if route.walk_distance_m > MAX_WALK_DISTANCE_M:
+            continue
+        if route.duration_m < best_duration:
+            best_duration = route.duration_m
+            best_route = route
+    return best_route
+
+
+def calculate_route_pairs(
+    data_accessor: DataAccessor,
+    diff_polygon: MultiPolygon,
+    spot_list: dict,
+    target_max_limit: int,
+    combus_route: CombusRoute,
+) -> list[RoutePair]:
+    """RoutePairリストを返却する。"""
+    ref_point_list = data_accessor.ref_point_list["ref-points"]
+    ref_point_in_polygon = filter_ref_points_in_diff_polygon(
+        ref_point_list, diff_polygon
+    )
+
+    ref_point_and_routes_list = []
+    for ref_point in ref_point_in_polygon:
+        original_route: Route = calculate_original_route(
+            ref_point, spot_list, data_accessor
+        )
+        with_combus_route: Route = calculate_with_combus_route(
+            ref_point, spot_list, data_accessor, combus_route
+        )
+
+        if original_route is None or with_combus_route is None:
+            continue
+
+        # originalが無効、かつwith_combusが有効なものを抽出
+        original_route_is_invalid = (
+            original_route.duration_m > target_max_limit
+            or original_route.walk_distance_m > MAX_WALK_DISTANCE_M
+        )
+        if not original_route_is_invalid:
+            continue
+        with_combus_route_is_valid = (
+            with_combus_route.duration_m <= target_max_limit
+            and with_combus_route.walk_distance_m <= MAX_WALK_DISTANCE_M
+        )
+        if not with_combus_route_is_valid:
+            continue
+
+        ref_point_and_routes_list.append((ref_point, original_route, with_combus_route))
+
+    # とりあえず先頭から3つ返却する
+    return [
+        RoutePair(original=original_route, with_combus=with_combus_route)
+        for _, original_route, with_combus_route in ref_point_and_routes_list[:3]
+    ]
+
+
+def calculate_route_pairs_dummy() -> list[RoutePair]:
     """ダミーのRoutePairリストを返却"""
     # 出発点 / 到着点
     p_from = RoutePoint(name="出発地", coord=Coord(lat=36.7000, lon=137.2100))
@@ -298,7 +610,7 @@ def exec_single_spot_type(
         with_combus_score_rate=diff_score_rate,
     )
 
-    spot_list = [
+    result_spot_list = [
         Spot(
             coord=Coord(lat=spot["lat"], lon=spot["lon"]),
             spot_type=spot_type,
@@ -307,10 +619,12 @@ def exec_single_spot_type(
         for spot in spot_list
     ]
 
-    route_pairs = calculate_route_pairs()
+    route_pairs = calculate_route_pairs(
+        data_accessor, diff_polygon, spot_list, target_max_limit, combus_route
+    )
 
     return AreaSearchResult(
-        spots=spot_list, reachable=reachable_area, route_pairs=route_pairs
+        spots=result_spot_list, reachable=reachable_area, route_pairs=route_pairs
     )
 
 
