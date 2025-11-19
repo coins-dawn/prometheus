@@ -314,7 +314,91 @@ def calculate_original_route(
 
 
 def merge_geometry(geom1: str, geom2: str, geom3: str) -> str:
-    return ""
+    """
+    geom1, geom2, geom3はGoogle polyline形式の文字列。
+    順にデコードして連結し、再度エンコードして返却する。
+    重複する接続点は除去する。
+    """
+
+    def decode_polyline(poly: str) -> list[tuple]:
+        if not poly:
+            return []
+        coords = []
+        index = 0
+        lat = 0
+        lng = 0
+        length = len(poly)
+        while index < length:
+            shift = 0
+            result = 0
+            while True:
+                b = ord(poly[index]) - 63
+                index += 1
+                result |= (b & 0x1F) << shift
+                shift += 5
+                if b < 0x20:
+                    break
+            dlat = ~(result >> 1) if (result & 1) else (result >> 1)
+            lat += dlat
+
+            shift = 0
+            result = 0
+            while True:
+                b = ord(poly[index]) - 63
+                index += 1
+                result |= (b & 0x1F) << shift
+                shift += 5
+                if b < 0x20:
+                    break
+            dlng = ~(result >> 1) if (result & 1) else (result >> 1)
+            lng += dlng
+
+            coords.append((lat * 1e-5, lng * 1e-5))
+        return coords
+
+    def encode_polyline(coords: list[tuple]) -> str:
+        if not coords:
+            return ""
+        result_chars = []
+        prev_lat = 0
+        prev_lng = 0
+        for lat, lng in coords:
+            lat_i = int(round(lat * 1e5))
+            lng_i = int(round(lng * 1e5))
+            dlat = lat_i - prev_lat
+            dlng = lng_i - prev_lng
+            for v in (dlat, dlng):
+                sv = v << 1
+                if v < 0:
+                    sv = ~sv
+                while sv >= 0x20:
+                    result_chars.append(chr((0x20 | (sv & 0x1F)) + 63))
+                    sv >>= 5
+                result_chars.append(chr(sv + 63))
+            prev_lat = lat_i
+            prev_lng = lng_i
+        return "".join(result_chars)
+
+    parts = [decode_polyline(g) if g else [] for g in (geom1, geom2, geom3)]
+
+    combined: list[tuple] = []
+    for part in parts:
+        if not part:
+            continue
+        if not combined:
+            combined.extend(part)
+            continue
+        # 接続点の重複を除去（1e-5 精度で比較）
+        last = combined[-1]
+        first = part[0]
+        if int(round(last[0] * 1e5)) == int(round(first[0] * 1e5)) and int(
+            round(last[1] * 1e5)
+        ) == int(round(first[1] * 1e5)):
+            combined.extend(part[1:])
+        else:
+            combined.extend(part)
+
+    return encode_polyline(combined)
 
 
 def merge_routes(
@@ -514,13 +598,15 @@ def calculate_route_pairs(
 
         # originalが無効、かつwith_combusが有効なものを抽出
         original_route_is_invalid = (
-            original_route.duration_m > target_max_limit
+            original_route.duration_m
+            > target_max_limit
             # or original_route.walk_distance_m > MAX_WALK_DISTANCE_M
         )
         if not original_route_is_invalid:
             continue
         with_combus_route_is_valid = (
-            with_combus_route.duration_m <= target_max_limit
+            with_combus_route.duration_m
+            <= target_max_limit
             # and with_combus_route.walk_distance_m <= MAX_WALK_DISTANCE_M
         )
         if not with_combus_route_is_valid:
