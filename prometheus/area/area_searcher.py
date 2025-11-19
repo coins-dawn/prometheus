@@ -151,7 +151,6 @@ def calc_with_combus_reachable_geojson_for_single_spot(
     """
     特定のスポットからコミュニティバスを利用した場合に到達可能な範囲を検索する。
     """
-    MAX_WALK_DISTANCE_M = 1000  # [m]
     merged_geojson = GeoJson()
     stop_id_list = [stop.id for stop in combus_route.stop_list]
 
@@ -169,9 +168,9 @@ def calc_with_combus_reachable_geojson_for_single_spot(
             continue
         stop_index = stop_id_list.index(stop_id)
         # 徒歩距離がしきい値を超える場合にはcontinue
-        walk_distance_m = value["walk_distance_m"]
-        if walk_distance_m > MAX_WALK_DISTANCE_M:
-            continue
+        # walk_distance_m = value["walk_distance_m"]
+        # if walk_distance_m > MAX_WALK_DISTANCE_M:
+        #     continue
         # 上限時間を超えている場合にはcontinue
         duration_m = value["duration_m"]
         remaining_time = target_max_limit - duration_m
@@ -410,8 +409,8 @@ def calculate_with_combus_route_for_single_spot_and_stop(
             "",  # geometryをちゃんとセットする
             0,  # distanceをちゃんとセットする
         )
-        if merged_route.walk_distance_m > MAX_WALK_DISTANCE_M:
-            continue
+        # if merged_route.walk_distance_m > MAX_WALK_DISTANCE_M:
+        #     continue
         if merged_route.duration_m < best_duration:
             best_duration = merged_route.duration_m
             best_route = merged_route
@@ -441,9 +440,9 @@ def calculate_with_combus_route_for_single_spot(
             continue
         stop_index = stop_id_list.index(stop_id)
         # 徒歩距離がしきい値を超える場合にはcontinue
-        walk_distance_m = route_dict["walk_distance_m"]
-        if walk_distance_m > MAX_WALK_DISTANCE_M:
-            continue
+        # walk_distance_m = route_dict["walk_distance_m"]
+        # if walk_distance_m > MAX_WALK_DISTANCE_M:
+        #     continue
         # 上限時間を超えている場合にはcontinue
         duration_m = route_dict["duration_m"]
         remaining_time = 9999  # とりあえず大きな値を入れておく
@@ -480,8 +479,8 @@ def calculate_with_combus_route(
         )
         if route is None:
             continue
-        if route.walk_distance_m > MAX_WALK_DISTANCE_M:
-            continue
+        # if route.walk_distance_m > MAX_WALK_DISTANCE_M:
+        #     continue
         if route.duration_m < best_duration:
             best_duration = route.duration_m
             best_route = route
@@ -516,13 +515,13 @@ def calculate_route_pairs(
         # originalが無効、かつwith_combusが有効なものを抽出
         original_route_is_invalid = (
             original_route.duration_m > target_max_limit
-            or original_route.walk_distance_m > MAX_WALK_DISTANCE_M
+            # or original_route.walk_distance_m > MAX_WALK_DISTANCE_M
         )
         if not original_route_is_invalid:
             continue
         with_combus_route_is_valid = (
             with_combus_route.duration_m <= target_max_limit
-            and with_combus_route.walk_distance_m <= MAX_WALK_DISTANCE_M
+            # and with_combus_route.walk_distance_m <= MAX_WALK_DISTANCE_M
         )
         if not with_combus_route_is_valid:
             continue
