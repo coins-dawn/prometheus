@@ -68,8 +68,6 @@ def area_search():
     except Exception as e:
         return jsonify({"status": "NG", "message": str(e)}), 400
 
-    exec_area_search(search_input, data_accessor)
-
     try:
         search_output = exec_area_search(search_input, data_accessor)
     except Exception as e:
