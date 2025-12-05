@@ -102,6 +102,7 @@ class RouteSection:
     to_point: RoutePoint
     duration_m: int
     distance_m: int
+    geometry: str
 
     def to_json(self) -> dict:
         return {
@@ -110,6 +111,7 @@ class RouteSection:
             "to": self.to_point.to_json(),
             "duration_m": self.duration_m,
             "distance_m": self.distance_m,
+            "geometry": self.geometry,
         }
 
 

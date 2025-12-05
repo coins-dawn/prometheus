@@ -106,6 +106,63 @@ def _save_combus_route_kml(combus_route: CombusRoute, base_dir: str):
     kml.save(f"{base_dir}/combus_route.kml")
 
 
+def _save_route_pairs_kml(area_search_result: AreaSearchResult, base_dir: str):
+    """area_search_result.route_pairs を KML に出力（各ペアごとに別ファイル）"""
+    route_pairs = getattr(area_search_result, "route_pairs", None)
+    if not route_pairs:
+        return
+
+    def route_to_coords(route) -> list[tuple]:
+        """Route -> list of (lon, lat) for KML. geometry があれば優先してデコード、なければ sections から作成。"""
+        if not route:
+            return []
+        geom = getattr(route, "geometry", None)
+        if geom:
+            try:
+                pts = polyline.decode(geom)  # list of (lat, lon)
+                return [(lon, lat) for lat, lon in pts]
+            except Exception:
+                pass
+        coords = []
+        for sec in getattr(route, "sections", []) or []:
+            try:
+                fp = sec.from_point.coord
+                tp = sec.to_point.coord
+                coords.append((fp.lon, fp.lat))
+                coords.append((tp.lon, tp.lat))
+            except Exception:
+                continue
+        # 連続重複点を削除
+        filtered = []
+        for c in coords:
+            if not filtered or (
+                abs(filtered[-1][0] - c[0]) > 1e-9 or abs(filtered[-1][1] - c[1]) > 1e-9
+            ):
+                filtered.append(c)
+        return filtered
+
+    for idx, pair in enumerate(route_pairs):
+        # original を別ファイルで出力
+        orig_coords = route_to_coords(getattr(pair, "original", None))
+        if orig_coords:
+            kml_orig = simplekml.Kml()
+            line = kml_orig.newlinestring(name=f"route_pair_{idx}_original")
+            line.coords = orig_coords
+            line.style.linestyle.color = simplekml.Color.green
+            line.style.linestyle.width = 3
+            kml_orig.save(f"{base_dir}/route_pair_{idx}_original.kml")
+
+        # with_combus を別ファイルで出力
+        wc_coords = route_to_coords(getattr(pair, "with_combus", None))
+        if wc_coords:
+            kml_wc = simplekml.Kml()
+            line = kml_wc.newlinestring(name=f"route_pair_{idx}_with_combus")
+            line.coords = wc_coords
+            line.style.linestyle.color = simplekml.Color.red
+            line.style.linestyle.width = 3
+            kml_wc.save(f"{base_dir}/route_pair_{idx}_with_combus.kml")
+
+
 def output_visualize_data(
     area_search_result: AreaSearchResult, spot_type: SpotType, combus_route: CombusRoute
 ):
@@ -118,3 +175,4 @@ def output_visualize_data(
     _save_original_polygon(area_search_result, spot_type, base_dir)
     _save_with_combus_polygon(area_search_result, spot_type, base_dir)
     _save_combus_route_kml(combus_route, base_dir)
+    _save_route_pairs_kml(area_search_result, base_dir)

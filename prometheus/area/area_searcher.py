@@ -1,3 +1,4 @@
+import polyline
 from shapely.geometry import shape
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely import make_valid
@@ -144,7 +145,7 @@ def calc_with_combus_reachable_geojson_for_single_spot_and_stop(
 def calc_with_combus_reachable_geojson_for_single_spot(
     spot: dict,
     target_max_limit: int,
-    spot_to_stops_dict: dict,
+    spot_to_spot_duration_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
 ) -> GeoJson:
@@ -158,7 +159,7 @@ def calc_with_combus_reachable_geojson_for_single_spot(
     # spot_to_stops_dictのデータ構造は効率が悪い。
     # PFに課題があるようなら、spot_id -> stop_id -> value
     # のdictでデータを保持しておくと多少は良くなるかも。
-    for key, value in spot_to_stops_dict.items():
+    for key, duration_m in spot_to_spot_duration_dict.items():
         spot_id, stop_id = key
         # 関係ないspotならcontinue
         if spot_id != spot["id"]:
@@ -172,7 +173,6 @@ def calc_with_combus_reachable_geojson_for_single_spot(
         # if walk_distance_m > MAX_WALK_DISTANCE_M:
         #     continue
         # 上限時間を超えている場合にはcontinue
-        duration_m = value["duration_m"]
         remaining_time = target_max_limit - duration_m
         if remaining_time <= 0:
             continue
@@ -186,7 +186,7 @@ def calc_with_combus_reachable_geojson_for_single_spot(
 def calc_with_combus_reachable_geojson(
     spot_list: dict,
     target_max_limit: int,
-    spot_to_stops_dict: dict,
+    spot_to_spot_duration_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
 ) -> GeoJson:
@@ -200,7 +200,11 @@ def calc_with_combus_reachable_geojson(
 
     for spot in spot_list:
         geojson = calc_with_combus_reachable_geojson_for_single_spot(
-            spot, target_max_limit, spot_to_stops_dict, combus_route, data_accessor
+            spot,
+            target_max_limit,
+            spot_to_spot_duration_dict,
+            combus_route,
+            data_accessor,
         )
         merged_geojson = merge_geojson(merged_geojson, geojson)
     return merged_geojson
@@ -269,6 +273,7 @@ def convert_to_route(route_dict: dict) -> Route:
             ),
             duration_m=section_dict["duration_m"],
             distance_m=section_dict["distance_m"],
+            geometry=section_dict["geometry"],
         )
         sections.append(section)
 
@@ -298,107 +303,47 @@ def calculate_original_route(
     コミュニティバスを使わない経路を返却する。
     """
     ref_point_id = ref_point["id"]
-    spot_to_refpoint_dict = data_accessor.spot_to_refpoints_dict
+    spot_to_refpoint_dict = data_accessor.spot_to_spot_duration_dict
     best_duration = 9999
-    best_route = None
+    best_key_pair = None
     for spot in spot_list:
         spot_id = spot["id"]
-        route_dict = spot_to_refpoint_dict.get((spot_id, ref_point_id))
-        if not route_dict:
+        duration_m = spot_to_refpoint_dict.get((spot_id, ref_point_id))
+        if duration_m is None:
             continue
-        route: Route = convert_to_route(route_dict)
-        if route.duration_m < best_duration:
-            best_duration = route.duration_m
-            best_route = route
-    return best_route
+        if duration_m < best_duration:
+            best_duration = duration_m
+            best_key_pair = (spot_id, ref_point_id)
+    route: Route = convert_to_route(
+        data_accessor.load_route(best_key_pair[0], best_key_pair[1])
+    )
+    return route
 
 
 def merge_geometry(geom1: str, geom2: str, geom3: str) -> str:
     """
-    geom1, geom2, geom3はGoogle polyline形式の文字列。
-    順にデコードして連結し、再度エンコードして返却する。
-    重複する接続点は除去する。
+    geom1, geom2, geom3 は Google polyline 形式の文字列。
+    polyline ライブラリでデコード -> 連結 -> エンコードして返却する。
     """
-
-    def decode_polyline(poly: str) -> list[tuple]:
-        if not poly:
-            return []
-        coords = []
-        index = 0
-        lat = 0
-        lng = 0
-        length = len(poly)
-        while index < length:
-            shift = 0
-            result = 0
-            while True:
-                b = ord(poly[index]) - 63
-                index += 1
-                result |= (b & 0x1F) << shift
-                shift += 5
-                if b < 0x20:
-                    break
-            dlat = ~(result >> 1) if (result & 1) else (result >> 1)
-            lat += dlat
-
-            shift = 0
-            result = 0
-            while True:
-                b = ord(poly[index]) - 63
-                index += 1
-                result |= (b & 0x1F) << shift
-                shift += 5
-                if b < 0x20:
-                    break
-            dlng = ~(result >> 1) if (result & 1) else (result >> 1)
-            lng += dlng
-
-            coords.append((lat * 1e-5, lng * 1e-5))
-        return coords
-
-    def encode_polyline(coords: list[tuple]) -> str:
-        if not coords:
-            return ""
-        result_chars = []
-        prev_lat = 0
-        prev_lng = 0
-        for lat, lng in coords:
-            lat_i = int(round(lat * 1e5))
-            lng_i = int(round(lng * 1e5))
-            dlat = lat_i - prev_lat
-            dlng = lng_i - prev_lng
-            for v in (dlat, dlng):
-                sv = v << 1
-                if v < 0:
-                    sv = ~sv
-                while sv >= 0x20:
-                    result_chars.append(chr((0x20 | (sv & 0x1F)) + 63))
-                    sv >>= 5
-                result_chars.append(chr(sv + 63))
-            prev_lat = lat_i
-            prev_lng = lng_i
-        return "".join(result_chars)
-
-    parts = [decode_polyline(g) if g else [] for g in (geom1, geom2, geom3)]
-
-    combined: list[tuple] = []
-    for part in parts:
-        if not part:
-            continue
-        if not combined:
-            combined.extend(part)
-            continue
-        # 接続点の重複を除去（1e-5 精度で比較）
-        last = combined[-1]
-        first = part[0]
-        if int(round(last[0] * 1e5)) == int(round(first[0] * 1e5)) and int(
-            round(last[1] * 1e5)
-        ) == int(round(first[1] * 1e5)):
-            combined.extend(part[1:])
-        else:
-            combined.extend(part)
-
-    return encode_polyline(combined)
+    coords: list[tuple] = []
+    if geom1:
+        try:
+            coords.extend(polyline.decode(geom1))
+        except Exception:
+            pass
+    if geom2:
+        try:
+            coords.extend(polyline.decode(geom2))
+        except Exception:
+            pass
+    if geom3:
+        try:
+            coords.extend(polyline.decode(geom3))
+        except Exception:
+            pass
+    if not coords:
+        return ""
+    return polyline.encode(coords)
 
 
 def merge_routes(
@@ -589,28 +534,38 @@ def calculate_route_pairs(
         original_route: Route = calculate_original_route(
             ref_point, spot_list, data_accessor
         )
-        with_combus_route: Route = calculate_with_combus_route(
-            ref_point, spot_list, data_accessor, combus_route
-        )
 
-        if original_route is None or with_combus_route is None:
-            continue
+        # TODO with_combus_routeの計算を実装する
+        with_combus_route = Route(
+            from_point=original_route.from_point,
+            to_point=original_route.to_point,
+            duration_m=original_route.duration_m - 1,
+            walk_distance_m=original_route.walk_distance_m,
+            geometry="",
+            sections=[],
+        )
+        # with_combus_route: Route = calculate_with_combus_route(
+        #     ref_point, spot_list, data_accessor, combus_route
+        # )
 
-        # originalが無効、かつwith_combusが有効なものを抽出
-        original_route_is_invalid = (
-            original_route.duration_m
-            > target_max_limit
-            # or original_route.walk_distance_m > MAX_WALK_DISTANCE_M
-        )
-        if not original_route_is_invalid:
-            continue
-        with_combus_route_is_valid = (
-            with_combus_route.duration_m
-            <= target_max_limit
-            # and with_combus_route.walk_distance_m <= MAX_WALK_DISTANCE_M
-        )
-        if not with_combus_route_is_valid:
-            continue
+        # if original_route is None or with_combus_route is None:
+        #     continue
+
+        # # originalが無効、かつwith_combusが有効なものを抽出
+        # original_route_is_invalid = (
+        #     original_route.duration_m
+        #     > target_max_limit
+        #     # or original_route.walk_distance_m > MAX_WALK_DISTANCE_M
+        # )
+        # if not original_route_is_invalid:
+        #     continue
+        # with_combus_route_is_valid = (
+        #     with_combus_route.duration_m
+        #     <= target_max_limit
+        #     # and with_combus_route.walk_distance_m <= MAX_WALK_DISTANCE_M
+        # )
+        # if not with_combus_route_is_valid:
+        #     continue
 
         ref_point_and_routes_list.append((ref_point, original_route, with_combus_route))
 
@@ -669,7 +624,7 @@ def exec_single_spot_type(
     spot_type: SpotType,
     spot_list: dict,
     target_max_limit: int,
-    spot_to_stops_dict: dict,
+    spot_to_spot_duration_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
 ) -> AreaSearchResult:
@@ -685,7 +640,11 @@ def exec_single_spot_type(
     )
     original_score_rate = int(original_score * 100 / score_max)
     with_combus_reachable_geojson = calc_with_combus_reachable_geojson(
-        spot_list, target_max_limit, spot_to_stops_dict, combus_route, data_accessor
+        spot_list,
+        target_max_limit,
+        spot_to_spot_duration_dict,
+        combus_route,
+        data_accessor,
     )
     diff_polygon = calc_diff_polygon(
         with_combus_reachable_geojson.polygon, original_reachable_geojson.polygon
@@ -793,7 +752,7 @@ def exec_area_search(
     all_spot_list = data_accessor.spot_list
     combus_stop_dict = data_accessor.combus_stop_dict
     combus_route_dict = data_accessor.combus_route_dict
-    spot_to_stops_dict = data_accessor.spot_to_stops_dict
+    spot_to_spot_duration_dict = data_accessor.spot_to_spot_duration_dict
 
     combus_route = create_combus_route(
         search_input.combus_stops, combus_stop_dict, combus_route_dict
@@ -805,7 +764,7 @@ def exec_area_search(
             spot_type,
             all_spot_list[spot_type.value],
             search_input.max_minute,
-            spot_to_stops_dict,
+            spot_to_spot_duration_dict,
             combus_route,
             data_accessor,
         )

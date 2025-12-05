@@ -7,9 +7,7 @@ class DataAccessor:
     COMBUS_STOP_LIST_FILE_PATH = "data/archive/combus_stops.json"
     REF_POINTS_LIST_FILE_PATH = "data/archive/ref_points.json"
     COMBUS_ROUTES_FILE_PATH = "data/archive/combus_routes.json"
-    SPOT_TO_STOPS_FILE_PATH = "data/archive/spot_to_stops.json"
-    SPOT_TO_REFPOINTS_FILE_PATH = "data/archive/spot_to_refpoints.json"
-    STPO_TO_REFPOINTS_FILE_PATH = "data/archive/stop_to_refpoints.json"
+    ALL_ROUTES_FILE_PATH = "data/archive/all_routes.csv"
     ALL_GEOJSON_FILE_PATH = "data/archive/all_geojsons.txt"
     MESH_FILE_PATH = "data/archive/mesh.json"
     BEST_COMBUS_STOP_SEQUENCE_FILE_PATH = "data/archive/best_combus_stop_sequences.json"
@@ -21,15 +19,7 @@ class DataAccessor:
         self.combus_stop_dict = DataAccessor.load_combus_stop_dict()
         self.ref_point_list = DataAccessor.load_ref_point_list()
         self.combus_route_dict = DataAccessor.load_combus_route_dict()
-        self.spot_to_stops_dict = DataAccessor.load_route_dict(
-            DataAccessor.SPOT_TO_STOPS_FILE_PATH, "spot_to_stops"
-        )
-        self.spot_to_refpoints_dict = DataAccessor.load_route_dict(
-            DataAccessor.SPOT_TO_REFPOINTS_FILE_PATH, "spot_to_refpoints"
-        )
-        self.stop_to_refpoints_dict = DataAccessor.load_route_dict(
-            DataAccessor.STPO_TO_REFPOINTS_FILE_PATH, "stop_to_refpoints"
-        )
+        self.spot_to_spot_duration_dict = DataAccessor.load_spot_to_spot_duration_dict()
         self.geojson_name_set = DataAccessor.load_geojson_name_set()
         self.mesh_dict = DataAccessor.load_mesh_dict()
         self.best_combus_stop_sequence_dict = (
@@ -96,28 +86,6 @@ class DataAccessor:
             }
         return combus_route_dict
 
-    @staticmethod
-    def load_route_dict(file_path: str, key: str):
-        """
-        経路情報をロードしdict型式で返却する。
-        """
-        point_to_point_list = []
-        point_to_point_dict = {}
-        with open(file_path, "r", encoding="utf-8") as f:
-            point_to_point_list = json.load(f)[key]
-
-        for point_to_point in point_to_point_list:
-            from_id = point_to_point["from"]
-            to_id = point_to_point["to"]
-            walk_distance_m = int(point_to_point["walk_distance_m"])
-            point_to_point_dict[(from_id, to_id)] = {
-                "duration_m": int(point_to_point["duration_m"]),
-                "walk_distance_m": walk_distance_m,
-                "geometry": point_to_point["geometry"],
-                "sections": point_to_point["sections"],
-            }
-        return point_to_point_dict
-
     @classmethod
     def load_geojson_name_set(cls):
         """
@@ -129,6 +97,22 @@ class DataAccessor:
                 name = line.strip()
                 all_geojson_name_set.add(name)
         return all_geojson_name_set
+
+    @classmethod
+    def load_spot_to_spot_duration_dict(cls):
+        """
+        スポット間の所要時間辞書をロードしdictで返却する。
+        """
+        spot_to_spot_duration_dict = {}
+        with open(cls.ALL_ROUTES_FILE_PATH, "r", encoding="utf-8") as f:
+            next(f)  # ヘッダー行をスキップ
+            for line in f:
+                parts = line.strip().split(",")
+                from_spot = parts[0]
+                to_spot = parts[1]
+                duration_m = int(parts[2])
+                spot_to_spot_duration_dict[(from_spot, to_spot)] = duration_m
+        return spot_to_spot_duration_dict
 
     @classmethod
     def load_mesh_dict(cls):
@@ -152,11 +136,12 @@ class DataAccessor:
     def load_best_combus_stop_sequences(cls):
         """最適なバス停列を辞書形式で返却する。"""
         result_dict = {}
-        with open(cls.BEST_COMBUS_STOP_SEQUENCE_FILE_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            for sequence in data["best-combus-stop-sequences"]:
-                key = (sequence["spot-type"], sequence["duration-limit-m"])
-                result_dict[key] = sequence["stop-sequence"]
+        # TODO コメントアウトをはずす
+        # with open(cls.BEST_COMBUS_STOP_SEQUENCE_FILE_PATH, "r", encoding="utf-8") as f:
+        #     data = json.load(f)
+        #     for sequence in data["best-combus-stop-sequences"]:
+        #         key = (sequence["spot-type"], sequence["duration-limit-m"])
+        #         result_dict[key] = sequence["stop-sequence"]
         return result_dict
 
     @classmethod
@@ -180,3 +165,11 @@ class DataAccessor:
             with open(file_path, "rb") as f:
                 return pickle.load(f)
         return None
+
+    def load_route(self, from_id: str, to_id: str):
+        """
+        指定されたfrom_idとto_idに対応する経路情報を返却する。
+        """
+        file_path = f"data/archive/route/{from_id}_{to_id}.json"
+        with open(file_path, "r", encoding="utf-8") as f:
+            return json.load(f)
