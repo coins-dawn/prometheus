@@ -7,7 +7,7 @@ from prometheus.arrange_data import arrange_data
 
 app = Flask(__name__)
 CORS(app)
-# arrange_data()
+arrange_data()
 data_accessor = DataAccessor()
 
 
