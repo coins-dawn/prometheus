@@ -7,3 +7,4 @@ pydantic
 polyline
 flask-cors
 shapely
+requests
