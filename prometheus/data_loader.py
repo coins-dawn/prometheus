@@ -14,18 +14,18 @@ class DataAccessor:
     TARGET_REGION_FILE_PATH = "data/archive/target_region.json"
 
     def __init__(self):
-        # self.spot_list = DataAccessor.load_spot_list()
-        # self.combus_stop_list = DataAccessor.load_combus_stop_list()
-        # self.combus_stop_dict = DataAccessor.load_combus_stop_dict()
-        # self.ref_point_list = DataAccessor.load_ref_point_list()
-        # self.combus_route_dict = DataAccessor.load_combus_route_dict()
-        # self.spot_to_spot_duration_dict = DataAccessor.load_spot_to_spot_duration_dict()
-        # self.geojson_name_set = DataAccessor.load_geojson_name_set()
-        # self.mesh_dict = DataAccessor.load_mesh_dict()
-        # self.best_combus_stop_sequence_dict = (
-        #     DataAccessor.load_best_combus_stop_sequences()
-        # )
-        # self.target_region_dict = DataAccessor.load_target_region()
+        self.spot_list = DataAccessor.load_spot_list()
+        self.combus_stop_list = DataAccessor.load_combus_stop_list()
+        self.combus_stop_dict = DataAccessor.load_combus_stop_dict()
+        self.ref_point_list = DataAccessor.load_ref_point_list()
+        self.combus_route_dict = DataAccessor.load_combus_route_dict()
+        self.spot_to_spot_duration_dict = DataAccessor.load_spot_to_spot_duration_dict()
+        self.geojson_name_set = DataAccessor.load_geojson_name_set()
+        self.mesh_dict = DataAccessor.load_mesh_dict()
+        self.best_combus_stop_sequence_dict = (
+            DataAccessor.load_best_combus_stop_sequences()
+        )
+        self.target_region_dict = DataAccessor.load_target_region()
         print("データのロードが完了しました。")
 
     @classmethod
