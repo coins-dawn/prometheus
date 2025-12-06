@@ -10,10 +10,12 @@ EXPAND_TARGET_DIR = "data/archive/"
 def download_archive():
     print("データのダウンロードを開始します...")
     os.makedirs(os.path.dirname(ARCHIVE_FILE_PATH), exist_ok=True)
-    resp = requests.get(ARCHIVE_DATA_DOWNLOAD_URL, timeout=30, allow_redirects=True)
-    resp.raise_for_status()
-    with open(ARCHIVE_FILE_PATH, "wb") as f:
-        f.write(resp.content)
+    with requests.get(ARCHIVE_DATA_DOWNLOAD_URL, timeout=30, allow_redirects=True, stream=True) as resp:
+        resp.raise_for_status()
+        with open(ARCHIVE_FILE_PATH, "wb") as f:
+            for chunk in resp.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
     print("データのダウンロードが完了しました。")
 
 
