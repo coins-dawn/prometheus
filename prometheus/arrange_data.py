@@ -1,23 +1,21 @@
 import os
-import sys
 import zipfile
-import subprocess
+import requests
 
 ARCHIVE_DATA_DOWNLOAD_URL = "https://github.com/coins-dawn/soaring/releases/download/v1.0.0/archive.zip"
 ARCHIVE_FILE_PATH = "data/archive.zip"
 EXPAND_TARGET_DIR = "data/archive/"
 
-def run_curl_command():
+
+def download_archive():
     print("データのダウンロードを開始します...")
-    COMMAND = [
-        'curl',
-        '-L',
-        '-o',
-        ARCHIVE_FILE_PATH,
-        ARCHIVE_DATA_DOWNLOAD_URL
-    ]
-    subprocess.run(COMMAND, check=True)
+    os.makedirs(os.path.dirname(ARCHIVE_FILE_PATH), exist_ok=True)
+    resp = requests.get(ARCHIVE_DATA_DOWNLOAD_URL, timeout=30, allow_redirects=True)
+    resp.raise_for_status()
+    with open(ARCHIVE_FILE_PATH, "wb") as f:
+        f.write(resp.content)
     print("データのダウンロードが完了しました。")
+
 
 def arrange_data():
     if os.path.exists(EXPAND_TARGET_DIR):
@@ -25,7 +23,7 @@ def arrange_data():
         return
 
     if not os.path.exists(ARCHIVE_FILE_PATH):
-        run_curl_command()
+        download_archive()
 
     print("zipファイルの展開を開始します...")
     with zipfile.ZipFile(ARCHIVE_FILE_PATH, "r") as zip_ref:
