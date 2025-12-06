@@ -1,7 +1,5 @@
 flask
 gunicorn
-flask
-pandas
 simplekml
 pydantic
 polyline
