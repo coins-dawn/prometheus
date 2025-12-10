@@ -493,6 +493,7 @@ def convert_route_summry_to_route(
     ]
     combus_geometry = ""
     duration_m = 0
+    distance_m = 0
     enter_stop_found = False
     for current_section_index, current_section in enumerate(combus_route.section_list):
         # セクションの入りのバス停を取得
@@ -516,6 +517,7 @@ def convert_route_summry_to_route(
         if enter_stop_found:
             combus_geometry = merge_geometry(combus_geometry, current_section.geometry)
             duration_m += current_section.duration_m
+            distance_m += (int(current_section.distance_km * 1000))
         if current_section_end_stop.id == with_combus_route_summary.exit_combus_stop_id:
             break
     combus_route_section = RouteSection(
@@ -529,7 +531,7 @@ def convert_route_summry_to_route(
             coord=Coord(lat=exit_combus_stop["lat"], lon=exit_combus_stop["lon"]),
         ),
         duration_m=duration_m,
-        distance_m=0,  # 必要に応じてちゃんと実装する
+        distance_m=distance_m,
         geometry=combus_geometry,
     )
 
