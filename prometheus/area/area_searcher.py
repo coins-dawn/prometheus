@@ -44,6 +44,7 @@ class WithCombusRouteSummary:
     spot_id: str
     enter_combus_stop_id: str
     exit_combus_stop_id: str
+    ref_point_id: str
     duration_m: int
     walk_distance_m: int
 
@@ -330,9 +331,9 @@ def calculate_original_route(
     return route
 
 
-def merge_geometry(geom1: str, geom2: str, geom3: str) -> str:
+def merge_geometry(geom1: str, geom2: str) -> str:
     """
-    geom1, geom2, geom3 は Google polyline 形式の文字列。
+    geom1, geom2 は Google polyline 形式の文字列。
     polyline ライブラリでデコード -> 連結 -> エンコードして返却する。
     """
     coords: list[tuple] = []
@@ -346,63 +347,9 @@ def merge_geometry(geom1: str, geom2: str, geom3: str) -> str:
             coords.extend(polyline.decode(geom2))
         except Exception:
             pass
-    if geom3:
-        try:
-            coords.extend(polyline.decode(geom3))
-        except Exception:
-            pass
     if not coords:
         return ""
     return polyline.encode(coords)
-
-
-def merge_routes(
-    spot_to_stop_route: Route,
-    stop_to_refpoint_route: Route,
-    combus_duration: int,
-    combus_geometry: str,
-    combus_distance: int,
-) -> Route:
-    """
-    3つの経路を結合して1つの経路を作成する。
-    1. スポット -> 乗りバス停
-    2. コミュニティバス
-    3. 降りバス停 -> 目的地
-    """
-    sections: list[RouteSection] = []
-
-    # スポット -> 乗りバス停
-    sections.extend(spot_to_stop_route.sections)
-
-    # コミュニティバス
-    sections.append(
-        RouteSection(
-            mode="combus",
-            from_point=stop_to_refpoint_route.from_point,
-            to_point=stop_to_refpoint_route.to_point,
-            duration_m=combus_duration,
-            distance_m=combus_distance,
-        )
-    )
-
-    # 降りバス停 -> 目的地
-    sections.extend(stop_to_refpoint_route.sections)
-
-    return Route(
-        from_point=spot_to_stop_route.from_point,
-        to_point=stop_to_refpoint_route.to_point,
-        duration_m=spot_to_stop_route.duration_m
-        + combus_duration
-        + stop_to_refpoint_route.duration_m,
-        walk_distance_m=spot_to_stop_route.walk_distance_m
-        + stop_to_refpoint_route.walk_distance_m,
-        geometry=merge_geometry(
-            spot_to_stop_route.geometry,
-            combus_geometry,
-            stop_to_refpoint_route.geometry,
-        ),
-        sections=sections,
-    )
 
 
 def calculate_with_combus_route_summary_for_single_spot_and_stop(
@@ -448,6 +395,7 @@ def calculate_with_combus_route_summary_for_single_spot_and_stop(
                 spot_id=spot_id,
                 enter_combus_stop_id=combus_route.stop_list[start_stop_index].id,
                 exit_combus_stop_id=combus_route.stop_list[current_stop_index].id,
+                ref_point_id=ref_point["id"],
                 duration_m=total_duration_m,
                 walk_distance_m=0,  # TODO 徒歩距離の計算を追加
             )
@@ -517,20 +465,103 @@ def convert_route_summry_to_route(
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
 ) -> Route:
-    # TODO 実装する
-    return Route(
+    # スポット -> 乗りバス停の経路を取得
+    spot_to_enter_stop_route_dict = data_accessor.load_route(
+        with_combus_route_summary.spot_id,
+        with_combus_route_summary.enter_combus_stop_id,
+    )
+    spot_to_enter_stop_route = convert_to_route(spot_to_enter_stop_route_dict)
+
+    # 降りバス停 -> 目的地の経路を取得
+    exit_stop_to_refpoint_route_dict = data_accessor.load_route(
+        with_combus_route_summary.exit_combus_stop_id,
+        with_combus_route_summary.ref_point_id,
+    )
+    stop_to_refpoint_route = convert_to_route(exit_stop_to_refpoint_route_dict)
+
+    # コミュニティバスの区間情報を取得
+    def calc_next_stop_index(current_index: int, stop_list_size: int):
+        if current_index == stop_list_size - 1:
+            return 0
+        return current_index + 1
+
+    enter_combus_stop = data_accessor.combus_stop_dict[
+        with_combus_route_summary.enter_combus_stop_id
+    ]
+    exit_combus_stop = data_accessor.combus_stop_dict[
+        with_combus_route_summary.exit_combus_stop_id
+    ]
+    combus_geometry = ""
+    duration_m = 0
+    enter_stop_found = False
+    for current_section_index, current_section in enumerate(combus_route.section_list):
+        # セクションの入りのバス停を取得
+        current_section_begin_stop_index = current_section_index
+        current_section_begin_stop = combus_route.stop_list[
+            current_section_begin_stop_index
+        ]
+        # セクションの出のバス停を取得
+        current_section_end_stop_index = calc_next_stop_index(
+            current_section_index, len(combus_route.stop_list)
+        )
+        current_section_end_stop = combus_route.stop_list[
+            current_section_end_stop_index
+        ]
+        # 乗りのバス停から降りのバス停まで、経路形状と所要時間を足し続ける
+        if (
+            current_section_begin_stop.id
+            == with_combus_route_summary.enter_combus_stop_id
+        ):
+            enter_stop_found = True
+        if enter_stop_found:
+            combus_geometry = merge_geometry(combus_geometry, current_section.geometry)
+            duration_m += current_section.duration_m
+        if current_section_end_stop.id == with_combus_route_summary.exit_combus_stop_id:
+            break
+    combus_route_section = RouteSection(
+        mode="combus",
         from_point=RoutePoint(
-            name="出発地a",
-            coord=Coord(lat=0.0, lon=0.0),  # ダミー
+            name=enter_combus_stop["name"],
+            coord=Coord(lat=enter_combus_stop["lat"], lon=enter_combus_stop["lon"]),
         ),
         to_point=RoutePoint(
-            name="到着地",
-            coord=Coord(lat=0.0, lon=0.0),  # ダミー
+            name=exit_combus_stop["name"],
+            coord=Coord(lat=exit_combus_stop["lat"], lon=exit_combus_stop["lon"]),
         ),
-        duration_m=with_combus_route_summary.duration_m,
-        walk_distance_m=with_combus_route_summary.walk_distance_m,
-        geometry="",
-        sections=[],
+        duration_m=duration_m,
+        distance_m=0,  # 必要に応じてちゃんと実装する
+        geometry=combus_geometry,
+    )
+
+    # 三つの区間をマージする
+    total_duration_m = (
+        spot_to_enter_stop_route.duration_m
+        + combus_route_section.duration_m
+        + stop_to_refpoint_route.duration_m
+    )
+    total_geometry = merge_geometry(
+        merge_geometry(
+            spot_to_enter_stop_route.geometry, combus_route_section.geometry
+        ),
+        stop_to_refpoint_route.geometry,
+    )
+    total_section = (
+        spot_to_enter_stop_route.sections
+        + [combus_route_section]
+        + stop_to_refpoint_route.sections
+    )
+    total_walk_distance_m = (
+        spot_to_enter_stop_route.walk_distance_m
+        + stop_to_refpoint_route.walk_distance_m
+    )
+
+    return Route(
+        from_point=spot_to_enter_stop_route.from_point,
+        to_point=stop_to_refpoint_route.to_point,
+        duration_m=total_duration_m,
+        walk_distance_m=total_walk_distance_m,
+        geometry=total_geometry,
+        sections=total_section,
     )
 
 
