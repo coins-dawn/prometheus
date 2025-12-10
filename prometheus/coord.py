@@ -1,6 +1,10 @@
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 
-class Coord(BaseModel):
+@dataclass
+class Coord:
     lat: float
     lon: float
+
+    def to_json(self) -> dict:
+        return {"lat": self.lat, "lon": self.lon}

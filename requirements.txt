@@ -1,8 +1,8 @@
 flask
 gunicorn
-networkx
-flask
-pandas
 simplekml
 pydantic
 polyline
+flask-cors
+shapely
+requests
