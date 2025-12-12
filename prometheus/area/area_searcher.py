@@ -295,6 +295,11 @@ def convert_to_route(route_dict: dict) -> Route:
         if section_dict["mode"] == "WALK"
     )
 
+    # 距離を合計
+    total_distance_m = sum(
+        section_dict["distance_m"] for section_dict in route_dict["sections"]
+    )
+
     route = Route(
         from_point=from_point,
         to_point=to_point,
@@ -302,6 +307,7 @@ def convert_to_route(route_dict: dict) -> Route:
         walk_distance_m=walk_distance_m,
         geometry=route_dict["geometry"],
         sections=sections,
+        distance_m=total_distance_m,
     )
 
     return route
@@ -541,6 +547,11 @@ def convert_route_summry_to_route(
         + combus_route_section.duration_m
         + stop_to_refpoint_route.duration_m
     )
+    total_distance_m = (
+        spot_to_enter_stop_route.distance_m
+        + combus_route_section.distance_m
+        + stop_to_refpoint_route.distance_m
+    )
     total_geometry = merge_geometry(
         merge_geometry(
             spot_to_enter_stop_route.geometry, combus_route_section.geometry
@@ -564,6 +575,7 @@ def convert_route_summry_to_route(
         walk_distance_m=total_walk_distance_m,
         geometry=total_geometry,
         sections=total_section,
+        distance_m=total_distance_m,
     )
 
 

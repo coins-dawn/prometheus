@@ -121,6 +121,7 @@ class Route:
     to_point: RoutePoint
     duration_m: int
     walk_distance_m: int
+    distance_m: int
     geometry: str
     sections: list[RouteSection]
 
@@ -132,6 +133,7 @@ class Route:
             "walk-distance-m": self.walk_distance_m,
             "geometry": self.geometry,
             "sections": [section.to_json() for section in self.sections],
+            "distance-m": self.distance_m,
         }
 
 
