@@ -295,6 +295,11 @@ def convert_to_route(route_dict: dict) -> Route:
         if section_dict["mode"] == "WALK"
     )
 
+    # 距離を合計
+    total_distance_m = sum(
+        section_dict["distance_m"] for section_dict in route_dict["sections"]
+    )
+
     route = Route(
         from_point=from_point,
         to_point=to_point,
@@ -302,6 +307,7 @@ def convert_to_route(route_dict: dict) -> Route:
         walk_distance_m=walk_distance_m,
         geometry=route_dict["geometry"],
         sections=sections,
+        distance_m=total_distance_m,
     )
 
     return route
@@ -517,7 +523,7 @@ def convert_route_summry_to_route(
         if enter_stop_found:
             combus_geometry = merge_geometry(combus_geometry, current_section.geometry)
             duration_m += current_section.duration_m
-            distance_m += (int(current_section.distance_km * 1000))
+            distance_m += int(current_section.distance_km * 1000)
         if current_section_end_stop.id == with_combus_route_summary.exit_combus_stop_id:
             break
     combus_route_section = RouteSection(
@@ -540,6 +546,11 @@ def convert_route_summry_to_route(
         spot_to_enter_stop_route.duration_m
         + combus_route_section.duration_m
         + stop_to_refpoint_route.duration_m
+    )
+    total_distance_m = (
+        spot_to_enter_stop_route.distance_m
+        + combus_route_section.distance_m
+        + stop_to_refpoint_route.distance_m
     )
     total_geometry = merge_geometry(
         merge_geometry(
@@ -564,6 +575,7 @@ def convert_route_summry_to_route(
         walk_distance_m=total_walk_distance_m,
         geometry=total_geometry,
         sections=total_section,
+        distance_m=total_distance_m,
     )
 
 
@@ -613,50 +625,6 @@ def calculate_route_pairs(
         RoutePair(original=original_route, with_combus=with_combus_route)
         for _, original_route, with_combus_route in ref_point_and_routes_list[:3]
     ]
-
-
-def calculate_route_pairs_dummy() -> list[RoutePair]:
-    """ダミーのRoutePairリストを返却"""
-    # 出発点 / 到着点
-    p_from = RoutePoint(name="出発地", coord=Coord(lat=36.7000, lon=137.2100))
-    p_to = RoutePoint(name="到着地", coord=Coord(lat=36.7020, lon=137.2120))
-
-    # オリジナル（徒歩のみ）
-    sec_orig = RouteSection(
-        mode="walk",
-        from_point=p_from,
-        to_point=p_to,
-        duration_m=10,
-        distance_m=800,
-    )
-    route_orig = Route(
-        from_point=p_from,
-        to_point=p_to,
-        duration_m=10,
-        walk_distance_m=800,
-        geometry="",
-        sections=[sec_orig],
-    )
-
-    # コミュニティバスあり（徒歩＋バスの区間）
-    p_stop = RoutePoint(name="バス停", coord=Coord(lat=36.7010, lon=137.2110))
-    sec_walk = RouteSection(
-        mode="walk", from_point=p_from, to_point=p_stop, duration_m=5, distance_m=400
-    )
-    sec_bus = RouteSection(
-        mode="bus", from_point=p_stop, to_point=p_to, duration_m=3, distance_m=600
-    )
-    route_with_combus = Route(
-        from_point=p_from,
-        to_point=p_to,
-        duration_m=8,
-        walk_distance_m=400,
-        geometry="",
-        sections=[sec_walk, sec_bus],
-    )
-
-    pair = RoutePair(original=route_orig, with_combus=route_with_combus)
-    return [pair]
 
 
 def exec_single_spot_type(
