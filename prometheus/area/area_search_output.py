@@ -109,8 +109,8 @@ class RouteSection:
             "mode": self.mode,
             "from": self.from_point.to_json(),
             "to": self.to_point.to_json(),
-            "duration_m": self.duration_m,
-            "distance_m": self.distance_m,
+            "duration-m": self.duration_m,
+            "distance-m": self.distance_m,
             "geometry": self.geometry,
         }
 
@@ -128,8 +128,8 @@ class Route:
         return {
             "from": self.from_point.to_json(),
             "to": self.to_point.to_json(),
-            "duration_m": self.duration_m,
-            "walk_distance_m": self.walk_distance_m,
+            "duration-m": self.duration_m,
+            "walk-distance-m": self.walk_distance_m,
             "geometry": self.geometry,
             "sections": [section.to_json() for section in self.sections],
         }
