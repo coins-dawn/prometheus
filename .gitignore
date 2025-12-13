@@ -3,4 +3,5 @@ __pycache__/
 *.kml
 /.vscode/
 /visualize/
-/data/
+/data/archive/
+/data/archive.zip
