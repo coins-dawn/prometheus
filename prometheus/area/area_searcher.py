@@ -597,7 +597,7 @@ def calculate_route_pairs(
         ref_point_list, diff_polygon
     )
 
-    ref_point_and_routes_list = []
+    route_pair_list = []
     for ref_point in ref_point_in_polygon:
         original_route: Route = calculate_original_route(
             ref_point, spot_list, data_accessor
@@ -619,16 +619,18 @@ def calculate_route_pairs(
         )
         if not with_combus_route_is_valid:
             continue
+        route_pair_list.append((original_route, with_combus_route_summary))
 
-        with_combus_route = convert_route_summry_to_route(
-            with_combus_route_summary, combus_route, data_accessor
-        )
-        ref_point_and_routes_list.append((ref_point, original_route, with_combus_route))
-
-    # とりあえず先頭から3つ返却する
+    # とりあえず先頭から3つ選択する
+    selected_route_summary_list = route_pair_list[:3]
     return [
-        RoutePair(original=original_route, with_combus=with_combus_route)
-        for _, original_route, with_combus_route in ref_point_and_routes_list[:3]
+        RoutePair(
+            original=original_route,
+            with_combus=convert_route_summry_to_route(
+                with_combus_route_summary, combus_route, data_accessor
+            ),
+        )
+        for original_route, with_combus_route_summary in selected_route_summary_list
     ]
 
 
