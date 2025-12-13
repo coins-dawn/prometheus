@@ -10,7 +10,7 @@ class DataAccessor:
     ALL_ROUTES_FILE_PATH = "data/archive/all_routes.csv"
     ALL_GEOJSON_FILE_PATH = "data/archive/all_geojsons.txt"
     MESH_FILE_PATH = "data/archive/mesh.json"
-    BEST_COMBUS_STOP_SEQUENCE_FILE_PATH = "data/archive/best_combus_stop_sequences.json"
+    BEST_COMBUS_STOP_SEQUENCE_FILE_PATH = "data/static/best_combus_stop_sequences.json"
     TARGET_REGION_FILE_PATH = "data/archive/target_region.json"
 
     def __init__(self):

@@ -390,6 +390,11 @@ def calculate_with_combus_route_summary_for_single_spot_and_stop(
         stop_to_refpoint_duration_m = data_accessor.spot_to_spot_duration_dict.get(
             (combus_route.stop_list[current_stop_index].id, ref_point["id"])
         )
+        # NOTE なぜか経路が存在しないペアがある
+        # 例 comstop44 -> refpoint1962
+        # 原因はわかっていないが、数が少ないのでいったんcontinueでしのぐ
+        if not stop_to_refpoint_duration_m:
+            continue
         total_duration_m = (
             spot_to_enter_stop_duration_m
             + combus_duration
