@@ -19,7 +19,7 @@ class DataAccessor:
         self.combus_stop_dict = DataAccessor.load_combus_stop_dict()
         self.ref_point_list = DataAccessor.load_ref_point_list()
         self.combus_route_dict = DataAccessor.load_combus_route_dict()
-        self.spot_to_spot_duration_dict = DataAccessor.load_spot_to_spot_duration_dict()
+        self.spot_to_spot_summary_dict = DataAccessor.load_spot_to_spot_summary_dict()
         self.geojson_name_key_dict = DataAccessor.load_geojson_name_key_dict()
         self.mesh_dict = DataAccessor.load_mesh_dict()
         self.best_combus_stop_sequence_dict = (
@@ -117,11 +117,11 @@ class DataAccessor:
         return all_geojson_name_key_dict
 
     @classmethod
-    def load_spot_to_spot_duration_dict(cls):
+    def load_spot_to_spot_summary_dict(cls):
         """
-        スポット間の所要時間辞書をロードしdictで返却する。
+        スポット間のサマリー辞書をロードしdictで返却する。
         """
-        spot_to_spot_duration_dict = {}
+        spot_to_spot_summary_dict = {}
         with open(cls.ALL_ROUTES_FILE_PATH, "r", encoding="utf-8") as f:
             next(f)  # ヘッダー行をスキップ
             for line in f:
@@ -129,8 +129,12 @@ class DataAccessor:
                 from_spot = parts[0]
                 to_spot = parts[1]
                 duration_m = int(parts[2])
-                spot_to_spot_duration_dict[(from_spot, to_spot)] = duration_m
-        return spot_to_spot_duration_dict
+                walk_distance_m = int(parts[3])
+                spot_to_spot_summary_dict[(from_spot, to_spot)] = (
+                    duration_m,
+                    walk_distance_m,
+                )
+        return spot_to_spot_summary_dict
 
     @classmethod
     def load_mesh_dict(cls):

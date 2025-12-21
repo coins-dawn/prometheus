@@ -118,6 +118,7 @@ def calc_original_reachable_geojson(
 
 def calc_with_combus_reachable_geojson_for_single_spot_and_stop(
     remaining_time: int,
+    remaining_walking_distance: int,
     stop_index: int,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
@@ -144,7 +145,7 @@ def calc_with_combus_reachable_geojson_for_single_spot_and_stop(
         )
         next_stop = combus_route.stop_list[next_stop_index]
         next_geojson_dict = data_accessor.load_geojson(
-            next_stop.id, current_remaining_time, 1000  # TODO ちゃんと実装する
+            next_stop.id, current_remaining_time, remaining_walking_distance
         )
         next_geojson = GeoJson(
             polygon=shape(next_geojson_dict["geometry"]),
@@ -161,7 +162,8 @@ def calc_with_combus_reachable_geojson_for_single_spot_and_stop(
 def calc_with_combus_reachable_geojson_for_single_spot(
     spot: dict,
     target_max_limit: int,
-    spot_to_spot_duration_dict: dict,
+    target_max_walking_distance_m: int,
+    spot_to_spot_summary_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
 ) -> GeoJson:
@@ -175,7 +177,8 @@ def calc_with_combus_reachable_geojson_for_single_spot(
     # spot_to_stops_dictのデータ構造は効率が悪い。
     # PFに課題があるようなら、spot_id -> stop_id -> value
     # のdictでデータを保持しておくと多少は良くなるかも。
-    for key, duration_m in spot_to_spot_duration_dict.items():
+    for key, summary in spot_to_spot_summary_dict.items():
+        duration_m, walk_distance_m = summary
         spot_id, stop_id = key
         # 関係ないspotならcontinue
         if spot_id != spot["id"]:
@@ -185,15 +188,19 @@ def calc_with_combus_reachable_geojson_for_single_spot(
             continue
         stop_index = stop_id_list.index(stop_id)
         # 徒歩距離がしきい値を超える場合にはcontinue
-        # walk_distance_m = value["walk_distance_m"]
-        # if walk_distance_m > MAX_WALK_DISTANCE_M:
-        #     continue
+        remaining_walking_distance = target_max_walking_distance_m - walk_distance_m
+        if remaining_walking_distance <= 0:
+            continue
         # 上限時間を超えている場合にはcontinue
         remaining_time = target_max_limit - duration_m
         if remaining_time <= 0:
             continue
         geojson = calc_with_combus_reachable_geojson_for_single_spot_and_stop(
-            remaining_time, stop_index, combus_route, data_accessor
+            remaining_time,
+            remaining_walking_distance,
+            stop_index,
+            combus_route,
+            data_accessor,
         )
         merged_geojson = merge_geojson(merged_geojson, geojson)
     return merged_geojson
@@ -202,7 +209,8 @@ def calc_with_combus_reachable_geojson_for_single_spot(
 def calc_with_combus_reachable_geojson(
     spot_list: dict,
     target_max_limit: int,
-    spot_to_spot_duration_dict: dict,
+    target_max_walking_distance_m: int,
+    spot_to_spot_summary_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
 ) -> GeoJson:
@@ -218,7 +226,8 @@ def calc_with_combus_reachable_geojson(
         geojson = calc_with_combus_reachable_geojson_for_single_spot(
             spot,
             target_max_limit,
-            spot_to_spot_duration_dict,
+            target_max_walking_distance_m,
+            spot_to_spot_summary_dict,
             combus_route,
             data_accessor,
         )
@@ -325,12 +334,12 @@ def calculate_original_route(
     コミュニティバスを使わない経路を返却する。
     """
     ref_point_id = ref_point["id"]
-    spot_to_refpoint_dict = data_accessor.spot_to_spot_duration_dict
+    spot_to_refpoint_dict = data_accessor.spot_to_spot_summary_dict
     best_duration = 9999
     best_key_pair = None
     for spot in spot_list:
         spot_id = spot["id"]
-        duration_m = spot_to_refpoint_dict.get((spot_id, ref_point_id))
+        duration_m, walk_distance_m = spot_to_refpoint_dict.get((spot_id, ref_point_id))
         if duration_m is None:
             continue
         if duration_m < best_duration:
@@ -392,7 +401,7 @@ def calculate_with_combus_route_summary_for_single_spot_and_stop(
         if current_stop_index == start_stop_index:
             break
         combus_duration += combus_route.section_list[current_stop_index].duration_m
-        stop_to_refpoint_duration_m = data_accessor.spot_to_spot_duration_dict.get(
+        stop_to_refpoint_duration_m, _ = data_accessor.spot_to_spot_summary_dict.get(
             (combus_route.stop_list[current_stop_index].id, ref_point["id"])
         )
         # NOTE なぜか経路が存在しないペアがある
@@ -431,7 +440,10 @@ def calculate_with_combus_route_summary_for_single_spot(
 
     best_duration = 9999
     best_route_summary = None
-    for key, duration_m in data_accessor.spot_to_spot_duration_dict.items():
+    for key, (
+        duration_m,
+        walk_distance_m,
+    ) in data_accessor.spot_to_spot_summary_dict.items():
         spot_id, stop_id = key
         # 関係ないspotならcontinue
         if spot_id != spot["id"]:
@@ -644,7 +656,7 @@ def exec_single_spot_type(
     spot_list: dict,
     target_max_limit: int,
     target_max_walking_distance_m: int,
-    spot_to_spot_duration_dict: dict,
+    spot_to_spot_summary_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
 ) -> AreaSearchResult:
@@ -662,7 +674,8 @@ def exec_single_spot_type(
     with_combus_reachable_geojson = calc_with_combus_reachable_geojson(
         spot_list,
         target_max_limit,
-        spot_to_spot_duration_dict,
+        target_max_walking_distance_m,
+        spot_to_spot_summary_dict,
         combus_route,
         data_accessor,
     )
@@ -772,7 +785,7 @@ def exec_area_search(
     all_spot_list = data_accessor.spot_list
     combus_stop_dict = data_accessor.combus_stop_dict
     combus_route_dict = data_accessor.combus_route_dict
-    spot_to_spot_duration_dict = data_accessor.spot_to_spot_duration_dict
+    spot_to_spot_summary_dict = data_accessor.spot_to_spot_summary_dict
 
     combus_route = create_combus_route(
         search_input.combus_stops, combus_stop_dict, combus_route_dict
@@ -785,7 +798,7 @@ def exec_area_search(
             all_spot_list[spot_type.value],
             search_input.max_minute,
             search_input.max_walking_distance_m,
-            spot_to_spot_duration_dict,
+            spot_to_spot_summary_dict,
             combus_route,
             data_accessor,
         )
