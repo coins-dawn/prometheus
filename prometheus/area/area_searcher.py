@@ -95,14 +95,19 @@ def calc_diff_polygon(base_polygon: MultiPolygon, diff_polygon: MultiPolygon):
 
 
 def calc_original_reachable_geojson(
-    spot_list: dict, target_max_limit: int, data_accessor: DataAccessor
+    spot_list: dict,
+    target_max_limit: int,
+    target_max_walking_distance_m: int,
+    data_accessor: DataAccessor,
 ) -> GeoJson:
     """
     既存の公共交通＋徒歩で到達可能な範囲を計算する。
     """
     merged_geojson = GeoJson()
     for spot in spot_list:
-        geojson_dict = data_accessor.load_geojson(spot["id"], target_max_limit)
+        geojson_dict = data_accessor.load_geojson(
+            spot["id"], target_max_limit, target_max_walking_distance_m
+        )
         geojson = GeoJson(
             polygon=shape(geojson_dict["geometry"]),
             reachable_mesh_codes=set(geojson_dict["properties"]["reachable-mesh"]),
@@ -139,7 +144,7 @@ def calc_with_combus_reachable_geojson_for_single_spot_and_stop(
         )
         next_stop = combus_route.stop_list[next_stop_index]
         next_geojson_dict = data_accessor.load_geojson(
-            next_stop.id, current_remaining_time
+            next_stop.id, current_remaining_time, 1000  # TODO ちゃんと実装する
         )
         next_geojson = GeoJson(
             polygon=shape(next_geojson_dict["geometry"]),
@@ -638,6 +643,7 @@ def exec_single_spot_type(
     spot_type: SpotType,
     spot_list: dict,
     target_max_limit: int,
+    target_max_walking_distance_m: int,
     spot_to_spot_duration_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
@@ -647,7 +653,7 @@ def exec_single_spot_type(
     """
     score_max = sum(mesh["population"] for mesh in data_accessor.mesh_dict.values())
     original_reachable_geojson = calc_original_reachable_geojson(
-        spot_list, target_max_limit, data_accessor
+        spot_list, target_max_limit, target_max_walking_distance_m, data_accessor
     )
     original_score = calc_score(
         data_accessor, original_reachable_geojson.reachable_mesh_codes
@@ -778,6 +784,7 @@ def exec_area_search(
             spot_type,
             all_spot_list[spot_type.value],
             search_input.max_minute,
+            search_input.max_walking_distance_m,
             spot_to_spot_duration_dict,
             combus_route,
             data_accessor,

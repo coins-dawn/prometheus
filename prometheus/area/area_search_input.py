@@ -1,6 +1,9 @@
 from prometheus.area.spot_type import SpotType
 
 
+WALKING_DISTANCE_DEFAULT_M = 1000  # 徒歩距離の上限[m]
+
+
 class AreaSearchInput:
     def __init__(self, data: dict):
         spots_mapping = {
@@ -30,6 +33,24 @@ class AreaSearchInput:
         ):
             raise Exception("max-minute は0から120の間の正の整数で指定してください。")
         self.max_minute = int(max_minute_str)
+
+        # max_walking_distance
+        # TODO 必須パラメタになったらエラー時にearly returnする
+        if "max-walking-distance" not in data:
+            self.max_walking_distance_m = WALKING_DISTANCE_DEFAULT_M
+        else:
+            max_walking_distance_str = data["max-walking-distance"]
+            if not isinstance(max_walking_distance_str, int):
+                raise Exception("max-walking-distance 整数で指定してください。")
+            max_walking_distance_m = int(max_walking_distance_str)
+            if (
+                max_walking_distance_m < 0
+                or max_walking_distance_m > WALKING_DISTANCE_DEFAULT_M
+            ):
+                raise Exception(
+                    "max-walking-distance は0から1000の間で指定してください。"
+                )
+            self.max_walking_distance_m = max_walking_distance_m
 
         # combus_stops
         if "combus-stops" not in data:

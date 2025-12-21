@@ -149,14 +149,14 @@ class DataAccessor:
         with open(cls.TARGET_REGION_FILE_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
 
-    def load_geojson(self, id_str: str, max_minute: int):
+    def load_geojson(self, id_str: str, max_minute: int, max_walking_distance_m: int):
         """
         指定されたIDと最大時間に対応するgeojsonをロードする。
         対応するgeojsonファイルが存在しない場合はNoneを返す。
         """
         current_max_minute = max_minute
         while current_max_minute > 0:
-            file_name = f"{id_str}_{current_max_minute}.bin"
+            file_name = f"{id_str}_{current_max_minute}_{max_walking_distance_m}.bin"
             if file_name not in self.geojson_name_set:
                 current_max_minute -= 1
                 continue
@@ -168,7 +168,8 @@ class DataAccessor:
     def load_route(self, from_id: str, to_id: str):
         """
         指定されたfrom_idとto_idに対応する経路情報を返却する。
+        pickle形式（.bin）で保存されたファイルを読み込む。
         """
-        file_path = f"data/archive/route/{from_id}_{to_id}.json"
-        with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        file_path = f"data/archive/route/{from_id}_{to_id}.bin"
+        with open(file_path, "rb") as f:
+            return pickle.load(f)
