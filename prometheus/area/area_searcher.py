@@ -339,7 +339,7 @@ def calculate_original_route(
     best_key_pair = None
     for spot in spot_list:
         spot_id = spot["id"]
-        duration_m, walk_distance_m = spot_to_refpoint_dict.get((spot_id, ref_point_id))
+        duration_m, _ = spot_to_refpoint_dict.get((spot_id, ref_point_id))
         if duration_m is None:
             continue
         if duration_m < best_duration:
@@ -375,6 +375,7 @@ def merge_geometry(geom1: str, geom2: str) -> str:
 def calculate_with_combus_route_summary_for_single_spot_and_stop(
     ref_point: dict,
     spot_to_enter_stop_duration_m: int,
+    spot_to_enter_stop_walk_distance_m: int,
     data_accessor: DataAccessor,
     combus_route: CombusRoute,
     start_stop_index: int,
@@ -401,13 +402,23 @@ def calculate_with_combus_route_summary_for_single_spot_and_stop(
         if current_stop_index == start_stop_index:
             break
         combus_duration += combus_route.section_list[current_stop_index].duration_m
-        stop_to_refpoint_duration_m, _ = data_accessor.spot_to_spot_summary_dict.get(
-            (combus_route.stop_list[current_stop_index].id, ref_point["id"])
+        stop_to_refpoint_duration_m, stop_to_refpoint_walk_distance_m = (
+            data_accessor.spot_to_spot_summary_dict.get(
+                (combus_route.stop_list[current_stop_index].id, ref_point["id"])
+            )
         )
         # NOTE なぜか経路が存在しないペアがある
         # 例 comstop44 -> refpoint1962
         # 原因はわかっていないが、数が少ないのでいったんcontinueでしのぐ
         if not stop_to_refpoint_duration_m:
+            continue
+        # TODO
+        # 徒歩距離の上限をいったん1000で固定
+        # 将来的にはちゃんとリクエストからひきまわす
+        total_walk_distance_m = (
+            spot_to_enter_stop_walk_distance_m + stop_to_refpoint_walk_distance_m
+        )
+        if total_walk_distance_m > MAX_WALK_DISTANCE_M:
             continue
         total_duration_m = (
             spot_to_enter_stop_duration_m
@@ -422,7 +433,7 @@ def calculate_with_combus_route_summary_for_single_spot_and_stop(
                 exit_combus_stop_id=combus_route.stop_list[current_stop_index].id,
                 ref_point_id=ref_point["id"],
                 duration_m=total_duration_m,
-                walk_distance_m=0,  # TODO 徒歩距離の計算を追加
+                walk_distance_m=total_walk_distance_m,
             )
     return best_route_summary
 
@@ -454,7 +465,13 @@ def calculate_with_combus_route_summary_for_single_spot(
         stop_index = stop_id_list.index(stop_id)
         # 当該のバス停で乗る最適経路を計算
         route_summary = calculate_with_combus_route_summary_for_single_spot_and_stop(
-            ref_point, duration_m, data_accessor, combus_route, stop_index, spot_id
+            ref_point,
+            duration_m,
+            walk_distance_m,
+            data_accessor,
+            combus_route,
+            stop_index,
+            spot_id,
         )
         if route_summary is None:
             continue
@@ -469,6 +486,7 @@ def calculate_with_combus_route_summary(
     spot_list: dict,
     data_accessor: DataAccessor,
     combus_route: CombusRoute,
+    target_max_walking_distance_m: int,
 ) -> WithCombusRouteSummary:
     """
     コミュニティバスを利用した経路サマリーを返却する。
@@ -481,6 +499,8 @@ def calculate_with_combus_route_summary(
             ref_point, data_accessor, combus_route, spot
         )
         if route_summary is None:
+            continue
+        if target_max_walking_distance_m < route_summary.walk_distance_m:
             continue
         if route_summary.duration_m < best_duration:
             best_duration = route_summary.duration_m
@@ -606,6 +626,7 @@ def calculate_route_pairs(
     diff_polygon: MultiPolygon,
     spot_list: dict,
     target_max_limit: int,
+    target_max_walking_distance_m: int,
     combus_route: CombusRoute,
 ) -> list[RoutePair]:
     """RoutePairリストを返却する。"""
@@ -621,18 +642,27 @@ def calculate_route_pairs(
         )
         with_combus_route_summary: WithCombusRouteSummary = (
             calculate_with_combus_route_summary(
-                ref_point, spot_list, data_accessor, combus_route
+                ref_point,
+                spot_list,
+                data_accessor,
+                combus_route,
+                target_max_walking_distance_m,
             )
         )
         if original_route is None or with_combus_route_summary is None:
             continue
 
         # originalが無効、かつwith_combusが有効なものを抽出
-        original_route_is_invalid = original_route.duration_m > target_max_limit
+        original_route_is_invalid = (
+            original_route.duration_m > target_max_limit
+            or original_route.walk_distance_m > target_max_walking_distance_m
+        )
         if not original_route_is_invalid:
             continue
         with_combus_route_is_valid = (
             with_combus_route_summary.duration_m <= target_max_limit
+            and with_combus_route_summary.walk_distance_m
+            <= target_max_walking_distance_m
         )
         if not with_combus_route_is_valid:
             continue
@@ -707,7 +737,12 @@ def exec_single_spot_type(
     ]
 
     route_pairs = calculate_route_pairs(
-        data_accessor, diff_polygon, spot_list, target_max_limit, combus_route
+        data_accessor,
+        diff_polygon,
+        spot_list,
+        target_max_limit,
+        target_max_walking_distance_m,
+        combus_route,
     )
 
     return AreaSearchResult(
