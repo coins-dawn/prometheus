@@ -3,7 +3,7 @@ import pickle
 
 
 class DataAccessor:
-    SPOT_LIST_FILE_PATH = "data/archive/toyama_spot_list.json"
+    SPOT_LIST_FILE_PATH = "data/archive/spot_list.json"
     COMBUS_STOP_LIST_FILE_PATH = "data/archive/combus_stops.json"
     REF_POINTS_LIST_FILE_PATH = "data/archive/ref_points.json"
     COMBUS_ROUTES_FILE_PATH = "data/archive/combus_routes.json"
