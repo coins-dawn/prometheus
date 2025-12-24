@@ -864,9 +864,34 @@ def exec_area_search(
         search_input.combus_stops, combus_stop_dict, combus_route_dict
     )
 
+    # spot_id -> SpotType の辞書を作成
+    spot_type_mapping = {
+        "hospital": SpotType.HOSPITAL,
+        "shopping": SpotType.SHOPPING,
+        "public-facility": SpotType.PUBLIC_FACILITY,
+    }
+    spot_type_dict = {}
+    spot_dict = {}
+    for spot_type, spot_list_ in all_spot_list.items():
+        for spot in spot_list_:
+            spot_type_dict[spot["id"]] = spot_type_mapping[spot_type]
+            spot_dict[spot["id"]] = spot
+
+    # target_spotが指定されている場合はそっちを優先
+    if search_input.target_spot != "":
+        spot_list = [spot_dict[search_input.target_spot]]
+        if search_input.target_spot not in spot_type_dict:
+            raise Exception(
+                f"指定されたスポットIDが存在しません。{search_input.target_spot}"
+            )
+        spot_type = spot_type_dict[search_input.target_spot]
+    else:
+        spot_list = all_spot_list[search_input.target_spot_type.value]
+        spot_type = search_input.target_spot_type
+
     area_search_result: AreaSearchResult = exec_single_spot_type(
-        search_input.target_spot_type,
-        all_spot_list[search_input.target_spot_type.value],
+        spot_type,
+        spot_list,
         search_input.max_minute,
         search_input.max_walking_distance_m,
         spot_to_spot_summary_dict,
@@ -874,9 +899,7 @@ def exec_area_search(
         data_accessor,
     )
 
-    output_visualize_data(
-        area_search_result, search_input.target_spot_type, combus_route
-    )
+    output_visualize_data(area_search_result, spot_type, combus_route)
 
     return AreaSearchOutput(
         area_search_result=area_search_result, combus_route=combus_route
