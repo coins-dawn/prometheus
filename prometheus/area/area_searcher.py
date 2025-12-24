@@ -147,11 +147,12 @@ def calc_with_combus_reachable_geojson_for_single_spot_and_stop(
         next_geojson_dict = data_accessor.load_geojson(
             next_stop.id, current_remaining_time, remaining_walking_distance
         )
-        next_geojson = GeoJson(
-            polygon=shape(next_geojson_dict["geometry"]),
-            reachable_mesh_codes=set(next_geojson_dict["properties"]["reachable-mesh"]),
-        )
-        merged_geojson = merge_geojson(merged_geojson, next_geojson)
+        if next_geojson_dict:
+            next_geojson = GeoJson(
+                polygon=shape(next_geojson_dict["geometry"]),
+                reachable_mesh_codes=set(next_geojson_dict["properties"]["reachable-mesh"]),
+            )
+            merged_geojson = merge_geojson(merged_geojson, next_geojson)
 
         # 次のバス停に移動する
         current_stop_index = next_stop_index
@@ -402,7 +403,7 @@ def calculate_with_combus_route_summary_for_single_spot_and_stop(
         if current_stop_index == start_stop_index:
             break
         combus_duration += combus_route.section_list[current_stop_index].duration_m
-        stop_to_refpoint_duration_m, stop_to_refpoint_walk_distance_m = (
+        summary = (
             data_accessor.spot_to_spot_summary_dict.get(
                 (combus_route.stop_list[current_stop_index].id, ref_point["id"])
             )
@@ -410,8 +411,9 @@ def calculate_with_combus_route_summary_for_single_spot_and_stop(
         # NOTE なぜか経路が存在しないペアがある
         # 例 comstop44 -> refpoint1962
         # 原因はわかっていないが、数が少ないのでいったんcontinueでしのぐ
-        if not stop_to_refpoint_duration_m:
+        if not summary:
             continue
+        stop_to_refpoint_duration_m, stop_to_refpoint_walk_distance_m = summary
         # TODO
         # 徒歩距離の上限をいったん1000で固定
         # 将来的にはちゃんとリクエストからひきまわす
