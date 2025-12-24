@@ -1,52 +1,31 @@
 {
     "best-combus-stop-sequences": [
         {
-            "spot-type": "hospital",
-            "duration-limit-m": 60,
-            "stop-sequence": [
-                "comstop18",
-                "comstop35",
-                "comstop22",
-                "comstop21"
-            ],
-            "score": 3557
-        },
-        {
-            "spot-type": "hospital",
-            "duration-limit-m": 90,
-            "stop-sequence": [
-                "comstop29",
-                "comstop35",
-                "comstop22",
-                "comstop23",
-                "comstop31"
-            ],
-            "score": 3497
-        },
-        {
             "spot-type": "shopping",
             "duration-limit-m": 60,
             "stop-sequence": [
-                "comstop34",
                 "comstop6",
-                "comstop18",
-                "comstop28",
-                "comstop47"
+                "comstop67",
+                "comstop1",
+                "comstop56",
+                "comstop91"
             ],
-            "score": 306
+            "score": 10081
         },
         {
             "spot-type": "shopping",
             "duration-limit-m": 90,
             "stop-sequence": [
-                "comstop27",
+                "comstop35",
+                "comstop1",
+                "comstop75",
+                "comstop76",
+                "comstop93",
                 "comstop37",
-                "comstop10",
-                "comstop2",
-                "comstop15",
-                "comstop3"
+                "comstop85",
+                "comstop39"
             ],
-            "score": 1529
+            "score": 10885
         }
     ]
 }

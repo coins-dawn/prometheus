@@ -7,7 +7,7 @@ from ortools.constraint_solver import pywrapcp
 
 random.seed(42)
 
-TRYAL_NUM_PER_SETTING = 1000  # 一つの設定ごとの試行回数
+TRYAL_NUM_PER_SETTING = 100  # 一つの設定ごとの試行回数
 
 
 def solve_tsp(duration_matrix):
@@ -96,7 +96,6 @@ def generate_combus_stop_sequence_list(
         route, total_duration = solve_tsp(duration_matrix)
         if total_duration <= duration_limit:
             sequence = [current_stops[i] for i in route[:-1]]
-            print(sequence)
             candidate_sequences_list.append(sequence)
     return candidate_sequences_list
 
@@ -105,7 +104,7 @@ def request_to_prometheus(combus_stop_sequence: list[str], spot_type: str):
     request_body = {
         "target-spots": [spot_type],
         "max-minute": 60,  # TODO: ここもパラメタにする
-        "max-walk-distance": 500,  # TODO: ここもパラメタにする
+        "max-walk-distance": 1000,  # TODO: ここもパラメタにする
         "combus-stops": combus_stop_sequence,
     }
 
@@ -141,7 +140,8 @@ def best_combus_stops_for_single_duration_limit(
 
     best_score = -1
     best_stop_sequence = None
-    for combus_stop_sequence in combus_stop_sequence_list:
+    for i, combus_stop_sequence in enumerate(combus_stop_sequence_list):
+        print(f"{i+1}/{len(combus_stop_sequence_list)}")
         response_json = request_to_prometheus(combus_stop_sequence, spot_type)
         if not response_json:
             continue
