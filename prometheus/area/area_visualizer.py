@@ -83,16 +83,13 @@ def _save_combus_route_kml(combus_route: CombusRoute, base_dir: str):
     """コミュニティバスの経路とバス停をKMLで保存"""
     if not combus_route:
         return
-
     kml = simplekml.Kml()
-
     # バス停の追加
     for stop in combus_route.stop_list:
         point = kml.newpoint(name=stop.name)
         point.coords = [(stop.coord.lon, stop.coord.lat)]
         point.style.iconstyle.color = simplekml.Color.red
         point.style.iconstyle.scale = 1.0
-
     # バス路線の追加
     for section in combus_route.section_list:
         coords = polyline.decode(section.geometry)
@@ -102,8 +99,37 @@ def _save_combus_route_kml(combus_route: CombusRoute, base_dir: str):
         line.coords = [(lon, lat) for lat, lon in coords]
         line.style.linestyle.color = simplekml.Color.blue
         line.style.linestyle.width = 4
-
     kml.save(f"{base_dir}/combus_route.kml")
+
+
+# 60% 透明のポリゴンKML出力用カラー（original=緑, with_combus=赤）
+def _kml_fill_color(feature_type: str):
+    alpha60 = int(255 * 0.6)
+    base = simplekml.Color.green if feature_type == "original" else simplekml.Color.red
+    return simplekml.Color.changealphaint(alpha60, base)
+
+
+def _save_polygons_kml(polygons: MultiPolygon, feature_type: str, spot_type: str, base_dir: str):
+    """到達圏ポリゴンをKMLで保存（塗りつぶし60%透明）"""
+    if not polygons or polygons.is_empty:
+        return
+    kml = simplekml.Kml()
+    fill = _kml_fill_color(feature_type)
+    for poly_geom in polygons.geoms:
+        poly = kml.newpolygon(name=f"{feature_type}_{spot_type}")
+        # 外周
+        poly.outerboundaryis = [(x, y) for x, y in poly_geom.exterior.coords]
+        # 穴（内周）
+        if getattr(poly_geom, "interiors", None):
+            poly.innerboundaryis = [
+                [(x, y) for x, y in ring.coords] for ring in poly_geom.interiors
+            ]
+        # スタイル（60%透明の塗り、枠線は同色）
+        poly.style.polystyle.color = fill
+        poly.style.polystyle.fill = True
+        poly.style.linestyle.color = fill
+        poly.style.linestyle.width = 2
+    kml.save(f"{base_dir}/{feature_type}_{spot_type}.kml")
 
 
 def _save_route_pairs_kml(area_search_result: AreaSearchResult, base_dir: str):
@@ -174,5 +200,9 @@ def output_visualize_data(
 
     _save_original_polygon(area_search_result, spot_type, base_dir)
     _save_with_combus_polygon(area_search_result, spot_type, base_dir)
+    # ポリゴンのKML（60%透明）も併せて出力
+    _save_polygons_kml(area_search_result.reachable.original, "original", spot_type.value, base_dir)
+    _save_polygons_kml(area_search_result.reachable.with_combus, "with_combus", spot_type.value, base_dir)
+
     _save_combus_route_kml(combus_route, base_dir)
     _save_route_pairs_kml(area_search_result, base_dir)
