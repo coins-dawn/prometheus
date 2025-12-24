@@ -911,9 +911,9 @@ def exec_area_search_all(data_accessor: DataAccessor) -> AllAreaSearchOutput:
     すべての上限時間・スポットタイプで到達圏探索を実行する。
     """
     time_limit_list = [time_m for time_m in range(30, 100, 10)]
-    walk_distance_limit_list = [300, 600, 1000]
+    walk_distance_limit_list = [500, 1000]
     result_list: list[AllAreaSearchResult] = []
-    
+
     for spot_list in data_accessor.spot_list.values():
         for spot in spot_list:
             for time_limit in time_limit_list:
@@ -922,7 +922,9 @@ def exec_area_search_all(data_accessor: DataAccessor) -> AllAreaSearchOutput:
                     reachable_geojson = calc_original_reachable_geojson(
                         spot_list, time_limit, walk_distance_limit, data_accessor
                     )
-                    score = calc_score(data_accessor, reachable_geojson.reachable_mesh_codes)
+                    score = calc_score(
+                        data_accessor, reachable_geojson.reachable_mesh_codes
+                    )
                     result_list.append(
                         AllAreaSearchResult(
                             spot=spot,
@@ -932,5 +934,5 @@ def exec_area_search_all(data_accessor: DataAccessor) -> AllAreaSearchOutput:
                             score=score,
                         )
                     )
-    
+
     return AllAreaSearchOutput(result_list=result_list)
