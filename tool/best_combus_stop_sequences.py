@@ -144,7 +144,7 @@ def best_combus_stops(
     複数のバス停列を試行し、以下のキーで上位3つを返す：
     キー1: len(route_pairs) が大きい（降順）
     キー2: score が大きい（降順）
-    
+
     Returns:
         list[tuple]: [(combus_stop_sequence, score), ...] の上位3つ
     """
@@ -160,20 +160,20 @@ def best_combus_stops(
         )
         if not response_json:
             continue
-        
+
         route_pairs = response_json["result"]["area"]["route-pairs"]
         score = response_json["result"]["area"]["reachable"]["with-combus-score"]
-        
-        results.append({
-            "sequence": combus_stop_sequence,
-            "score": score,
-            "route_pairs_count": len(route_pairs),
-        })
+
+        results.append(
+            {
+                "sequence": combus_stop_sequence,
+                "score": score,
+                "route_pairs_count": len(route_pairs),
+            }
+        )
 
     # キー1: len(route_pairs) 降順、キー2: score 降順でソート
-    results.sort(
-        key=lambda x: (-x["route_pairs_count"], -x["score"])
-    )
+    results.sort(key=lambda x: (-x["route_pairs_count"], -x["score"]))
 
     if not results:
         raise ValueError(

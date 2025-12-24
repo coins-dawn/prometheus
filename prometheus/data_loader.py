@@ -157,13 +157,8 @@ class DataAccessor:
     @classmethod
     def load_best_combus_stop_sequences(cls):
         """最適なバス停列を辞書形式で返却する。"""
-        result_dict = {}
         with open(cls.BEST_COMBUS_STOP_SEQUENCE_FILE_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            for sequence in data["best-combus-stop-sequences"]:
-                key = (sequence["spot-type"], sequence["duration-limit-m"])
-                result_dict[key] = sequence["stop-sequence"]
-        return result_dict
+            return json.load(f)
 
     @classmethod
     def load_target_region(cls):
