@@ -864,23 +864,23 @@ def exec_area_search(
         search_input.combus_stops, combus_stop_dict, combus_route_dict
     )
 
-    result_dict: dict[SpotType, AreaSearchResult] = {}
-    for spot_type in search_input.target_spots:
-        area_search_result = exec_single_spot_type(
-            spot_type,
-            all_spot_list[spot_type.value],
-            search_input.max_minute,
-            search_input.max_walking_distance_m,
-            spot_to_spot_summary_dict,
-            combus_route,
-            data_accessor,
-        )
+    area_search_result: AreaSearchResult = exec_single_spot_type(
+        search_input.target_spot_type,
+        all_spot_list[search_input.target_spot_type.value],
+        search_input.max_minute,
+        search_input.max_walking_distance_m,
+        spot_to_spot_summary_dict,
+        combus_route,
+        data_accessor,
+    )
 
-        output_visualize_data(area_search_result, spot_type, combus_route)
+    output_visualize_data(
+        area_search_result, search_input.target_spot_type, combus_route
+    )
 
-        result_dict[spot_type] = area_search_result
-
-    return AreaSearchOutput(result_dict=result_dict, combus_route=combus_route)
+    return AreaSearchOutput(
+        area_search_result=area_search_result, combus_route=combus_route
+    )
 
 
 def exec_area_search_all(data_accessor: DataAccessor) -> AllAreaSearchOutput:

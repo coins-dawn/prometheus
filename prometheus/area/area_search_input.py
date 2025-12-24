@@ -12,15 +12,24 @@ class AreaSearchInput:
             "public-facility": SpotType.PUBLIC_FACILITY,
         }
 
-        # target spots
-        self.target_spots: list[SpotType] = []
-        target_spots = data.get("target-spots", [])
-        if not target_spots:
-            raise Exception("target-spots が存在しません。")
-        for target_spot in target_spots:
+        # target_spot_type or target_spot のいずれかは必須
+        if "target-spot-type" not in data and "target-spot" not in data:
+            raise Exception(
+                "target-spot-type か target-spot のいずれかを指定してください。"
+            )
+
+        # target_spot_type
+        self.target_spot_type: SpotType = None
+        if "target-spot-type" in data:
+            target_spot = data["target-spot-type"]
             if target_spot not in spots_mapping:
                 raise Exception(f"不明なスポットタイプです: {target_spot}")
-            self.target_spots.append(spots_mapping[target_spot])
+            self.target_spot_type = spots_mapping[target_spot]
+
+        # target_spot
+        self.target_spot = ""
+        if "target-spot" in data:
+            self.target_spot = data["target-spot"]
 
         # max_minute
         if "max-minute" not in data:
@@ -36,20 +45,18 @@ class AreaSearchInput:
 
         # max_walking_distance
         self.max_walking_distance_m = WALKING_DISTANCE_DEFAULT_M
-
         if "max-walk-distance" not in data:
-            self.max_walking_distance_m = WALKING_DISTANCE_DEFAULT_M
-        else:
-            max_walking_distance_str = data["max-walk-distance"]
-            if not isinstance(max_walking_distance_str, int):
-                raise Exception("max-walk-distance は整数で指定してください。")
-            max_walking_distance_m = int(max_walking_distance_str)
-            if (
-                max_walking_distance_m < 0
-                or max_walking_distance_m > WALKING_DISTANCE_DEFAULT_M
-            ):
-                raise Exception("max-walk-distance は0から1000の間で指定してください。")
-            self.max_walking_distance_m = max_walking_distance_m
+            raise Exception("max-walk-distanceが存在しません。")
+        max_walking_distance_str = data["max-walk-distance"]
+        if not isinstance(max_walking_distance_str, int):
+            raise Exception("max-walk-distance は整数で指定してください。")
+        max_walking_distance_m = int(max_walking_distance_str)
+        if (
+            max_walking_distance_m < 0
+            or max_walking_distance_m > WALKING_DISTANCE_DEFAULT_M
+        ):
+            raise Exception("max-walk-distance は0から1000の間で指定してください。")
+        self.max_walking_distance_m = max_walking_distance_m
 
         # combus_stops
         if "combus-stops" not in data:
