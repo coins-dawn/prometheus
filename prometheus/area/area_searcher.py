@@ -83,7 +83,9 @@ def merge_polygon(base_polygon: MultiPolygon, append_polygon: MultiPolygon):
     2つの面ジオメトリをマージし、常に MultiPolygon を返す。
     LineString 等が混ざっても破棄して面のみを対象にする。
     """
-    base = _to_multipolygon(base_polygon) if base_polygon is not None else MultiPolygon()
+    base = (
+        _to_multipolygon(base_polygon) if base_polygon is not None else MultiPolygon()
+    )
     add = _to_multipolygon(append_polygon)
 
     if add.is_empty:
@@ -110,7 +112,9 @@ def calc_diff_polygon(base_polygon: MultiPolygon, diff_polygon: MultiPolygon):
     """
     差分を取り、常に MultiPolygon を返す。
     """
-    base = _to_multipolygon(base_polygon) if base_polygon is not None else MultiPolygon()
+    base = (
+        _to_multipolygon(base_polygon) if base_polygon is not None else MultiPolygon()
+    )
     diff = _to_multipolygon(diff_polygon)
 
     if base.is_empty:
@@ -178,7 +182,9 @@ def calc_with_combus_reachable_geojson_for_single_spot_and_stop(
             poly = _to_multipolygon(shape(next_geojson_dict["geometry"]))
             next_geojson = GeoJson(
                 polygon=poly,
-                reachable_mesh_codes=set(next_geojson_dict["properties"]["reachable-mesh"]),
+                reachable_mesh_codes=set(
+                    next_geojson_dict["properties"]["reachable-mesh"]
+                ),
             )
             merged_geojson = merge_geojson(merged_geojson, next_geojson)
 
@@ -435,10 +441,8 @@ def calculate_with_combus_route_summary_for_single_spot_and_stop(
         if current_stop_index == start_stop_index:
             break
         combus_duration += combus_route.section_list[current_stop_index].duration_m
-        summary = (
-            data_accessor.spot_to_spot_summary_dict.get(
-                (combus_route.stop_list[current_stop_index].id, ref_point["id"])
-            )
+        summary = data_accessor.spot_to_spot_summary_dict.get(
+            (combus_route.stop_list[current_stop_index].id, ref_point["id"])
         )
         # NOTE なぜか経路が存在しないペアがある
         # 例 comstop44 -> refpoint1962

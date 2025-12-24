@@ -48,9 +48,7 @@ class AreaSearchInput:
                 max_walking_distance_m < 0
                 or max_walking_distance_m > WALKING_DISTANCE_DEFAULT_M
             ):
-                raise Exception(
-                    "max-walk-distance は0から1000の間で指定してください。"
-                )
+                raise Exception("max-walk-distance は0から1000の間で指定してください。")
             self.max_walking_distance_m = max_walking_distance_m
 
         # combus_stops

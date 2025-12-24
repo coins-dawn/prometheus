@@ -105,7 +105,7 @@ def request_to_prometheus(combus_stop_sequence: list[str], spot_type: str):
     request_body = {
         "target-spots": [spot_type],
         "max-minute": 60,  # TODO: ここもパラメタにする
-        "max-walk-distance": 500, # TODO: ここもパラメタにする
+        "max-walk-distance": 500,  # TODO: ここもパラメタにする
         "combus-stops": combus_stop_sequence,
     }
 

@@ -109,7 +109,9 @@ def _kml_fill_color(feature_type: str):
     return simplekml.Color.changealphaint(alpha60, base)
 
 
-def _save_polygons_kml(polygons: MultiPolygon, feature_type: str, spot_type: str, base_dir: str):
+def _save_polygons_kml(
+    polygons: MultiPolygon, feature_type: str, spot_type: str, base_dir: str
+):
     """到達圏ポリゴンをKMLで保存（塗りつぶし60%透明）"""
     if not polygons or polygons.is_empty:
         return
@@ -201,8 +203,15 @@ def output_visualize_data(
     _save_original_polygon(area_search_result, spot_type, base_dir)
     _save_with_combus_polygon(area_search_result, spot_type, base_dir)
     # ポリゴンのKML（60%透明）も併せて出力
-    _save_polygons_kml(area_search_result.reachable.original, "original", spot_type.value, base_dir)
-    _save_polygons_kml(area_search_result.reachable.with_combus, "with_combus", spot_type.value, base_dir)
+    _save_polygons_kml(
+        area_search_result.reachable.original, "original", spot_type.value, base_dir
+    )
+    _save_polygons_kml(
+        area_search_result.reachable.with_combus,
+        "with_combus",
+        spot_type.value,
+        base_dir,
+    )
 
     _save_combus_route_kml(combus_route, base_dir)
     _save_route_pairs_kml(area_search_result, base_dir)
