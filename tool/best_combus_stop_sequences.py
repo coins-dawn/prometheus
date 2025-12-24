@@ -7,7 +7,7 @@ from ortools.constraint_solver import pywrapcp
 
 random.seed(42)
 
-TRYAL_NUM_PER_SETTING = 100  # 一つの設定ごとの試行回数
+TRYAL_NUM_PER_SETTING = 1000  # 一つの設定ごとの試行回数
 
 
 def solve_tsp(duration_matrix):
@@ -144,6 +144,10 @@ def best_combus_stops_for_single_duration_limit(
         print(f"{i+1}/{len(combus_stop_sequence_list)}")
         response_json = request_to_prometheus(combus_stop_sequence, spot_type)
         if not response_json:
+            continue
+        route_pairs = response_json["result"]["area"][spot_type]["route-pairs"]
+        # 経路が3つ返却されていない場合はスキップ
+        if len(route_pairs) != 3:
             continue
         score = response_json["result"]["area"][spot_type]["reachable"][
             "with-combus-score"

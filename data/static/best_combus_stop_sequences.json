@@ -4,28 +4,27 @@
             "spot-type": "shopping",
             "duration-limit-m": 60,
             "stop-sequence": [
-                "comstop6",
-                "comstop67",
-                "comstop1",
-                "comstop56",
+                "comstop48",
+                "comstop8",
+                "comstop79",
+                "comstop35",
+                "comstop68",
                 "comstop91"
             ],
-            "score": 10081
+            "score": 12503
         },
         {
             "spot-type": "shopping",
             "duration-limit-m": 90,
             "stop-sequence": [
-                "comstop35",
-                "comstop1",
-                "comstop75",
-                "comstop76",
-                "comstop93",
-                "comstop37",
-                "comstop85",
-                "comstop39"
+                "comstop38",
+                "comstop4",
+                "comstop48",
+                "comstop49",
+                "comstop55",
+                "comstop42"
             ],
-            "score": 10885
+            "score": 13407
         }
     ]
 }
