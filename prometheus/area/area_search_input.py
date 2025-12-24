@@ -37,24 +37,21 @@ class AreaSearchInput:
         # max_walking_distance
         self.max_walking_distance_m = WALKING_DISTANCE_DEFAULT_M
 
-        # NOTE
-        # 現状、徒歩距離上限は固定で1000m
-        # スポットのgeojsonが対応したら有効化する
-        # if "max-walk-distance" not in data:
-        #     self.max_walking_distance_m = WALKING_DISTANCE_DEFAULT_M
-        # else:
-        #     max_walking_distance_str = data["max-walk-distance"]
-        #     if not isinstance(max_walking_distance_str, int):
-        #         raise Exception("max-walk-distance は整数で指定してください。")
-        #     max_walking_distance_m = int(max_walking_distance_str)
-        #     if (
-        #         max_walking_distance_m < 0
-        #         or max_walking_distance_m > WALKING_DISTANCE_DEFAULT_M
-        #     ):
-        #         raise Exception(
-        #             "max-walk-distance は0から1000の間で指定してください。"
-        #         )
-        #     self.max_walking_distance_m = max_walking_distance_m
+        if "max-walk-distance" not in data:
+            self.max_walking_distance_m = WALKING_DISTANCE_DEFAULT_M
+        else:
+            max_walking_distance_str = data["max-walk-distance"]
+            if not isinstance(max_walking_distance_str, int):
+                raise Exception("max-walk-distance は整数で指定してください。")
+            max_walking_distance_m = int(max_walking_distance_str)
+            if (
+                max_walking_distance_m < 0
+                or max_walking_distance_m > WALKING_DISTANCE_DEFAULT_M
+            ):
+                raise Exception(
+                    "max-walk-distance は0から1000の間で指定してください。"
+                )
+            self.max_walking_distance_m = max_walking_distance_m
 
         # combus_stops
         if "combus-stops" not in data:
