@@ -1,5 +1,5 @@
 import polyline
-from shapely.geometry import shape
+from shapely.geometry import shape, Polygon
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely import make_valid
 from dataclasses import dataclass
@@ -49,21 +49,50 @@ class WithCombusRouteSummary:
     walk_distance_m: int
 
 
+def _to_multipolygon(geom) -> MultiPolygon:
+    """
+    任意のShapelyジオメトリを MultiPolygon に正規化する。
+    - Polygon は [Polygon] で包む
+    - GeometryCollection は再帰的に Polygon/MultiPolygon だけ抽出
+    - LineString などは破棄
+    """
+    if geom is None:
+        return MultiPolygon()
+    g = geom
+    # invalidなら make_valid（GeometryCollection になることがある）
+    if hasattr(g, "is_valid") and not g.is_valid:
+        g = make_valid(g)
+
+    if isinstance(g, MultiPolygon):
+        return g
+    if isinstance(g, Polygon):
+        return MultiPolygon([g])
+    if getattr(g, "geom_type", "") == "GeometryCollection":
+        polys = []
+        for sub in g.geoms:
+            mp = _to_multipolygon(sub)
+            if not mp.is_empty:
+                polys.extend(list(mp.geoms))
+        return MultiPolygon(polys) if polys else MultiPolygon()
+    # それ以外（LineString 等）は無視
+    return MultiPolygon()
+
+
 def merge_polygon(base_polygon: MultiPolygon, append_polygon: MultiPolygon):
-    assert (
-        base_polygon is None or base_polygon.is_valid
-    ), "マージ元のPolygonが不正です。"
+    """
+    2つの面ジオメトリをマージし、常に MultiPolygon を返す。
+    LineString 等が混ざっても破棄して面のみを対象にする。
+    """
+    base = _to_multipolygon(base_polygon) if base_polygon is not None else MultiPolygon()
+    add = _to_multipolygon(append_polygon)
 
-    if append_polygon.is_empty:
-        return base_polygon
-    if not append_polygon.is_valid:
-        append_polygon = make_valid(append_polygon)
-    if base_polygon is None:
-        merged_polygon = append_polygon
-    else:
-        merged_polygon = base_polygon.union(append_polygon)
+    if add.is_empty:
+        return base
+    if base.is_empty:
+        return add
 
-    return merged_polygon
+    merged = base.union(add)
+    return _to_multipolygon(merged)
 
 
 def merge_geojson(base_geojson: GeoJson, append_geojson: GeoJson):
@@ -78,20 +107,19 @@ def merge_geojson(base_geojson: GeoJson, append_geojson: GeoJson):
 
 
 def calc_diff_polygon(base_polygon: MultiPolygon, diff_polygon: MultiPolygon):
-    assert base_polygon is None or base_polygon.is_valid, "差分元のPolygonが不正です。"
+    """
+    差分を取り、常に MultiPolygon を返す。
+    """
+    base = _to_multipolygon(base_polygon) if base_polygon is not None else MultiPolygon()
+    diff = _to_multipolygon(diff_polygon)
 
-    if diff_polygon.is_empty:
-        return base_polygon
-    if not diff_polygon.is_valid:
-        diff_polygon = make_valid(diff_polygon)
-    if base_polygon is None:
-        return None
-    else:
-        result_polygon = base_polygon.difference(diff_polygon)
-        if result_polygon.geom_type == "Polygon":
-            result_polygon = MultiPolygon([result_polygon])
+    if base.is_empty:
+        return MultiPolygon()
+    if diff.is_empty:
+        return base
 
-    return result_polygon
+    result = base.difference(diff)
+    return _to_multipolygon(result)
 
 
 def calc_original_reachable_geojson(
@@ -108,8 +136,9 @@ def calc_original_reachable_geojson(
         geojson_dict = data_accessor.load_geojson(
             spot["id"], target_max_limit, target_max_walking_distance_m
         )
+        poly = _to_multipolygon(shape(geojson_dict["geometry"]))
         geojson = GeoJson(
-            polygon=shape(geojson_dict["geometry"]),
+            polygon=poly,
             reachable_mesh_codes=set(geojson_dict["properties"]["reachable-mesh"]),
         )
         merged_geojson = merge_geojson(merged_geojson, geojson)
@@ -133,13 +162,11 @@ def calc_with_combus_reachable_geojson_for_single_spot_and_stop(
         return current_index + 1
 
     while True:
-        # 次のバス停に移動した場合に時間が残っているか確認
         section = combus_route.section_list[current_stop_index]
         current_remaining_time -= section.duration_m
         if current_remaining_time < 10:
             break
 
-        # 時間が残っている場合はpolygonを取得してマージする
         next_stop_index = calc_next_stop_index(
             current_stop_index, len(combus_route.stop_list)
         )
@@ -148,13 +175,13 @@ def calc_with_combus_reachable_geojson_for_single_spot_and_stop(
             next_stop.id, current_remaining_time, remaining_walking_distance
         )
         if next_geojson_dict:
+            poly = _to_multipolygon(shape(next_geojson_dict["geometry"]))
             next_geojson = GeoJson(
-                polygon=shape(next_geojson_dict["geometry"]),
+                polygon=poly,
                 reachable_mesh_codes=set(next_geojson_dict["properties"]["reachable-mesh"]),
             )
             merged_geojson = merge_geojson(merged_geojson, next_geojson)
 
-        # 次のバス停に移動する
         current_stop_index = next_stop_index
 
     return merged_geojson
@@ -233,6 +260,11 @@ def calc_with_combus_reachable_geojson(
             data_accessor,
         )
         merged_geojson = merge_geojson(merged_geojson, geojson)
+
+    # 返却前に型を保証
+    assert (
+        merged_geojson.polygon.geom_type == "MultiPolygon"
+    ), f"merged_geojson.polygon の型が不正: {merged_geojson.polygon.geom_type}"
     return merged_geojson
 
 
