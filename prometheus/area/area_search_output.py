@@ -177,15 +177,17 @@ class AreaSearchOutput:
 
 @dataclass
 class AllAreaSearchResult:
-    spot_type: SpotType
+    spot: dict
     time_limit: int
+    walk_distance_limit: int
     polygon: MultiPolygon
     score: int
 
     def to_json(self) -> dict:
         return {
-            "spot-type": self.spot_type,
+            "spot": self.spot,
             "time-limit": self.time_limit,
+            "walk-distance-limit": self.walk_distance_limit,
             "polygon": self.polygon.__geo_interface__,
             "score": self.score,
         }
