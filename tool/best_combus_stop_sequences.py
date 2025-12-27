@@ -112,6 +112,7 @@ def request_to_prometheus(
         "max-minute": time_limit,
         "max-walk-distance": walk_distance_limit,
         "combus-stops": combus_stop_sequence,
+        "use-cache": False
     }
 
     try:
