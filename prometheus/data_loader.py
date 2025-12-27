@@ -3,14 +3,14 @@ import pickle
 
 
 class DataAccessor:
-    SPOT_LIST_FILE_PATH = "data/archive/toyama_spot_list.json"
+    SPOT_LIST_FILE_PATH = "data/archive/spot_list.json"
     COMBUS_STOP_LIST_FILE_PATH = "data/archive/combus_stops.json"
     REF_POINTS_LIST_FILE_PATH = "data/archive/ref_points.json"
     COMBUS_ROUTES_FILE_PATH = "data/archive/combus_routes.json"
     ALL_ROUTES_FILE_PATH = "data/archive/all_routes.csv"
     ALL_GEOJSON_FILE_PATH = "data/archive/all_geojsons.txt"
     MESH_FILE_PATH = "data/archive/mesh.json"
-    BEST_COMBUS_STOP_SEQUENCE_FILE_PATH = "data/archive/best_combus_stop_sequences.json"
+    BEST_COMBUS_STOP_SEQUENCE_FILE_PATH = "data/static/best_combus_stop_sequences.json"
     TARGET_REGION_FILE_PATH = "data/archive/target_region.json"
 
     def __init__(self):
@@ -19,8 +19,8 @@ class DataAccessor:
         self.combus_stop_dict = DataAccessor.load_combus_stop_dict()
         self.ref_point_list = DataAccessor.load_ref_point_list()
         self.combus_route_dict = DataAccessor.load_combus_route_dict()
-        self.spot_to_spot_duration_dict = DataAccessor.load_spot_to_spot_duration_dict()
-        self.geojson_name_set = DataAccessor.load_geojson_name_set()
+        self.spot_to_spot_summary_dict = DataAccessor.load_spot_to_spot_summary_dict()
+        self.geojson_name_key_dict = DataAccessor.load_geojson_name_key_dict()
         self.mesh_dict = DataAccessor.load_mesh_dict()
         self.best_combus_stop_sequence_dict = (
             DataAccessor.load_best_combus_stop_sequences()
@@ -87,23 +87,41 @@ class DataAccessor:
         return combus_route_dict
 
     @classmethod
-    def load_geojson_name_set(cls):
+    def load_geojson_name_key_dict(cls):
         """
-        すべてのgeojsonの名称をロードしsetで返却する。
+        geojsonファイル名のキー辞書をロードしdictで返却する。
+        id_strをキーに、(max_minute, max_distance)のリストを値とする。
+        リストはmax_minute、次にmax_distanceの降順でソートされる。
         """
-        all_geojson_name_set = set()
+        all_geojson_name_key_dict = {}
         with open(cls.ALL_GEOJSON_FILE_PATH, "r", encoding="utf-8") as f:
             for line in f:
-                name = line.strip()
-                all_geojson_name_set.add(name)
-        return all_geojson_name_set
+                file_name = line.strip()
+                # .bin拡張子を削除
+                if file_name.endswith(".bin"):
+                    file_name = file_name[:-4]
+                # _で分割
+                parts = file_name.split("_")
+                assert len(parts) == 3
+                id_str = parts[0]
+                max_minute = int(parts[1])
+                max_distance = int(parts[2])
+                if id_str not in all_geojson_name_key_dict:
+                    all_geojson_name_key_dict[id_str] = []
+                all_geojson_name_key_dict[id_str].append((max_minute, max_distance))
+        # 各キーのリストをmax_minute、次にmax_distanceで降順ソート
+        for id_str in all_geojson_name_key_dict:
+            all_geojson_name_key_dict[id_str].sort(
+                key=lambda x: (x[0], x[1]), reverse=True
+            )
+        return all_geojson_name_key_dict
 
     @classmethod
-    def load_spot_to_spot_duration_dict(cls):
+    def load_spot_to_spot_summary_dict(cls):
         """
-        スポット間の所要時間辞書をロードしdictで返却する。
+        スポット間のサマリー辞書をロードしdictで返却する。
         """
-        spot_to_spot_duration_dict = {}
+        spot_to_spot_summary_dict = {}
         with open(cls.ALL_ROUTES_FILE_PATH, "r", encoding="utf-8") as f:
             next(f)  # ヘッダー行をスキップ
             for line in f:
@@ -111,8 +129,12 @@ class DataAccessor:
                 from_spot = parts[0]
                 to_spot = parts[1]
                 duration_m = int(parts[2])
-                spot_to_spot_duration_dict[(from_spot, to_spot)] = duration_m
-        return spot_to_spot_duration_dict
+                walk_distance_m = int(parts[3])
+                spot_to_spot_summary_dict[(from_spot, to_spot)] = (
+                    duration_m,
+                    walk_distance_m,
+                )
+        return spot_to_spot_summary_dict
 
     @classmethod
     def load_mesh_dict(cls):
@@ -135,13 +157,8 @@ class DataAccessor:
     @classmethod
     def load_best_combus_stop_sequences(cls):
         """最適なバス停列を辞書形式で返却する。"""
-        result_dict = {}
         with open(cls.BEST_COMBUS_STOP_SEQUENCE_FILE_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            for sequence in data["best-combus-stop-sequences"]:
-                key = (sequence["spot-type"], sequence["duration-limit-m"])
-                result_dict[key] = sequence["stop-sequence"]
-        return result_dict
+            return json.load(f)
 
     @classmethod
     def load_target_region(cls):
@@ -149,17 +166,17 @@ class DataAccessor:
         with open(cls.TARGET_REGION_FILE_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
 
-    def load_geojson(self, id_str: str, max_minute: int):
+    def load_geojson(self, id_str: str, max_minute: int, max_walking_distance_m: int):
         """
-        指定されたIDと最大時間に対応するgeojsonをロードする。
-        対応するgeojsonファイルが存在しない場合はNoneを返す。
+        指定されたID、最大時間、徒歩距離上限に対応するgeojsonをロードする。
         """
-        current_max_minute = max_minute
-        while current_max_minute > 0:
-            file_name = f"{id_str}_{current_max_minute}.bin"
-            if file_name not in self.geojson_name_set:
-                current_max_minute -= 1
+        minute_walk_distance_list = self.geojson_name_key_dict[id_str]
+        for geojson_minute, geojson_walk_distance in minute_walk_distance_list:
+            if geojson_minute > max_minute:
                 continue
+            if geojson_walk_distance > max_walking_distance_m:
+                continue
+            file_name = f"{id_str}_{geojson_minute}_{geojson_walk_distance}.bin"
             file_path = f"data/archive/geojson/{file_name}"
             with open(file_path, "rb") as f:
                 return pickle.load(f)
@@ -168,7 +185,8 @@ class DataAccessor:
     def load_route(self, from_id: str, to_id: str):
         """
         指定されたfrom_idとto_idに対応する経路情報を返却する。
+        pickle形式（.bin）で保存されたファイルを読み込む。
         """
-        file_path = f"data/archive/route/{from_id}_{to_id}.json"
-        with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        file_path = f"data/archive/route/{from_id}_{to_id}.bin"
+        with open(file_path, "rb") as f:
+            return pickle.load(f)

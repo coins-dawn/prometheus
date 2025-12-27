@@ -165,30 +165,29 @@ class AreaSearchResult:
 
 @dataclass
 class AreaSearchOutput:
-    result_dict: dict[SpotType, AreaSearchResult]
-    combus_route: CombusRoute = NotImplementedError
+    area_search_result: AreaSearchResult
+    combus_route: CombusRoute
 
     def to_json(self) -> dict:
         return {
-            "area": {
-                spot_type.value: result.to_json()
-                for spot_type, result in self.result_dict.items()
-            },
+            "area": self.area_search_result.to_json(),
             "combus": self.combus_route.to_json(),
         }
 
 
 @dataclass
 class AllAreaSearchResult:
-    spot_type: SpotType
+    spot: dict
     time_limit: int
+    walk_distance_limit: int
     polygon: MultiPolygon
     score: int
 
     def to_json(self) -> dict:
         return {
-            "spot-type": self.spot_type,
+            "spot": self.spot,
             "time-limit": self.time_limit,
+            "walk-distance-limit": self.walk_distance_limit,
             "polygon": self.polygon.__geo_interface__,
             "score": self.score,
         }

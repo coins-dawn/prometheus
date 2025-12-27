@@ -1,5 +1,5 @@
 import polyline
-from shapely.geometry import shape
+from shapely.geometry import shape, Polygon
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely import make_valid
 from dataclasses import dataclass
@@ -49,21 +49,52 @@ class WithCombusRouteSummary:
     walk_distance_m: int
 
 
+def _to_multipolygon(geom) -> MultiPolygon:
+    """
+    任意のShapelyジオメトリを MultiPolygon に正規化する。
+    - Polygon は [Polygon] で包む
+    - GeometryCollection は再帰的に Polygon/MultiPolygon だけ抽出
+    - LineString などは破棄
+    """
+    if geom is None:
+        return MultiPolygon()
+    g = geom
+    # invalidなら make_valid（GeometryCollection になることがある）
+    if hasattr(g, "is_valid") and not g.is_valid:
+        g = make_valid(g)
+
+    if isinstance(g, MultiPolygon):
+        return g
+    if isinstance(g, Polygon):
+        return MultiPolygon([g])
+    if getattr(g, "geom_type", "") == "GeometryCollection":
+        polys = []
+        for sub in g.geoms:
+            mp = _to_multipolygon(sub)
+            if not mp.is_empty:
+                polys.extend(list(mp.geoms))
+        return MultiPolygon(polys) if polys else MultiPolygon()
+    # それ以外（LineString 等）は無視
+    return MultiPolygon()
+
+
 def merge_polygon(base_polygon: MultiPolygon, append_polygon: MultiPolygon):
-    assert (
-        base_polygon is None or base_polygon.is_valid
-    ), "マージ元のPolygonが不正です。"
+    """
+    2つの面ジオメトリをマージし、常に MultiPolygon を返す。
+    LineString 等が混ざっても破棄して面のみを対象にする。
+    """
+    base = (
+        _to_multipolygon(base_polygon) if base_polygon is not None else MultiPolygon()
+    )
+    add = _to_multipolygon(append_polygon)
 
-    if append_polygon.is_empty:
-        return base_polygon
-    if not append_polygon.is_valid:
-        append_polygon = make_valid(append_polygon)
-    if base_polygon is None:
-        merged_polygon = append_polygon
-    else:
-        merged_polygon = base_polygon.union(append_polygon)
+    if add.is_empty:
+        return base
+    if base.is_empty:
+        return add
 
-    return merged_polygon
+    merged = base.union(add)
+    return _to_multipolygon(merged)
 
 
 def merge_geojson(base_geojson: GeoJson, append_geojson: GeoJson):
@@ -78,33 +109,40 @@ def merge_geojson(base_geojson: GeoJson, append_geojson: GeoJson):
 
 
 def calc_diff_polygon(base_polygon: MultiPolygon, diff_polygon: MultiPolygon):
-    assert base_polygon is None or base_polygon.is_valid, "差分元のPolygonが不正です。"
+    """
+    差分を取り、常に MultiPolygon を返す。
+    """
+    base = (
+        _to_multipolygon(base_polygon) if base_polygon is not None else MultiPolygon()
+    )
+    diff = _to_multipolygon(diff_polygon)
 
-    if diff_polygon.is_empty:
-        return base_polygon
-    if not diff_polygon.is_valid:
-        diff_polygon = make_valid(diff_polygon)
-    if base_polygon is None:
-        return None
-    else:
-        result_polygon = base_polygon.difference(diff_polygon)
-        if result_polygon.geom_type == "Polygon":
-            result_polygon = MultiPolygon([result_polygon])
+    if base.is_empty:
+        return MultiPolygon()
+    if diff.is_empty:
+        return base
 
-    return result_polygon
+    result = base.difference(diff)
+    return _to_multipolygon(result)
 
 
 def calc_original_reachable_geojson(
-    spot_list: dict, target_max_limit: int, data_accessor: DataAccessor
+    spot_list: dict,
+    target_max_limit: int,
+    target_max_walking_distance_m: int,
+    data_accessor: DataAccessor,
 ) -> GeoJson:
     """
     既存の公共交通＋徒歩で到達可能な範囲を計算する。
     """
     merged_geojson = GeoJson()
     for spot in spot_list:
-        geojson_dict = data_accessor.load_geojson(spot["id"], target_max_limit)
+        geojson_dict = data_accessor.load_geojson(
+            spot["id"], target_max_limit, target_max_walking_distance_m
+        )
+        poly = _to_multipolygon(shape(geojson_dict["geometry"]))
         geojson = GeoJson(
-            polygon=shape(geojson_dict["geometry"]),
+            polygon=poly,
             reachable_mesh_codes=set(geojson_dict["properties"]["reachable-mesh"]),
         )
         merged_geojson = merge_geojson(merged_geojson, geojson)
@@ -113,6 +151,7 @@ def calc_original_reachable_geojson(
 
 def calc_with_combus_reachable_geojson_for_single_spot_and_stop(
     remaining_time: int,
+    remaining_walking_distance: int,
     stop_index: int,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
@@ -127,27 +166,28 @@ def calc_with_combus_reachable_geojson_for_single_spot_and_stop(
         return current_index + 1
 
     while True:
-        # 次のバス停に移動した場合に時間が残っているか確認
         section = combus_route.section_list[current_stop_index]
         current_remaining_time -= section.duration_m
         if current_remaining_time < 10:
             break
 
-        # 時間が残っている場合はpolygonを取得してマージする
         next_stop_index = calc_next_stop_index(
             current_stop_index, len(combus_route.stop_list)
         )
         next_stop = combus_route.stop_list[next_stop_index]
         next_geojson_dict = data_accessor.load_geojson(
-            next_stop.id, current_remaining_time
+            next_stop.id, current_remaining_time, remaining_walking_distance
         )
-        next_geojson = GeoJson(
-            polygon=shape(next_geojson_dict["geometry"]),
-            reachable_mesh_codes=set(next_geojson_dict["properties"]["reachable-mesh"]),
-        )
-        merged_geojson = merge_geojson(merged_geojson, next_geojson)
+        if next_geojson_dict:
+            poly = _to_multipolygon(shape(next_geojson_dict["geometry"]))
+            next_geojson = GeoJson(
+                polygon=poly,
+                reachable_mesh_codes=set(
+                    next_geojson_dict["properties"]["reachable-mesh"]
+                ),
+            )
+            merged_geojson = merge_geojson(merged_geojson, next_geojson)
 
-        # 次のバス停に移動する
         current_stop_index = next_stop_index
 
     return merged_geojson
@@ -156,7 +196,8 @@ def calc_with_combus_reachable_geojson_for_single_spot_and_stop(
 def calc_with_combus_reachable_geojson_for_single_spot(
     spot: dict,
     target_max_limit: int,
-    spot_to_spot_duration_dict: dict,
+    target_max_walking_distance_m: int,
+    spot_to_spot_summary_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
 ) -> GeoJson:
@@ -170,7 +211,8 @@ def calc_with_combus_reachable_geojson_for_single_spot(
     # spot_to_stops_dictのデータ構造は効率が悪い。
     # PFに課題があるようなら、spot_id -> stop_id -> value
     # のdictでデータを保持しておくと多少は良くなるかも。
-    for key, duration_m in spot_to_spot_duration_dict.items():
+    for key, summary in spot_to_spot_summary_dict.items():
+        duration_m, walk_distance_m = summary
         spot_id, stop_id = key
         # 関係ないspotならcontinue
         if spot_id != spot["id"]:
@@ -180,15 +222,19 @@ def calc_with_combus_reachable_geojson_for_single_spot(
             continue
         stop_index = stop_id_list.index(stop_id)
         # 徒歩距離がしきい値を超える場合にはcontinue
-        # walk_distance_m = value["walk_distance_m"]
-        # if walk_distance_m > MAX_WALK_DISTANCE_M:
-        #     continue
+        remaining_walking_distance = target_max_walking_distance_m - walk_distance_m
+        if remaining_walking_distance <= 0:
+            continue
         # 上限時間を超えている場合にはcontinue
         remaining_time = target_max_limit - duration_m
         if remaining_time <= 0:
             continue
         geojson = calc_with_combus_reachable_geojson_for_single_spot_and_stop(
-            remaining_time, stop_index, combus_route, data_accessor
+            remaining_time,
+            remaining_walking_distance,
+            stop_index,
+            combus_route,
+            data_accessor,
         )
         merged_geojson = merge_geojson(merged_geojson, geojson)
     return merged_geojson
@@ -197,7 +243,8 @@ def calc_with_combus_reachable_geojson_for_single_spot(
 def calc_with_combus_reachable_geojson(
     spot_list: dict,
     target_max_limit: int,
-    spot_to_spot_duration_dict: dict,
+    target_max_walking_distance_m: int,
+    spot_to_spot_summary_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
 ) -> GeoJson:
@@ -213,11 +260,17 @@ def calc_with_combus_reachable_geojson(
         geojson = calc_with_combus_reachable_geojson_for_single_spot(
             spot,
             target_max_limit,
-            spot_to_spot_duration_dict,
+            target_max_walking_distance_m,
+            spot_to_spot_summary_dict,
             combus_route,
             data_accessor,
         )
         merged_geojson = merge_geojson(merged_geojson, geojson)
+
+    # 返却前に型を保証
+    assert (
+        merged_geojson.polygon.geom_type == "MultiPolygon"
+    ), f"merged_geojson.polygon の型が不正: {merged_geojson.polygon.geom_type}"
     return merged_geojson
 
 
@@ -320,12 +373,12 @@ def calculate_original_route(
     コミュニティバスを使わない経路を返却する。
     """
     ref_point_id = ref_point["id"]
-    spot_to_refpoint_dict = data_accessor.spot_to_spot_duration_dict
+    spot_to_refpoint_dict = data_accessor.spot_to_spot_summary_dict
     best_duration = 9999
     best_key_pair = None
     for spot in spot_list:
         spot_id = spot["id"]
-        duration_m = spot_to_refpoint_dict.get((spot_id, ref_point_id))
+        duration_m, _ = spot_to_refpoint_dict.get((spot_id, ref_point_id))
         if duration_m is None:
             continue
         if duration_m < best_duration:
@@ -361,6 +414,7 @@ def merge_geometry(geom1: str, geom2: str) -> str:
 def calculate_with_combus_route_summary_for_single_spot_and_stop(
     ref_point: dict,
     spot_to_enter_stop_duration_m: int,
+    spot_to_enter_stop_walk_distance_m: int,
     data_accessor: DataAccessor,
     combus_route: CombusRoute,
     start_stop_index: int,
@@ -387,9 +441,23 @@ def calculate_with_combus_route_summary_for_single_spot_and_stop(
         if current_stop_index == start_stop_index:
             break
         combus_duration += combus_route.section_list[current_stop_index].duration_m
-        stop_to_refpoint_duration_m = data_accessor.spot_to_spot_duration_dict.get(
+        summary = data_accessor.spot_to_spot_summary_dict.get(
             (combus_route.stop_list[current_stop_index].id, ref_point["id"])
         )
+        # NOTE なぜか経路が存在しないペアがある
+        # 例 comstop44 -> refpoint1962
+        # 原因はわかっていないが、数が少ないのでいったんcontinueでしのぐ
+        if not summary:
+            continue
+        stop_to_refpoint_duration_m, stop_to_refpoint_walk_distance_m = summary
+        # TODO
+        # 徒歩距離の上限をいったん1000で固定
+        # 将来的にはちゃんとリクエストからひきまわす
+        total_walk_distance_m = (
+            spot_to_enter_stop_walk_distance_m + stop_to_refpoint_walk_distance_m
+        )
+        if total_walk_distance_m > MAX_WALK_DISTANCE_M:
+            continue
         total_duration_m = (
             spot_to_enter_stop_duration_m
             + combus_duration
@@ -403,7 +471,7 @@ def calculate_with_combus_route_summary_for_single_spot_and_stop(
                 exit_combus_stop_id=combus_route.stop_list[current_stop_index].id,
                 ref_point_id=ref_point["id"],
                 duration_m=total_duration_m,
-                walk_distance_m=0,  # TODO 徒歩距離の計算を追加
+                walk_distance_m=total_walk_distance_m,
             )
     return best_route_summary
 
@@ -421,7 +489,10 @@ def calculate_with_combus_route_summary_for_single_spot(
 
     best_duration = 9999
     best_route_summary = None
-    for key, duration_m in data_accessor.spot_to_spot_duration_dict.items():
+    for key, (
+        duration_m,
+        walk_distance_m,
+    ) in data_accessor.spot_to_spot_summary_dict.items():
         spot_id, stop_id = key
         # 関係ないspotならcontinue
         if spot_id != spot["id"]:
@@ -432,7 +503,13 @@ def calculate_with_combus_route_summary_for_single_spot(
         stop_index = stop_id_list.index(stop_id)
         # 当該のバス停で乗る最適経路を計算
         route_summary = calculate_with_combus_route_summary_for_single_spot_and_stop(
-            ref_point, duration_m, data_accessor, combus_route, stop_index, spot_id
+            ref_point,
+            duration_m,
+            walk_distance_m,
+            data_accessor,
+            combus_route,
+            stop_index,
+            spot_id,
         )
         if route_summary is None:
             continue
@@ -447,6 +524,7 @@ def calculate_with_combus_route_summary(
     spot_list: dict,
     data_accessor: DataAccessor,
     combus_route: CombusRoute,
+    target_max_walking_distance_m: int,
 ) -> WithCombusRouteSummary:
     """
     コミュニティバスを利用した経路サマリーを返却する。
@@ -459,6 +537,8 @@ def calculate_with_combus_route_summary(
             ref_point, data_accessor, combus_route, spot
         )
         if route_summary is None:
+            continue
+        if target_max_walking_distance_m < route_summary.walk_distance_m:
             continue
         if route_summary.duration_m < best_duration:
             best_duration = route_summary.duration_m
@@ -584,6 +664,7 @@ def calculate_route_pairs(
     diff_polygon: MultiPolygon,
     spot_list: dict,
     target_max_limit: int,
+    target_max_walking_distance_m: int,
     combus_route: CombusRoute,
 ) -> list[RoutePair]:
     """RoutePairリストを返却する。"""
@@ -592,38 +673,49 @@ def calculate_route_pairs(
         ref_point_list, diff_polygon
     )
 
-    ref_point_and_routes_list = []
+    route_pair_list = []
     for ref_point in ref_point_in_polygon:
         original_route: Route = calculate_original_route(
             ref_point, spot_list, data_accessor
         )
         with_combus_route_summary: WithCombusRouteSummary = (
             calculate_with_combus_route_summary(
-                ref_point, spot_list, data_accessor, combus_route
+                ref_point,
+                spot_list,
+                data_accessor,
+                combus_route,
+                target_max_walking_distance_m,
             )
         )
         if original_route is None or with_combus_route_summary is None:
             continue
 
         # originalが無効、かつwith_combusが有効なものを抽出
-        original_route_is_invalid = original_route.duration_m > target_max_limit
+        original_route_is_invalid = (
+            original_route.duration_m > target_max_limit
+            or original_route.walk_distance_m > target_max_walking_distance_m
+        )
         if not original_route_is_invalid:
             continue
         with_combus_route_is_valid = (
             with_combus_route_summary.duration_m <= target_max_limit
+            and with_combus_route_summary.walk_distance_m
+            <= target_max_walking_distance_m
         )
         if not with_combus_route_is_valid:
             continue
+        route_pair_list.append((original_route, with_combus_route_summary))
 
-        with_combus_route = convert_route_summry_to_route(
-            with_combus_route_summary, combus_route, data_accessor
-        )
-        ref_point_and_routes_list.append((ref_point, original_route, with_combus_route))
-
-    # とりあえず先頭から3つ返却する
+    # とりあえず先頭から3つ選択する
+    selected_route_summary_list = route_pair_list[:3]
     return [
-        RoutePair(original=original_route, with_combus=with_combus_route)
-        for _, original_route, with_combus_route in ref_point_and_routes_list[:3]
+        RoutePair(
+            original=original_route,
+            with_combus=convert_route_summry_to_route(
+                with_combus_route_summary, combus_route, data_accessor
+            ),
+        )
+        for original_route, with_combus_route_summary in selected_route_summary_list
     ]
 
 
@@ -631,7 +723,8 @@ def exec_single_spot_type(
     spot_type: SpotType,
     spot_list: dict,
     target_max_limit: int,
-    spot_to_spot_duration_dict: dict,
+    target_max_walking_distance_m: int,
+    spot_to_spot_summary_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
 ) -> AreaSearchResult:
@@ -640,7 +733,7 @@ def exec_single_spot_type(
     """
     score_max = sum(mesh["population"] for mesh in data_accessor.mesh_dict.values())
     original_reachable_geojson = calc_original_reachable_geojson(
-        spot_list, target_max_limit, data_accessor
+        spot_list, target_max_limit, target_max_walking_distance_m, data_accessor
     )
     original_score = calc_score(
         data_accessor, original_reachable_geojson.reachable_mesh_codes
@@ -649,7 +742,8 @@ def exec_single_spot_type(
     with_combus_reachable_geojson = calc_with_combus_reachable_geojson(
         spot_list,
         target_max_limit,
-        spot_to_spot_duration_dict,
+        target_max_walking_distance_m,
+        spot_to_spot_summary_dict,
         combus_route,
         data_accessor,
     )
@@ -681,7 +775,12 @@ def exec_single_spot_type(
     ]
 
     route_pairs = calculate_route_pairs(
-        data_accessor, diff_polygon, spot_list, target_max_limit, combus_route
+        data_accessor,
+        diff_polygon,
+        spot_list,
+        target_max_limit,
+        target_max_walking_distance_m,
+        combus_route,
     )
 
     return AreaSearchResult(
@@ -759,50 +858,81 @@ def exec_area_search(
     all_spot_list = data_accessor.spot_list
     combus_stop_dict = data_accessor.combus_stop_dict
     combus_route_dict = data_accessor.combus_route_dict
-    spot_to_spot_duration_dict = data_accessor.spot_to_spot_duration_dict
+    spot_to_spot_summary_dict = data_accessor.spot_to_spot_summary_dict
 
     combus_route = create_combus_route(
         search_input.combus_stops, combus_stop_dict, combus_route_dict
     )
 
-    result_dict: dict[SpotType, AreaSearchResult] = {}
-    for spot_type in search_input.target_spots:
-        area_search_result = exec_single_spot_type(
-            spot_type,
-            all_spot_list[spot_type.value],
-            search_input.max_minute,
-            spot_to_spot_duration_dict,
-            combus_route,
-            data_accessor,
-        )
+    # spot_id -> SpotType の辞書を作成
+    spot_type_mapping = {
+        "hospital": SpotType.HOSPITAL,
+        "shopping": SpotType.SHOPPING,
+        "public-facility": SpotType.PUBLIC_FACILITY,
+    }
+    spot_type_dict = {}
+    spot_dict = {}
+    for spot_type, spot_list_ in all_spot_list.items():
+        for spot in spot_list_:
+            spot_type_dict[spot["id"]] = spot_type_mapping[spot_type]
+            spot_dict[spot["id"]] = spot
 
-        output_visualize_data(area_search_result, spot_type, combus_route)
+    # target_spotが指定されている場合はそっちを優先
+    if search_input.target_spot != "":
+        spot_list = [spot_dict[search_input.target_spot]]
+        if search_input.target_spot not in spot_type_dict:
+            raise Exception(
+                f"指定されたスポットIDが存在しません。{search_input.target_spot}"
+            )
+        spot_type = spot_type_dict[search_input.target_spot]
+    else:
+        spot_list = all_spot_list[search_input.target_spot_type.value]
+        spot_type = search_input.target_spot_type
 
-        result_dict[spot_type] = area_search_result
+    area_search_result: AreaSearchResult = exec_single_spot_type(
+        spot_type,
+        spot_list,
+        search_input.max_minute,
+        search_input.max_walking_distance_m,
+        spot_to_spot_summary_dict,
+        combus_route,
+        data_accessor,
+    )
 
-    return AreaSearchOutput(result_dict=result_dict, combus_route=combus_route)
+    output_visualize_data(area_search_result, spot_type, combus_route)
+
+    return AreaSearchOutput(
+        area_search_result=area_search_result, combus_route=combus_route
+    )
 
 
 def exec_area_search_all(data_accessor: DataAccessor) -> AllAreaSearchOutput:
     """
     すべての上限時間・スポットタイプで到達圏探索を実行する。
     """
-    all_spot_list = data_accessor.spot_list
-    time_limit_list = [time_m for time_m in range(30, 130, 10)]
+    time_limit_list = [time_m for time_m in range(30, 100, 10)]
+    walk_distance_limit_list = [500, 1000]
     result_list: list[AllAreaSearchResult] = []
-    for spot_type, spot_list in data_accessor.spot_list.items():
-        for time_limit in time_limit_list:
-            spot_list = all_spot_list[spot_type]
-            reachable_geojson = calc_original_reachable_geojson(
-                spot_list, time_limit, data_accessor
-            )
-            score = calc_score(data_accessor, reachable_geojson.reachable_mesh_codes)
-            result_list.append(
-                AllAreaSearchResult(
-                    spot_type=spot_type,
-                    time_limit=time_limit,
-                    polygon=reachable_geojson.polygon,
-                    score=score,
-                )
-            )
+
+    for spot_list in data_accessor.spot_list.values():
+        for spot in spot_list:
+            for time_limit in time_limit_list:
+                for walk_distance_limit in walk_distance_limit_list:
+                    spot_list = [spot]
+                    reachable_geojson = calc_original_reachable_geojson(
+                        spot_list, time_limit, walk_distance_limit, data_accessor
+                    )
+                    score = calc_score(
+                        data_accessor, reachable_geojson.reachable_mesh_codes
+                    )
+                    result_list.append(
+                        AllAreaSearchResult(
+                            spot=spot,
+                            time_limit=time_limit,
+                            walk_distance_limit=walk_distance_limit,
+                            polygon=reachable_geojson.polygon,
+                            score=score,
+                        )
+                    )
+
     return AllAreaSearchOutput(result_list=result_list)

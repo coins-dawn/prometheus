@@ -1,0 +1,592 @@
+{
+    "best-combus-stop-sequences": [
+        {
+            "spot": "sho1",
+            "time-limit-m": 30,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop98",
+                "comstop68",
+                "comstop21",
+                "comstop100",
+                "comstop70",
+                "comstop1"
+            ],
+            "score": 2768
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 30,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop82",
+                "comstop36",
+                "comstop55",
+                "comstop1",
+                "comstop43",
+                "comstop6"
+            ],
+            "score": 2583
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 30,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop76",
+                "comstop30",
+                "comstop29",
+                "comstop1",
+                "comstop10",
+                "comstop71"
+            ],
+            "score": 584
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 30,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop13",
+                "comstop2",
+                "comstop93",
+                "comstop59",
+                "comstop57",
+                "comstop68"
+            ],
+            "score": 6223
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 30,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop68",
+                "comstop88",
+                "comstop53",
+                "comstop22",
+                "comstop24",
+                "comstop73"
+            ],
+            "score": 5980
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 30,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop61",
+                "comstop55",
+                "comstop68",
+                "comstop45",
+                "comstop71",
+                "comstop96"
+            ],
+            "score": 5597
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 40,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop79",
+                "comstop3",
+                "comstop11",
+                "comstop33",
+                "comstop1",
+                "comstop28"
+            ],
+            "score": 4191
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 40,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop44",
+                "comstop73",
+                "comstop1",
+                "comstop45",
+                "comstop19",
+                "comstop24"
+            ],
+            "score": 671
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 40,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop38",
+                "comstop1",
+                "comstop79",
+                "comstop46",
+                "comstop55",
+                "comstop31"
+            ],
+            "score": 2072
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 40,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop1",
+                "comstop97",
+                "comstop87",
+                "comstop39",
+                "comstop3",
+                "comstop60"
+            ],
+            "score": 9616
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 40,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop60",
+                "comstop8",
+                "comstop53",
+                "comstop54",
+                "comstop72",
+                "comstop68"
+            ],
+            "score": 6940
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 40,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop58",
+                "comstop47",
+                "comstop73",
+                "comstop68",
+                "comstop91",
+                "comstop10"
+            ],
+            "score": 5972
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 50,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop12",
+                "comstop13",
+                "comstop91",
+                "comstop1",
+                "comstop28",
+                "comstop62"
+            ],
+            "score": 5064
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 50,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop39",
+                "comstop43",
+                "comstop80",
+                "comstop51",
+                "comstop1",
+                "comstop49"
+            ],
+            "score": 2767
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 50,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop84",
+                "comstop22",
+                "comstop28",
+                "comstop57",
+                "comstop45",
+                "comstop93"
+            ],
+            "score": 2582
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 50,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop68",
+                "comstop26",
+                "comstop43",
+                "comstop62",
+                "comstop1",
+                "comstop79"
+            ],
+            "score": 9893
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 50,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop14",
+                "comstop85",
+                "comstop66",
+                "comstop1",
+                "comstop72",
+                "comstop48"
+            ],
+            "score": 9088
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 50,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop42",
+                "comstop71",
+                "comstop12",
+                "comstop48",
+                "comstop2",
+                "comstop59"
+            ],
+            "score": 7884
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 60,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop89",
+                "comstop43",
+                "comstop2",
+                "comstop1",
+                "comstop62",
+                "comstop31"
+            ],
+            "score": 4659
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 60,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop1",
+                "comstop98",
+                "comstop27",
+                "comstop100",
+                "comstop58",
+                "comstop36"
+            ],
+            "score": 2459
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 60,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop52",
+                "comstop53",
+                "comstop1",
+                "comstop72",
+                "comstop5",
+                "comstop71"
+            ],
+            "score": 1252
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 60,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop48",
+                "comstop6",
+                "comstop90",
+                "comstop30",
+                "comstop55",
+                "comstop68"
+            ],
+            "score": 13232
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 60,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop48",
+                "comstop6",
+                "comstop27",
+                "comstop67",
+                "comstop30",
+                "comstop86"
+            ],
+            "score": 10036
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 60,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop79",
+                "comstop6",
+                "comstop70",
+                "comstop62",
+                "comstop1",
+                "comstop98"
+            ],
+            "score": 8505
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 70,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop39",
+                "comstop18",
+                "comstop2",
+                "comstop67",
+                "comstop1",
+                "comstop98"
+            ],
+            "score": 3872
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 70,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop77",
+                "comstop18",
+                "comstop39",
+                "comstop3",
+                "comstop67",
+                "comstop1"
+            ],
+            "score": 1932
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 70,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop13",
+                "comstop69",
+                "comstop25",
+                "comstop30",
+                "comstop93",
+                "comstop50"
+            ],
+            "score": 4903
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 70,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop48",
+                "comstop49",
+                "comstop98",
+                "comstop55",
+                "comstop9",
+                "comstop71"
+            ],
+            "score": 12476
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 70,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop31",
+                "comstop48",
+                "comstop39",
+                "comstop68",
+                "comstop28",
+                "comstop58"
+            ],
+            "score": 10296
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 70,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop5",
+                "comstop62",
+                "comstop15",
+                "comstop73",
+                "comstop91",
+                "comstop48"
+            ],
+            "score": 8642
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 80,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop84",
+                "comstop82",
+                "comstop86",
+                "comstop1",
+                "comstop5",
+                "comstop50"
+            ],
+            "score": 1160
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 80,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop70",
+                "comstop100",
+                "comstop89",
+                "comstop50",
+                "comstop1",
+                "comstop29"
+            ],
+            "score": 161
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 80,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop39",
+                "comstop72",
+                "comstop54",
+                "comstop1",
+                "comstop45",
+                "comstop31"
+            ],
+            "score": 3133
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 80,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop1",
+                "comstop65",
+                "comstop33",
+                "comstop80",
+                "comstop39",
+                "comstop49"
+            ],
+            "score": 12395
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 80,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop47",
+                "comstop72",
+                "comstop91",
+                "comstop6",
+                "comstop37",
+                "comstop93"
+            ],
+            "score": 9837
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 80,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop48",
+                "comstop88",
+                "comstop83",
+                "comstop59",
+                "comstop75",
+                "comstop11"
+            ],
+            "score": 8876
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 90,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop85",
+                "comstop43",
+                "comstop6",
+                "comstop80",
+                "comstop1",
+                "comstop84"
+            ],
+            "score": 3544
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 90,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop69",
+                "comstop2",
+                "comstop3",
+                "comstop51",
+                "comstop15",
+                "comstop1"
+            ],
+            "score": 4599
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 90,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop36",
+                "comstop22",
+                "comstop83",
+                "comstop91",
+                "comstop4",
+                "comstop12"
+            ],
+            "score": 3058
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 90,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop68",
+                "comstop48",
+                "comstop67",
+                "comstop9",
+                "comstop8",
+                "comstop59"
+            ],
+            "score": 10758
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 90,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop90",
+                "comstop60",
+                "comstop48",
+                "comstop2",
+                "comstop16",
+                "comstop25"
+            ],
+            "score": 10369
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 90,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop23",
+                "comstop42",
+                "comstop68",
+                "comstop48",
+                "comstop89",
+                "comstop92"
+            ],
+            "score": 10276
+        }
+    ]
+}

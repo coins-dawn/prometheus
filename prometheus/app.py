@@ -40,17 +40,9 @@ def combus_stop_sequences():
     """
     spot type, 上限時間ごとの最適なバス停の列を返却する。
     """
-    ret_list = []
-    for key, stop_sequence in data_accessor.best_combus_stop_sequence_dict.items():
-        spot_type, time_limit = key
-        ret_list.append(
-            {
-                "spot-type": spot_type,
-                "time-limit": time_limit,
-                "stop-sequence": stop_sequence,
-            }
-        )
-    return jsonify({"status": "OK", "result": ret_list})
+    return jsonify(
+        {"status": "OK", "result": data_accessor.best_combus_stop_sequence_dict}
+    )
 
 
 @app.route("/area/search", methods=["POST"])
