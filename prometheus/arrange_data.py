@@ -3,7 +3,7 @@ import zipfile
 import requests
 
 ARCHIVE_DATA_DOWNLOAD_URL = (
-    "https://github.com/coins-dawn/soaring/releases/download/v2.0.0/archive.zip"
+    "https://github.com/coins-dawn/soaring/releases/download/v3.0.0/archive.zip"
 )
 ARCHIVE_FILE_PATH = "data/archive.zip"
 EXPAND_TARGET_DIR = "data/archive/"
