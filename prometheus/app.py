@@ -60,6 +60,22 @@ def area_search():
     except Exception as e:
         return jsonify({"status": "NG", "message": str(e)}), 400
 
+    # キャッシュを利用する
+    if search_input.use_cache:
+        cached_response = data_accessor.static_request_response_dict.get(
+            search_input.to_cache_key()
+        )
+        if cached_response:
+            return (
+                jsonify(
+                    {
+                        "status": "OK",
+                        "result": cached_response,
+                    }
+                ),
+                200,
+            )
+
     try:
         search_output = exec_area_search(search_input, data_accessor)
     except Exception as e:

@@ -2,6 +2,7 @@ import json
 import sys
 import random
 import requests
+import pickle
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 
@@ -193,11 +194,41 @@ def write_best_combus_stop_sequences(best_combus_sequences: dict, output_path: s
         json.dump(output_data, f, ensure_ascii=False, indent=4)
 
 
+def send_best_sequences_to_prometheus(best_combus_sequences: list[dict]):
+    request_response_pairs = []
+    for best_combus_sequence in best_combus_sequences:
+        request_body = {
+            "target-spot": best_combus_sequence["spot"],
+            "max-minute": best_combus_sequence["time-limit-m"],
+            "max-walk-distance": best_combus_sequence["walk-distance-limit-m"],
+            "combus-stops": best_combus_sequence["stop-sequence"],
+        }
+        response_json = request_to_prometheus(
+            best_combus_sequence["stop-sequence"],
+            best_combus_sequence["spot"],
+            best_combus_sequence["time-limit-m"],
+            best_combus_sequence["walk-distance-limit-m"],
+        )
+        request_response_pairs.append(
+            {
+                "request": request_body,
+                "response": response_json,
+            }
+        )
+    return request_response_pairs
+
+
+def write_request_response_pairs(pairs: list[dict], output_path: str):
+    with open(output_path, "wb") as f:
+        pickle.dump(pairs, f)
+
+
 def main(
     input_combus_stops_file: str,
     input_combus_routes_file: str,
     input_spot_list_file: str,
     output_best_combus_stop_sequences_file: str,
+    output_request_response_file: str,
 ):
     # データのロード
     combus_stops = load_combus_stops(input_combus_stops_file)
@@ -230,6 +261,10 @@ def main(
                         }
                     )
 
+    request_response_pairs = send_best_sequences_to_prometheus(
+        best_combus_stop_sequences
+    )
+    write_request_response_pairs(request_response_pairs, output_request_response_file)
     write_best_combus_stop_sequences(
         best_combus_stop_sequences, output_best_combus_stop_sequences_file
     )
@@ -240,9 +275,11 @@ if __name__ == "__main__":
     input_combus_routes_file = sys.argv[2]
     input_spot_list_file = sys.argv[3]
     output_best_combus_stop_sequences_file = sys.argv[4]
+    output_request_response_file = sys.argv[5]
     main(
         input_combus_stops_file,
         input_combus_routes_file,
         input_spot_list_file,
         output_best_combus_stop_sequences_file,
+        output_request_response_file,
     )

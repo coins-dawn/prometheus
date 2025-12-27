@@ -12,24 +12,18 @@ class AreaSearchInput:
             "public-facility": SpotType.PUBLIC_FACILITY,
         }
 
-        # target_spot_type or target_spot のいずれかは必須
-        if "target-spot-type" not in data and "target-spot" not in data:
-            raise Exception(
-                "target-spot-type か target-spot のいずれかを指定してください。"
-            )
-
-        # target_spot_type
-        self.target_spot_type: SpotType = None
-        if "target-spot-type" in data:
-            target_spot = data["target-spot-type"]
-            if target_spot not in spots_mapping:
-                raise Exception(f"不明なスポットタイプです: {target_spot}")
-            self.target_spot_type = spots_mapping[target_spot]
+        # # target_spot_type
+        # self.target_spot_type: SpotType = None
+        # if "target-spot-type" in data:
+        #     target_spot = data["target-spot-type"]
+        #     if target_spot not in spots_mapping:
+        #         raise Exception(f"不明なスポットタイプです: {target_spot}")
+        #     self.target_spot_type = spots_mapping[target_spot]
 
         # target_spot
-        self.target_spot = ""
-        if "target-spot" in data:
-            self.target_spot = data["target-spot"]
+        if "target-spot" not in data:
+            raise Exception("target-spot が存在しません。")
+        self.target_spot = data["target-spot"]
 
         # max_minute
         if "max-minute" not in data:
@@ -68,3 +62,17 @@ class AreaSearchInput:
         if not all(isinstance(stop, str) for stop in combus_stops):
             raise Exception("combus-stopsの要素は全て文字列で指定してください")
         self.combus_stops = combus_stops
+
+        # cache
+        if "use-cache" in data:
+            self.use_cache = bool(data["use-cache"])
+        else:
+            self.use_cache = True
+
+    def to_cache_key(self) -> tuple:
+        return (
+            self.target_spot,
+            self.max_minute,
+            self.max_walking_distance_m,
+            tuple(self.combus_stops),
+        )

@@ -12,6 +12,7 @@ class DataAccessor:
     MESH_FILE_PATH = "data/archive/mesh.json"
     BEST_COMBUS_STOP_SEQUENCE_FILE_PATH = "data/static/best_combus_stop_sequences.json"
     TARGET_REGION_FILE_PATH = "data/archive/target_region.json"
+    STATIC_RESPONSE_FILE_PATH = "data/static/request_response.bin"
 
     def __init__(self):
         self.spot_list = DataAccessor.load_spot_list()
@@ -26,6 +27,7 @@ class DataAccessor:
             DataAccessor.load_best_combus_stop_sequences()
         )
         self.target_region_dict = DataAccessor.load_target_region()
+        self.static_request_response_dict = DataAccessor.load_static_request_response()
         print("データのロードが完了しました。")
 
     @classmethod
@@ -190,3 +192,25 @@ class DataAccessor:
         file_path = f"data/archive/route/{from_id}_{to_id}.bin"
         with open(file_path, "rb") as f:
             return pickle.load(f)
+
+    @classmethod
+    def load_static_request_response(cls):
+        """
+        事前に保存されたリクエストとレスポンスのペアをロードする。
+        """
+        static_response_list = []
+        with open(cls.STATIC_RESPONSE_FILE_PATH, "rb") as f:
+            static_response_list = pickle.load(f)
+
+        static_request_response_dict = {}
+        for elem in static_response_list:
+            request = elem["request"]
+            response = elem["response"]
+            key = (
+                request["target-spot"],
+                request["max-minute"],
+                request["max-walk-distance"],
+                tuple(request["combus-stops"]),
+            )
+            static_request_response_dict[key] = response
+        return static_request_response_dict
