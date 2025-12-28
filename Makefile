@@ -17,4 +17,5 @@ best-combus-stop-sequences:
 		data/archive/combus_stops.json \
 		data/archive/combus_routes.json \
 		data/archive/spot_list.json \
-		data/static/best_combus_stop_sequences.json
+		data/static/best_combus_stop_sequences.json \
+		data/static/request_response.bin
