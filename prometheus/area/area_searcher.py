@@ -953,27 +953,34 @@ def exec_area_search_all(data_accessor: DataAccessor) -> AllAreaSearchOutput:
     """
     time_limit_list = [time_m for time_m in range(30, 100, 10)]
     walk_distance_limit_list = [500, 1000]
+    start_time_list = ["10:00", "15:25"]
     result_list: list[AllAreaSearchResult] = []
 
     for spot_list in data_accessor.spot_list.values():
         for spot in spot_list:
             for time_limit in time_limit_list:
                 for walk_distance_limit in walk_distance_limit_list:
-                    spot_list = [spot]
-                    reachable_geojson = calc_original_reachable_geojson(
-                        spot_list, time_limit, walk_distance_limit, data_accessor
-                    )
-                    score = calc_score(
-                        data_accessor, reachable_geojson.reachable_mesh_codes
-                    )
-                    result_list.append(
-                        AllAreaSearchResult(
-                            spot=spot,
-                            time_limit=time_limit,
-                            walk_distance_limit=walk_distance_limit,
-                            polygon=reachable_geojson.polygon,
-                            score=score,
+                    for start_time in start_time_list:
+                        spot_list = [spot]
+                        reachable_geojson = calc_original_reachable_geojson(
+                            spot_list,
+                            time_limit,
+                            walk_distance_limit,
+                            data_accessor,
+                            start_time.replace(":", ""),
                         )
-                    )
+                        score = calc_score(
+                            data_accessor, reachable_geojson.reachable_mesh_codes
+                        )
+                        result_list.append(
+                            AllAreaSearchResult(
+                                spot=spot,
+                                time_limit=time_limit,
+                                walk_distance_limit=walk_distance_limit,
+                                polygon=reachable_geojson.polygon,
+                                score=score,
+                                start_time=start_time,
+                            )
+                        )
 
     return AllAreaSearchOutput(result_list=result_list)

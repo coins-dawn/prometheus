@@ -182,6 +182,7 @@ class AllAreaSearchResult:
     walk_distance_limit: int
     polygon: MultiPolygon
     score: int
+    start_time: str
 
     def to_json(self) -> dict:
         return {
@@ -190,6 +191,7 @@ class AllAreaSearchResult:
             "walk-distance-limit": self.walk_distance_limit,
             "polygon": self.polygon.__geo_interface__,
             "score": self.score,
+            "start-time": self.start_time,
         }
 
 
