@@ -146,5 +146,13 @@ def mesh():
     )
 
 
+@app.route("/target/ptrans", methods=["GET"])
+def ptrans():
+    """
+    公共交通機関のデータを返却する。
+    """
+    return jsonify({"status": "OK", "result": data_accessor.load_ptrans()})
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)

@@ -131,6 +131,7 @@ def calc_original_reachable_geojson(
     target_max_limit: int,
     target_max_walking_distance_m: int,
     data_accessor: DataAccessor,
+    start_time: str,
 ) -> GeoJson:
     """
     既存の公共交通＋徒歩で到達可能な範囲を計算する。
@@ -138,7 +139,7 @@ def calc_original_reachable_geojson(
     merged_geojson = GeoJson()
     for spot in spot_list:
         geojson_dict = data_accessor.load_geojson(
-            spot["id"], target_max_limit, target_max_walking_distance_m
+            spot["id"], target_max_limit, target_max_walking_distance_m, start_time
         )
         poly = _to_multipolygon(shape(geojson_dict["geometry"]))
         geojson = GeoJson(
@@ -175,8 +176,11 @@ def calc_with_combus_reachable_geojson_for_single_spot_and_stop(
             current_stop_index, len(combus_route.stop_list)
         )
         next_stop = combus_route.stop_list[next_stop_index]
+        # NOTE
+        # コミュニティバスのバス停からの到達圏ポリゴンを取得する際は
+        # 出発時刻を10時に固定する
         next_geojson_dict = data_accessor.load_geojson(
-            next_stop.id, current_remaining_time, remaining_walking_distance
+            next_stop.id, current_remaining_time, remaining_walking_distance, "1000"
         )
         if next_geojson_dict:
             poly = _to_multipolygon(shape(next_geojson_dict["geometry"]))
@@ -200,6 +204,7 @@ def calc_with_combus_reachable_geojson_for_single_spot(
     spot_to_spot_summary_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
+    target_start_time: str,
 ) -> GeoJson:
     """
     特定のスポットからコミュニティバスを利用した場合に到達可能な範囲を検索する。
@@ -213,9 +218,12 @@ def calc_with_combus_reachable_geojson_for_single_spot(
     # のdictでデータを保持しておくと多少は良くなるかも。
     for key, summary in spot_to_spot_summary_dict.items():
         duration_m, walk_distance_m = summary
-        spot_id, stop_id = key
+        spot_id, stop_id, start_time_key = key
         # 関係ないspotならcontinue
         if spot_id != spot["id"]:
+            continue
+        # 時刻が一致していなければcontinue
+        if target_start_time != start_time_key:
             continue
         # コミュニティバスに含まれないバス停ならcontinue
         if stop_id not in stop_id_list:
@@ -247,6 +255,7 @@ def calc_with_combus_reachable_geojson(
     spot_to_spot_summary_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
+    start_time: str,
 ) -> GeoJson:
     """
     コミュニティバスを利用した場合に到達可能な範囲を検索する。
@@ -264,6 +273,7 @@ def calc_with_combus_reachable_geojson(
             spot_to_spot_summary_dict,
             combus_route,
             data_accessor,
+            start_time,
         )
         merged_geojson = merge_geojson(merged_geojson, geojson)
 
@@ -367,7 +377,7 @@ def convert_to_route(route_dict: dict) -> Route:
 
 
 def calculate_original_route(
-    ref_point: dict, spot_list: dict, data_accessor: DataAccessor
+    ref_point: dict, spot_list: dict, data_accessor: DataAccessor, start_time: str
 ) -> Route:
     """
     コミュニティバスを使わない経路を返却する。
@@ -378,14 +388,14 @@ def calculate_original_route(
     best_key_pair = None
     for spot in spot_list:
         spot_id = spot["id"]
-        duration_m, _ = spot_to_refpoint_dict.get((spot_id, ref_point_id))
+        duration_m, _ = spot_to_refpoint_dict.get((spot_id, ref_point_id, start_time))
         if duration_m is None:
             continue
         if duration_m < best_duration:
             best_duration = duration_m
             best_key_pair = (spot_id, ref_point_id)
     route: Route = convert_to_route(
-        data_accessor.load_route(best_key_pair[0], best_key_pair[1])
+        data_accessor.load_route(best_key_pair[0], best_key_pair[1], start_time),
     )
     return route
 
@@ -441,8 +451,11 @@ def calculate_with_combus_route_summary_for_single_spot_and_stop(
         if current_stop_index == start_stop_index:
             break
         combus_duration += combus_route.section_list[current_stop_index].duration_m
+        # NOTE
+        # コミュニティバスのバス停から目的地への経路サマリーを取得する際は
+        # 出発時刻を10時に固定する
         summary = data_accessor.spot_to_spot_summary_dict.get(
-            (combus_route.stop_list[current_stop_index].id, ref_point["id"])
+            (combus_route.stop_list[current_stop_index].id, ref_point["id"], "1000")
         )
         # NOTE なぜか経路が存在しないペアがある
         # 例 comstop44 -> refpoint1962
@@ -450,9 +463,6 @@ def calculate_with_combus_route_summary_for_single_spot_and_stop(
         if not summary:
             continue
         stop_to_refpoint_duration_m, stop_to_refpoint_walk_distance_m = summary
-        # TODO
-        # 徒歩距離の上限をいったん1000で固定
-        # 将来的にはちゃんとリクエストからひきまわす
         total_walk_distance_m = (
             spot_to_enter_stop_walk_distance_m + stop_to_refpoint_walk_distance_m
         )
@@ -481,6 +491,7 @@ def calculate_with_combus_route_summary_for_single_spot(
     data_accessor: DataAccessor,
     combus_route: CombusRoute,
     spot: dict,
+    target_start_time: str,
 ) -> WithCombusRouteSummary:
     """
     コミュニティバスを利用した経路サマリーを返却する。
@@ -493,9 +504,12 @@ def calculate_with_combus_route_summary_for_single_spot(
         duration_m,
         walk_distance_m,
     ) in data_accessor.spot_to_spot_summary_dict.items():
-        spot_id, stop_id = key
+        spot_id, stop_id, start_time_key = key
         # 関係ないspotならcontinue
         if spot_id != spot["id"]:
+            continue
+        # 時刻が一致していなければcontinue
+        if target_start_time != start_time_key:
             continue
         # コミュニティバスに含まれないバス停ならcontinue
         if stop_id not in stop_id_list:
@@ -525,6 +539,7 @@ def calculate_with_combus_route_summary(
     data_accessor: DataAccessor,
     combus_route: CombusRoute,
     target_max_walking_distance_m: int,
+    start_time: str,
 ) -> WithCombusRouteSummary:
     """
     コミュニティバスを利用した経路サマリーを返却する。
@@ -534,7 +549,7 @@ def calculate_with_combus_route_summary(
     best_route_summary = None
     for spot in spot_list:
         route_summary = calculate_with_combus_route_summary_for_single_spot(
-            ref_point, data_accessor, combus_route, spot
+            ref_point, data_accessor, combus_route, spot, start_time
         )
         if route_summary is None:
             continue
@@ -550,18 +565,24 @@ def convert_route_summry_to_route(
     with_combus_route_summary: WithCombusRouteSummary,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
+    start_time: str,
 ) -> Route:
     # スポット -> 乗りバス停の経路を取得
     spot_to_enter_stop_route_dict = data_accessor.load_route(
         with_combus_route_summary.spot_id,
         with_combus_route_summary.enter_combus_stop_id,
+        start_time,
     )
     spot_to_enter_stop_route = convert_to_route(spot_to_enter_stop_route_dict)
 
     # 降りバス停 -> 目的地の経路を取得
+    # NOTE
+    # コミュニティバスのバス停から目的地への経路
+    # を取得する際は出発時刻を10:00に固定する
     exit_stop_to_refpoint_route_dict = data_accessor.load_route(
         with_combus_route_summary.exit_combus_stop_id,
         with_combus_route_summary.ref_point_id,
+        "1000",
     )
     stop_to_refpoint_route = convert_to_route(exit_stop_to_refpoint_route_dict)
 
@@ -676,6 +697,7 @@ def calculate_route_pairs(
     target_max_limit: int,
     target_max_walking_distance_m: int,
     combus_route: CombusRoute,
+    start_time: str,
 ) -> list[RoutePair]:
     """RoutePairリストを返却する。"""
     ref_point_list = data_accessor.ref_point_list["ref-points"]
@@ -686,7 +708,7 @@ def calculate_route_pairs(
     route_pair_list = []
     for ref_point in ref_point_in_polygon:
         original_route: Route = calculate_original_route(
-            ref_point, spot_list, data_accessor
+            ref_point, spot_list, data_accessor, start_time
         )
         with_combus_route_summary: WithCombusRouteSummary = (
             calculate_with_combus_route_summary(
@@ -695,6 +717,7 @@ def calculate_route_pairs(
                 data_accessor,
                 combus_route,
                 target_max_walking_distance_m,
+                start_time,
             )
         )
         if original_route is None or with_combus_route_summary is None:
@@ -722,7 +745,7 @@ def calculate_route_pairs(
         RoutePair(
             original=original_route,
             with_combus=convert_route_summry_to_route(
-                with_combus_route_summary, combus_route, data_accessor
+                with_combus_route_summary, combus_route, data_accessor, start_time
             ),
         )
         for original_route, with_combus_route_summary in selected_route_summary_list
@@ -737,13 +760,18 @@ def exec_single_spot_type(
     spot_to_spot_summary_dict: dict,
     combus_route: CombusRoute,
     data_accessor: DataAccessor,
+    start_time: str,
 ) -> AreaSearchResult:
     """
     指定されたスポットタイプに対してエリア検索を実行する。
     """
     score_max = sum(mesh["population"] for mesh in data_accessor.mesh_dict.values())
     original_reachable_geojson = calc_original_reachable_geojson(
-        spot_list, target_max_limit, target_max_walking_distance_m, data_accessor
+        spot_list,
+        target_max_limit,
+        target_max_walking_distance_m,
+        data_accessor,
+        start_time,
     )
     original_score = calc_score(
         data_accessor, original_reachable_geojson.reachable_mesh_codes
@@ -756,6 +784,7 @@ def exec_single_spot_type(
         spot_to_spot_summary_dict,
         combus_route,
         data_accessor,
+        start_time,
     )
     diff_polygon = calc_diff_polygon(
         with_combus_reachable_geojson.polygon, original_reachable_geojson.polygon
@@ -791,6 +820,7 @@ def exec_single_spot_type(
         target_max_limit,
         target_max_walking_distance_m,
         combus_route,
+        start_time,
     )
 
     return AreaSearchResult(
@@ -907,6 +937,7 @@ def exec_area_search(
         spot_to_spot_summary_dict,
         combus_route,
         data_accessor,
+        search_input.start_time,
     )
 
     output_visualize_data(area_search_result, spot_type, combus_route)
