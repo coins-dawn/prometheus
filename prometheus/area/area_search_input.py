@@ -68,7 +68,7 @@ class AreaSearchInput:
             self.use_cache = bool(data["use-cache"])
         else:
             # self.use_cache = True
-            self.use_cache = False # 一時的に無効化
+            self.use_cache = False  # 一時的に無効化
 
     def to_cache_key(self) -> tuple:
         return (

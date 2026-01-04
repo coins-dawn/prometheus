@@ -13,6 +13,7 @@ class DataAccessor:
     BEST_COMBUS_STOP_SEQUENCE_FILE_PATH = "data/static/best_combus_stop_sequences.json"
     TARGET_REGION_FILE_PATH = "data/archive/target_region.json"
     STATIC_RESPONSE_FILE_PATH = "data/static/request_response.bin"
+    PTRANS_FILE_PATH = "data/archive/ptrans.json"
 
     def __init__(self):
         self.spot_list = DataAccessor.load_spot_list()
@@ -214,3 +215,11 @@ class DataAccessor:
             )
             static_request_response_dict[key] = response
         return static_request_response_dict
+
+    @classmethod
+    def load_ptrans(cls):
+        """
+        公共交通機関のデータをロードする。
+        """
+        with open(cls.PTRANS_FILE_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
