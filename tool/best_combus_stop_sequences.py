@@ -3,12 +3,13 @@ import sys
 import random
 import requests
 import pickle
+import time
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 
 random.seed(42)
 
-TRYAL_NUM_PER_SETTING = 100  # 一つの設定ごとの試行回数
+TRYAL_NUM_PER_SETTING = 1000  # 一つの設定ごとの試行回数
 BUS_STOP_SEQUENCE_SIZE = 6  # バス停の数
 
 
@@ -102,6 +103,7 @@ def generate_combus_stop_sequence_list(
 
 
 def request_to_prometheus(
+    session: requests.Session,
     combus_stop_sequence: list[str],
     spot_id: str,
     time_limit: int,
@@ -112,11 +114,11 @@ def request_to_prometheus(
         "max-minute": time_limit,
         "max-walk-distance": walk_distance_limit,
         "combus-stops": combus_stop_sequence,
-        "use-cache": False
+        "use-cache": False,
     }
 
     try:
-        response = requests.post(
+        response = session.post(
             "http://127.0.0.1:8000/area/search",
             json=request_body,
             headers={"Content-Type": "application/json"},
@@ -136,6 +138,7 @@ def request_to_prometheus(
 
 
 def best_combus_stops(
+    session: requests.Session,
     combus_stops: list[str],
     combus_duration_dict: dict[tuple[str, str], int],
     spot_id: str,
@@ -156,9 +159,9 @@ def best_combus_stops(
 
     results = []
     for i, combus_stop_sequence in enumerate(combus_stop_sequence_list):
-        print(f"{i+1}/{len(combus_stop_sequence_list)}")
+        # print(f"{i+1}/{len(combus_stop_sequence_list)}")
         response_json = request_to_prometheus(
-            combus_stop_sequence, spot_id, time_limit, walk_distance_limit
+            session, combus_stop_sequence, spot_id, time_limit, walk_distance_limit
         )
         if not response_json:
             continue
@@ -184,6 +187,9 @@ def best_combus_stops(
 
     # 上位3つを返す（存在しない場合は少ないものを返す）
     top_3 = results[:3]
+    print(f"選ばれた結果 (spot={spot_id}, time={time_limit}, walk={walk_distance_limit}):")
+    for i, r in enumerate(top_3, 1):
+        print(f"  {i}位: score={r['score']}, route_pairs_count={r['route_pairs_count']}, sequence={r['sequence']}")
     return [(r["sequence"], r["score"]) for r in top_3]
 
 
@@ -195,7 +201,9 @@ def write_best_combus_stop_sequences(best_combus_sequences: dict, output_path: s
         json.dump(output_data, f, ensure_ascii=False, indent=4)
 
 
-def send_best_sequences_to_prometheus(best_combus_sequences: list[dict]):
+def send_best_sequences_to_prometheus(
+    session: requests.Session, best_combus_sequences: list[dict]
+):
     request_response_pairs = []
     for best_combus_sequence in best_combus_sequences:
         request_body = {
@@ -205,6 +213,7 @@ def send_best_sequences_to_prometheus(best_combus_sequences: list[dict]):
             "combus-stops": best_combus_sequence["stop-sequence"],
         }
         response_json = request_to_prometheus(
+            session,
             best_combus_sequence["stop-sequence"],
             best_combus_sequence["spot"],
             best_combus_sequence["time-limit-m"],
@@ -231,6 +240,7 @@ def main(
     output_best_combus_stop_sequences_file: str,
     output_request_response_file: str,
 ):
+    start_time = time.time()
     # データのロード
     combus_stops = load_combus_stops(input_combus_stops_file)
     combus_duration_dict = load_combus_duration_dict(input_combus_routes_file)
@@ -241,34 +251,39 @@ def main(
     walk_distance_limit_list = [500, 1000]
 
     best_combus_stop_sequences = []
-    for spot in spot_list:
-        for time_limit in time_limit_list:
-            for walk_distance_limit in walk_distance_limit_list:
-                result_list = best_combus_stops(
-                    combus_stops,
-                    combus_duration_dict,
-                    spot["id"],
-                    time_limit,
-                    walk_distance_limit,
-                )
-                for best_combus_stop_sequence, score in result_list:
-                    best_combus_stop_sequences.append(
-                        {
-                            "spot": spot["id"],
-                            "time-limit-m": time_limit,
-                            "walk-distance-limit-m": walk_distance_limit,
-                            "stop-sequence": best_combus_stop_sequence,
-                            "score": score,
-                        }
+    with requests.Session() as session:
+        for spot in spot_list:
+            for time_limit in time_limit_list:
+                for walk_distance_limit in walk_distance_limit_list:
+                    result_list = best_combus_stops(
+                        session,
+                        combus_stops,
+                        combus_duration_dict,
+                        spot["id"],
+                        time_limit,
+                        walk_distance_limit,
                     )
+                    for best_combus_stop_sequence, score in result_list:
+                        best_combus_stop_sequences.append(
+                            {
+                                "spot": spot["id"],
+                                "time-limit-m": time_limit,
+                                "walk-distance-limit-m": walk_distance_limit,
+                                "stop-sequence": best_combus_stop_sequence,
+                                "score": score,
+                            }
+                        )
 
-    request_response_pairs = send_best_sequences_to_prometheus(
-        best_combus_stop_sequences
-    )
+        request_response_pairs = send_best_sequences_to_prometheus(
+            session, best_combus_stop_sequences
+        )
     write_request_response_pairs(request_response_pairs, output_request_response_file)
     write_best_combus_stop_sequences(
         best_combus_stop_sequences, output_best_combus_stop_sequences_file
     )
+
+    elapsed_time = time.time() - start_time
+    print(f"\n処理時間: {elapsed_time:.2f}秒 ({elapsed_time/60:.2f}分)")
 
 
 if __name__ == "__main__":
