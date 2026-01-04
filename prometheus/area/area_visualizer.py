@@ -177,7 +177,7 @@ def _save_route_pairs_kml(area_search_result: AreaSearchResult, base_dir: str):
             line = kml_orig.newlinestring(name=f"route_pair_{idx}_original")
             line.coords = orig_coords
             line.style.linestyle.color = simplekml.Color.green
-            line.style.linestyle.width = 3
+            line.style.linestyle.width = 9
             kml_orig.save(f"{base_dir}/route_pair_{idx}_original.kml")
 
         # with_combus を別ファイルで出力
@@ -187,7 +187,7 @@ def _save_route_pairs_kml(area_search_result: AreaSearchResult, base_dir: str):
             line = kml_wc.newlinestring(name=f"route_pair_{idx}_with_combus")
             line.coords = wc_coords
             line.style.linestyle.color = simplekml.Color.red
-            line.style.linestyle.width = 3
+            line.style.linestyle.width = 9
             kml_wc.save(f"{base_dir}/route_pair_{idx}_with_combus.kml")
 
 
