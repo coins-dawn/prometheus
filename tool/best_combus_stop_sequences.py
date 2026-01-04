@@ -187,9 +187,13 @@ def best_combus_stops(
 
     # 上位3つを返す（存在しない場合は少ないものを返す）
     top_3 = results[:3]
-    print(f"選ばれた結果 (spot={spot_id}, time={time_limit}, walk={walk_distance_limit}):")
+    print(
+        f"選ばれた結果 (spot={spot_id}, time={time_limit}, walk={walk_distance_limit}):"
+    )
     for i, r in enumerate(top_3, 1):
-        print(f"  {i}位: score={r['score']}, route_pairs_count={r['route_pairs_count']}, sequence={r['sequence']}")
+        print(
+            f"  {i}位: score={r['score']}, route_pairs_count={r['route_pairs_count']}, sequence={r['sequence']}"
+        )
     return [(r["sequence"], r["score"]) for r in top_3]
 
 
