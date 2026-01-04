@@ -5,6 +5,36 @@
             "time-limit-m": 30,
             "walk-distance-limit-m": 500,
             "stop-sequence": [
+                "comstop1",
+                "comstop41",
+                "comstop11",
+                "comstop9",
+                "comstop22",
+                "comstop17"
+            ],
+            "score": 265,
+            "start-time": "10:00"
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 30,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop24",
+                "comstop11",
+                "comstop1",
+                "comstop34",
+                "comstop49",
+                "comstop35"
+            ],
+            "score": 2290,
+            "start-time": "10:00"
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 30,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
                 "comstop30",
                 "comstop1",
                 "comstop49",
@@ -12,7 +42,7 @@
                 "comstop21",
                 "comstop51"
             ],
-            "score": 10848,
+            "score": 2039,
             "start-time": "10:00"
         },
         {
@@ -20,59 +50,14 @@
             "time-limit-m": 30,
             "walk-distance-limit-m": 500,
             "stop-sequence": [
-                "comstop1",
-                "comstop35",
-                "comstop5",
-                "comstop45",
-                "comstop10",
-                "comstop8"
-            ],
-            "score": 7787,
-            "start-time": "10:00"
-        },
-        {
-            "spot": "sho1",
-            "time-limit-m": 30,
-            "walk-distance-limit-m": 500,
-            "stop-sequence": [
-                "comstop15",
+                "comstop36",
                 "comstop51",
-                "comstop1",
-                "comstop46",
-                "comstop5",
-                "comstop38"
-            ],
-            "score": 3106,
-            "start-time": "10:00"
-        },
-        {
-            "spot": "sho1",
-            "time-limit-m": 30,
-            "walk-distance-limit-m": 500,
-            "stop-sequence": [
-                "comstop16",
-                "comstop1",
-                "comstop5",
-                "comstop11",
-                "comstop12",
-                "comstop36"
-            ],
-            "score": 1528,
-            "start-time": "15:25"
-        },
-        {
-            "spot": "sho1",
-            "time-limit-m": 30,
-            "walk-distance-limit-m": 500,
-            "stop-sequence": [
-                "comstop16",
-                "comstop7",
-                "comstop45",
-                "comstop10",
-                "comstop42",
+                "comstop15",
+                "comstop27",
+                "comstop6",
                 "comstop1"
             ],
-            "score": 11260,
+            "score": 2650,
             "start-time": "15:25"
         },
         {
@@ -87,7 +72,22 @@
                 "comstop1",
                 "comstop8"
             ],
-            "score": 9575,
+            "score": 2276,
+            "start-time": "15:25"
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 30,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop16",
+                "comstop7",
+                "comstop45",
+                "comstop10",
+                "comstop42",
+                "comstop1"
+            ],
+            "score": 1907,
             "start-time": "15:25"
         },
         {
@@ -102,7 +102,7 @@
                 "comstop20",
                 "comstop38"
             ],
-            "score": 8740,
+            "score": 4739,
             "start-time": "10:00"
         },
         {
@@ -117,7 +117,7 @@
                 "comstop23",
                 "comstop1"
             ],
-            "score": 8740,
+            "score": 4739,
             "start-time": "10:00"
         },
         {
@@ -125,14 +125,14 @@
             "time-limit-m": 30,
             "walk-distance-limit-m": 1000,
             "stop-sequence": [
+                "comstop32",
+                "comstop8",
+                "comstop16",
+                "comstop35",
                 "comstop7",
-                "comstop51",
-                "comstop29",
-                "comstop30",
-                "comstop34",
-                "comstop1"
+                "comstop9"
             ],
-            "score": 3207,
+            "score": 3444,
             "start-time": "10:00"
         },
         {
@@ -147,7 +147,7 @@
                 "comstop27",
                 "comstop4"
             ],
-            "score": 7489,
+            "score": 4973,
             "start-time": "15:25"
         },
         {
@@ -162,7 +162,7 @@
                 "comstop6",
                 "comstop2"
             ],
-            "score": 6097,
+            "score": 4177,
             "start-time": "15:25"
         },
         {
@@ -170,14 +170,14 @@
             "time-limit-m": 30,
             "walk-distance-limit-m": 1000,
             "stop-sequence": [
-                "comstop42",
-                "comstop2",
-                "comstop18",
-                "comstop12",
+                "comstop15",
                 "comstop16",
-                "comstop8"
+                "comstop8",
+                "comstop32",
+                "comstop9",
+                "comstop13"
             ],
-            "score": 5089,
+            "score": 3540,
             "start-time": "15:25"
         },
         {
@@ -192,7 +192,7 @@
                 "comstop9",
                 "comstop11"
             ],
-            "score": 17039,
+            "score": 560,
             "start-time": "10:00"
         },
         {
@@ -207,7 +207,7 @@
                 "comstop2",
                 "comstop20"
             ],
-            "score": 28259,
+            "score": 1783,
             "start-time": "10:00"
         },
         {
@@ -215,45 +215,15 @@
             "time-limit-m": 60,
             "walk-distance-limit-m": 500,
             "stop-sequence": [
+                "comstop12",
+                "comstop20",
+                "comstop48",
+                "comstop3",
                 "comstop1",
-                "comstop44",
-                "comstop22",
-                "comstop37",
-                "comstop19",
-                "comstop48"
+                "comstop19"
             ],
-            "score": 25251,
+            "score": 1712,
             "start-time": "10:00"
-        },
-        {
-            "spot": "sho1",
-            "time-limit-m": 60,
-            "walk-distance-limit-m": 500,
-            "stop-sequence": [
-                "comstop25",
-                "comstop31",
-                "comstop41",
-                "comstop4",
-                "comstop1",
-                "comstop36"
-            ],
-            "score": 22260,
-            "start-time": "15:25"
-        },
-        {
-            "spot": "sho1",
-            "time-limit-m": 60,
-            "walk-distance-limit-m": 500,
-            "stop-sequence": [
-                "comstop2",
-                "comstop27",
-                "comstop50",
-                "comstop1",
-                "comstop36",
-                "comstop35"
-            ],
-            "score": 21278,
-            "start-time": "15:25"
         },
         {
             "spot": "sho1",
@@ -267,7 +237,37 @@
                 "comstop1",
                 "comstop39"
             ],
-            "score": 21182,
+            "score": 2864,
+            "start-time": "15:25"
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 60,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop51",
+                "comstop7",
+                "comstop1",
+                "comstop49",
+                "comstop28",
+                "comstop17"
+            ],
+            "score": 2732,
+            "start-time": "15:25"
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 60,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop25",
+                "comstop31",
+                "comstop41",
+                "comstop4",
+                "comstop1",
+                "comstop36"
+            ],
+            "score": 721,
             "start-time": "15:25"
         },
         {
@@ -275,14 +275,44 @@
             "time-limit-m": 60,
             "walk-distance-limit-m": 1000,
             "stop-sequence": [
+                "comstop49",
+                "comstop1",
+                "comstop16",
+                "comstop10",
+                "comstop27",
+                "comstop2"
+            ],
+            "score": 7679,
+            "start-time": "10:00"
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 60,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop6",
+                "comstop41",
+                "comstop10",
+                "comstop40",
+                "comstop49",
+                "comstop35"
+            ],
+            "score": 7646,
+            "start-time": "10:00"
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 60,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop49",
+                "comstop3",
                 "comstop4",
-                "comstop13",
-                "comstop9",
-                "comstop32",
-                "comstop1",
-                "comstop23"
+                "comstop41",
+                "comstop7",
+                "comstop30"
             ],
-            "score": 22334,
+            "score": 7426,
             "start-time": "10:00"
         },
         {
@@ -290,30 +320,15 @@
             "time-limit-m": 60,
             "walk-distance-limit-m": 1000,
             "stop-sequence": [
-                "comstop32",
-                "comstop34",
+                "comstop7",
+                "comstop51",
+                "comstop8",
                 "comstop1",
-                "comstop5",
-                "comstop39",
-                "comstop41"
+                "comstop30",
+                "comstop9"
             ],
-            "score": 22167,
-            "start-time": "10:00"
-        },
-        {
-            "spot": "sho1",
-            "time-limit-m": 60,
-            "walk-distance-limit-m": 1000,
-            "stop-sequence": [
-                "comstop22",
-                "comstop25",
-                "comstop20",
-                "comstop43",
-                "comstop1",
-                "comstop49"
-            ],
-            "score": 22060,
-            "start-time": "10:00"
+            "score": 10193,
+            "start-time": "15:25"
         },
         {
             "spot": "sho1",
@@ -327,7 +342,7 @@
                 "comstop50",
                 "comstop13"
             ],
-            "score": 16687,
+            "score": 8896,
             "start-time": "15:25"
         },
         {
@@ -335,29 +350,14 @@
             "time-limit-m": 60,
             "walk-distance-limit-m": 1000,
             "stop-sequence": [
-                "comstop17",
-                "comstop47",
-                "comstop1",
-                "comstop4",
-                "comstop7",
-                "comstop25"
-            ],
-            "score": 16647,
-            "start-time": "15:25"
-        },
-        {
-            "spot": "sho1",
-            "time-limit-m": 60,
-            "walk-distance-limit-m": 1000,
-            "stop-sequence": [
-                "comstop9",
-                "comstop34",
-                "comstop16",
                 "comstop42",
-                "comstop13",
-                "comstop27"
+                "comstop6",
+                "comstop8",
+                "comstop22",
+                "comstop29",
+                "comstop9"
             ],
-            "score": 16560,
+            "score": 7726,
             "start-time": "15:25"
         },
         {
@@ -365,44 +365,44 @@
             "time-limit-m": 90,
             "walk-distance-limit-m": 500,
             "stop-sequence": [
-                "comstop42",
-                "comstop44",
-                "comstop1",
-                "comstop2",
-                "comstop27",
-                "comstop33"
-            ],
-            "score": 30451,
-            "start-time": "10:00"
-        },
-        {
-            "spot": "sho1",
-            "time-limit-m": 90,
-            "walk-distance-limit-m": 500,
-            "stop-sequence": [
-                "comstop31",
-                "comstop39",
-                "comstop1",
-                "comstop42",
+                "comstop49",
+                "comstop3",
+                "comstop43",
                 "comstop9",
-                "comstop12"
-            ],
-            "score": 30451,
-            "start-time": "10:00"
-        },
-        {
-            "spot": "sho1",
-            "time-limit-m": 90,
-            "walk-distance-limit-m": 500,
-            "stop-sequence": [
-                "comstop40",
-                "comstop7",
-                "comstop33",
-                "comstop26",
-                "comstop38",
+                "comstop42",
                 "comstop1"
             ],
-            "score": 30451,
+            "score": 4283,
+            "start-time": "10:00"
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 90,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop27",
+                "comstop6",
+                "comstop3",
+                "comstop49",
+                "comstop1",
+                "comstop36"
+            ],
+            "score": 3995,
+            "start-time": "10:00"
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 90,
+            "walk-distance-limit-m": 500,
+            "stop-sequence": [
+                "comstop22",
+                "comstop16",
+                "comstop1",
+                "comstop43",
+                "comstop6",
+                "comstop49"
+            ],
+            "score": 3366,
             "start-time": "10:00"
         },
         {
@@ -417,7 +417,7 @@
                 "comstop11",
                 "comstop43"
             ],
-            "score": 24893,
+            "score": 2845,
             "start-time": "15:25"
         },
         {
@@ -425,14 +425,14 @@
             "time-limit-m": 90,
             "walk-distance-limit-m": 500,
             "stop-sequence": [
+                "comstop21",
+                "comstop51",
+                "comstop16",
+                "comstop28",
                 "comstop1",
-                "comstop5",
-                "comstop41",
-                "comstop14",
-                "comstop50",
-                "comstop43"
+                "comstop11"
             ],
-            "score": 24893,
+            "score": 3685,
             "start-time": "15:25"
         },
         {
@@ -447,7 +447,7 @@
                 "comstop50",
                 "comstop3"
             ],
-            "score": 24893,
+            "score": 2201,
             "start-time": "15:25"
         },
         {
@@ -455,14 +455,29 @@
             "time-limit-m": 90,
             "walk-distance-limit-m": 1000,
             "stop-sequence": [
-                "comstop2",
-                "comstop38",
-                "comstop37",
-                "comstop9",
-                "comstop16",
+                "comstop39",
+                "comstop13",
+                "comstop35",
+                "comstop1",
+                "comstop17",
+                "comstop27"
+            ],
+            "score": 8725,
+            "start-time": "10:00"
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 90,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop43",
+                "comstop1",
+                "comstop40",
+                "comstop32",
+                "comstop35",
                 "comstop3"
             ],
-            "score": 24027,
+            "score": 8438,
             "start-time": "10:00"
         },
         {
@@ -470,44 +485,29 @@
             "time-limit-m": 90,
             "walk-distance-limit-m": 1000,
             "stop-sequence": [
-                "comstop39",
-                "comstop5",
-                "comstop15",
-                "comstop25",
-                "comstop47",
-                "comstop38"
-            ],
-            "score": 24027,
-            "start-time": "10:00"
-        },
-        {
-            "spot": "sho1",
-            "time-limit-m": 90,
-            "walk-distance-limit-m": 1000,
-            "stop-sequence": [
-                "comstop31",
-                "comstop39",
-                "comstop3",
-                "comstop35",
-                "comstop40",
-                "comstop33"
-            ],
-            "score": 24027,
-            "start-time": "10:00"
-        },
-        {
-            "spot": "sho1",
-            "time-limit-m": 90,
-            "walk-distance-limit-m": 1000,
-            "stop-sequence": [
-                "comstop17",
-                "comstop20",
-                "comstop10",
+                "comstop13",
                 "comstop48",
-                "comstop1",
-                "comstop34"
+                "comstop50",
+                "comstop37",
+                "comstop42",
+                "comstop35"
             ],
-            "score": 16866,
+            "score": 7290,
+            "start-time": "10:00"
+        },
+        {
+            "spot": "sho1",
+            "time-limit-m": 90,
+            "walk-distance-limit-m": 1000,
+            "stop-sequence": [
+                "comstop16",
+                "comstop17",
+                "comstop15",
+                "comstop37",
+                "comstop20",
+                "comstop6"
+            ],
+            "score": 9976,
             "start-time": "15:25"
         },
         {
@@ -515,14 +515,14 @@
             "time-limit-m": 90,
             "walk-distance-limit-m": 1000,
             "stop-sequence": [
+                "comstop15",
+                "comstop14",
+                "comstop10",
+                "comstop6",
                 "comstop1",
-                "comstop32",
-                "comstop51",
-                "comstop20",
-                "comstop31",
-                "comstop45"
+                "comstop32"
             ],
-            "score": 16866,
+            "score": 9427,
             "start-time": "15:25"
         },
         {
@@ -537,7 +537,7 @@
                 "comstop1",
                 "comstop39"
             ],
-            "score": 16866,
+            "score": 8955,
             "start-time": "15:25"
         }
     ]
