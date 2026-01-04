@@ -2,6 +2,21 @@ import json
 import pickle
 
 
+def convert_time(start_time: str) -> str:
+    """時刻の形式を変換（例: 10:00am -> 1000, 3:25pm -> 1525）"""
+    is_pm = start_time.endswith("pm")
+    time_part = start_time[:-2]  # "am"または"pm"を削除
+    # 時間と分を分割
+    hours_str, minutes = time_part.split(":")
+    hours = int(hours_str)
+    # pmの場合は時間に12を足す（ただし12pmは12時のまま）
+    if is_pm and hours != 12:
+        hours += 12
+    elif not is_pm and hours == 12:  # 12amは00時
+        hours = 0
+    return f"{hours:02d}{minutes}"
+
+
 class DataAccessor:
     SPOT_LIST_FILE_PATH = "data/archive/spot_list.json"
     COMBUS_STOP_LIST_FILE_PATH = "data/archive/combus_stops.json"
@@ -105,16 +120,19 @@ class DataAccessor:
                     file_name = file_name[:-4]
                 # _で分割
                 parts = file_name.split("_")
-                assert len(parts) == 3
+                assert len(parts) == 4
                 id_str = parts[0]
                 max_minute = int(parts[1])
                 max_distance = int(parts[2])
-                if id_str not in all_geojson_name_key_dict:
-                    all_geojson_name_key_dict[id_str] = []
-                all_geojson_name_key_dict[id_str].append((max_minute, max_distance))
+                start_time = parts[3]
+                if (id_str, start_time) not in all_geojson_name_key_dict:
+                    all_geojson_name_key_dict[(id_str, start_time)] = []
+                all_geojson_name_key_dict[(id_str, start_time)].append(
+                    (max_minute, max_distance)
+                )
         # 各キーのリストをmax_minute、次にmax_distanceで降順ソート
-        for id_str in all_geojson_name_key_dict:
-            all_geojson_name_key_dict[id_str].sort(
+        for key in all_geojson_name_key_dict:
+            all_geojson_name_key_dict[key].sort(
                 key=lambda x: (x[0], x[1]), reverse=True
             )
         return all_geojson_name_key_dict
@@ -131,9 +149,10 @@ class DataAccessor:
                 parts = line.strip().split(",")
                 from_spot = parts[0]
                 to_spot = parts[1]
-                duration_m = int(parts[2])
-                walk_distance_m = int(parts[3])
-                spot_to_spot_summary_dict[(from_spot, to_spot)] = (
+                start_time = convert_time(parts[2])
+                duration_m = int(parts[3])
+                walk_distance_m = int(parts[4])
+                spot_to_spot_summary_dict[(from_spot, to_spot, start_time)] = (
                     duration_m,
                     walk_distance_m,
                 )
@@ -169,28 +188,32 @@ class DataAccessor:
         with open(cls.TARGET_REGION_FILE_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
 
-    def load_geojson(self, id_str: str, max_minute: int, max_walking_distance_m: int):
+    def load_geojson(
+        self, id_str: str, max_minute: int, max_walking_distance_m: int, start_time: str
+    ):
         """
         指定されたID、最大時間、徒歩距離上限に対応するgeojsonをロードする。
         """
-        minute_walk_distance_list = self.geojson_name_key_dict[id_str]
+        minute_walk_distance_list = self.geojson_name_key_dict[(id_str, start_time)]
         for geojson_minute, geojson_walk_distance in minute_walk_distance_list:
             if geojson_minute > max_minute:
                 continue
             if geojson_walk_distance > max_walking_distance_m:
                 continue
-            file_name = f"{id_str}_{geojson_minute}_{geojson_walk_distance}.bin"
+            file_name = (
+                f"{id_str}_{geojson_minute}_{geojson_walk_distance}_{start_time}.bin"
+            )
             file_path = f"data/archive/geojson/{file_name}"
             with open(file_path, "rb") as f:
                 return pickle.load(f)
         return None
 
-    def load_route(self, from_id: str, to_id: str):
+    def load_route(self, from_id: str, to_id: str, start_time: str):
         """
         指定されたfrom_idとto_idに対応する経路情報を返却する。
         pickle形式（.bin）で保存されたファイルを読み込む。
         """
-        file_path = f"data/archive/route/{from_id}_{to_id}.bin"
+        file_path = f"data/archive/route/{from_id}_{to_id}_{start_time}.bin"
         with open(file_path, "rb") as f:
             return pickle.load(f)
 
@@ -211,6 +234,7 @@ class DataAccessor:
                 request["target-spot"],
                 request["max-minute"],
                 request["max-walk-distance"],
+                request["start-time"],
                 tuple(request["combus-stops"]),
             )
             static_request_response_dict[key] = response

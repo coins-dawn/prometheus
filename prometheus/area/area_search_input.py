@@ -70,10 +70,22 @@ class AreaSearchInput:
             # self.use_cache = True
             self.use_cache = False  # 一時的に無効化
 
+        # start_time
+        if "start-time" not in data:
+            self.start_time = "1000"
+        else:
+            start_time_str = data["start-time"]
+            if start_time_str not in ["10:00", "15:25"]:
+                raise Exception(
+                    "start-time は '10:00' または '15:25' で指定してください。"
+                )
+            self.start_time = start_time_str.replace(":", "")
+
     def to_cache_key(self) -> tuple:
         return (
             self.target_spot,
             self.max_minute,
             self.max_walking_distance_m,
+            self.start_time,
             tuple(self.combus_stops),
         )
