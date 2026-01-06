@@ -1,4 +1,5 @@
 import polyline
+import math
 from shapely.geometry import shape, Polygon
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely import make_valid
@@ -690,6 +691,62 @@ def convert_route_summry_to_route(
     )
 
 
+def _select_spread_route_pairs(
+    route_pair_list: list[tuple[Route, WithCombusRouteSummary]], k: int = 3
+) -> list[tuple[Route, WithCombusRouteSummary]]:
+    """ハバースイン距離に基づく最遠点優先でk件選ぶ。"""
+    if len(route_pair_list) <= k:
+        return route_pair_list
+
+    def haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+        R = 6371000.0
+        phi1 = math.radians(lat1)
+        phi2 = math.radians(lat2)
+        dphi = math.radians(lat2 - lat1)
+        dlambda = math.radians(lon2 - lon1)
+        a = (
+            math.sin(dphi / 2) ** 2
+            + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+        )
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return R * c
+
+    coords = [
+        (rp[0].to_point.coord.lat, rp[0].to_point.coord.lon) for rp in route_pair_list
+    ]
+
+    avg_dists = []
+    for i, (lat_i, lon_i) in enumerate(coords):
+        total = 0.0
+        for j, (lat_j, lon_j) in enumerate(coords):
+            if i == j:
+                continue
+            total += haversine_m(lat_i, lon_i, lat_j, lon_j)
+        avg = total / max(1, len(coords) - 1)
+        avg_dists.append((avg, i))
+    _, first_idx = max(avg_dists, key=lambda x: x[0])
+
+    selected_indices = [first_idx]
+    remaining_indices = [i for i in range(len(coords)) if i != first_idx]
+
+    while len(selected_indices) < k and remaining_indices:
+        best_idx = None
+        best_min_dist = -1.0
+        for idx in remaining_indices:
+            lat_i, lon_i = coords[idx]
+            min_dist = min(
+                haversine_m(lat_i, lon_i, coords[s][0], coords[s][1])
+                for s in selected_indices
+            )
+            if min_dist > best_min_dist:
+                best_min_dist = min_dist
+                best_idx = idx
+        selected_indices.append(best_idx)
+        remaining_indices.remove(best_idx)
+
+    return [route_pair_list[i] for i in selected_indices]
+
+
 def calculate_route_pairs(
     data_accessor: DataAccessor,
     diff_polygon: MultiPolygon,
@@ -739,8 +796,7 @@ def calculate_route_pairs(
             continue
         route_pair_list.append((original_route, with_combus_route_summary))
 
-    # とりあえず先頭から3つ選択する
-    selected_route_summary_list = route_pair_list[:3]
+    selected_route_summary_list = _select_spread_route_pairs(route_pair_list, 3)
     return [
         RoutePair(
             original=original_route,
