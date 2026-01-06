@@ -9,7 +9,7 @@ from ortools.constraint_solver import pywrapcp
 
 random.seed(42)
 
-TRYAL_NUM_PER_SETTING = 100  # 一つの設定ごとの試行回数
+TRYAL_NUM_PER_SETTING = 200  # 一つの設定ごとの試行回数
 BUS_STOP_SEQUENCE_SIZE = 6  # バス停の数
 
 
@@ -261,8 +261,7 @@ def main(
     spot_dict = load_spot_dict(input_spot_list_file)
 
     spot_list = [spot for spots in spot_dict.values() for spot in spots]
-    # time_limit_list = [time_m for time_m in range(30, 100, 10)]
-    time_limit_list = [30, 60, 90]
+    time_limit_list = [time_m for time_m in range(30, 100, 10)]
     walk_distance_limit_list = [500, 1000]
     start_time_list = ["10:00", "15:25"]
 
