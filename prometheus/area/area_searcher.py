@@ -1009,7 +1009,7 @@ def exec_area_search_all(data_accessor: DataAccessor) -> AllAreaSearchOutput:
     """
     time_limit_list = [time_m for time_m in range(30, 100, 10)]
     walk_distance_limit_list = [500, 1000]
-    start_time_list = ["10:00", "15:25"]
+    start_time_list = ["10:00", "13:00", "15:25"]
     result_list: list[AllAreaSearchResult] = []
 
     for spot_list in data_accessor.spot_list.values():
