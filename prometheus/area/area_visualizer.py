@@ -169,25 +169,50 @@ def _save_route_pairs_kml(area_search_result: AreaSearchResult, base_dir: str):
                 filtered.append(c)
         return filtered
 
+    def add_route_pins(kml, route):
+        """経路の出発地と目的地にピンを追加"""
+        if not route:
+            return
+        from_pt = getattr(route, "from_point", None)
+        to_pt = getattr(route, "to_point", None)
+        
+        # 出発地にピンを追加（青）
+        if from_pt and from_pt.coord:
+            start_pin = kml.newpoint(name=f"出発地: {from_pt.name}")
+            start_pin.coords = [(from_pt.coord.lon, from_pt.coord.lat)]
+            start_pin.style.iconstyle.color = simplekml.Color.blue
+            start_pin.style.iconstyle.scale = 1.2
+        
+        # 目的地にピンを追加（赤）
+        if to_pt and to_pt.coord:
+            end_pin = kml.newpoint(name=f"目的地: {to_pt.name}")
+            end_pin.coords = [(to_pt.coord.lon, to_pt.coord.lat)]
+            end_pin.style.iconstyle.color = simplekml.Color.red
+            end_pin.style.iconstyle.scale = 1.2
+
     for idx, pair in enumerate(route_pairs):
         # original を別ファイルで出力
-        orig_coords = route_to_coords(getattr(pair, "original", None))
+        orig_route = getattr(pair, "original", None)
+        orig_coords = route_to_coords(orig_route)
         if orig_coords:
             kml_orig = simplekml.Kml()
             line = kml_orig.newlinestring(name=f"route_pair_{idx}_original")
             line.coords = orig_coords
             line.style.linestyle.color = simplekml.Color.green
             line.style.linestyle.width = 9
+            add_route_pins(kml_orig, orig_route)
             kml_orig.save(f"{base_dir}/route_pair_{idx}_original.kml")
 
         # with_combus を別ファイルで出力
-        wc_coords = route_to_coords(getattr(pair, "with_combus", None))
+        wc_route = getattr(pair, "with_combus", None)
+        wc_coords = route_to_coords(wc_route)
         if wc_coords:
             kml_wc = simplekml.Kml()
             line = kml_wc.newlinestring(name=f"route_pair_{idx}_with_combus")
             line.coords = wc_coords
             line.style.linestyle.color = simplekml.Color.red
             line.style.linestyle.width = 9
+            add_route_pins(kml_wc, wc_route)
             kml_wc.save(f"{base_dir}/route_pair_{idx}_with_combus.kml")
 
 
