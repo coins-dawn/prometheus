@@ -74,9 +74,9 @@ class AreaSearchInput:
             self.start_time = "1000"
         else:
             start_time_str = data["start-time"]
-            if start_time_str not in ["10:00", "13:00", "15:25"]:
+            if start_time_str not in ["10:00", "13:00", "16:00"]:
                 raise Exception(
-                    "start-time は '10:00', '13:00' または '15:25' で指定してください。"
+                    "start-time は '10:00', '13:00' または '16:00' で指定してください。"
                 )
             self.start_time = start_time_str.replace(":", "")
 

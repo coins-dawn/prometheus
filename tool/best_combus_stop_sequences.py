@@ -290,9 +290,9 @@ def main(
 
     spot_list = [spot for spots in spot_dict.values() for spot in spots]
     time_limit_list = [time_m for time_m in range(30, 100, 10)]
-    time_limit_list = [30, 40, 50, 60]
+    time_limit_list = [30, 40, 50, 60, 70, 80, 90]
     walk_distance_limit_list = [500, 1000]
-    start_time_list = ["10:00", "13:00", "15:25"]
+    start_time_list = ["10:00", "13:00", "16:00"]
 
     best_combus_stop_sequences = []
     with requests.Session() as session:
