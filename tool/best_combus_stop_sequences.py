@@ -96,20 +96,26 @@ def generate_combus_stop_sequence_list(
 ) -> list[list[str]]:
     candidate_sequences_list = []
     # spot_idに対応するnear-spot-idを持つバス停を探す
-    near_stops = [stop["id"] for stop in combus_stops if stop["near-spot-id"] == spot_id]
+    near_stops = [
+        stop["id"] for stop in combus_stops if stop["near-spot-id"] == spot_id
+    ]
     all_stop_ids = [stop["id"] for stop in combus_stops]
-    
+
     while len(candidate_sequences_list) < TRYAL_NUM_PER_SETTING:
         # near-spot-idが一致するバス停がある場合、1つ選んで必ず含める
         if near_stops:
             selected_near_stop = random.choice(near_stops)
             # 残りのバス停からランダムに選ぶ
-            other_stops = [stop_id for stop_id in all_stop_ids if stop_id != selected_near_stop]
-            current_stops = [selected_near_stop] + random.sample(other_stops, BUS_STOP_SEQUENCE_SIZE - 1)
+            other_stops = [
+                stop_id for stop_id in all_stop_ids if stop_id != selected_near_stop
+            ]
+            current_stops = [selected_near_stop] + random.sample(
+                other_stops, BUS_STOP_SEQUENCE_SIZE - 1
+            )
         else:
             # near-spot-idが一致するバス停がない場合は従来通りランダムに選ぶ
             current_stops = random.sample(all_stop_ids, BUS_STOP_SEQUENCE_SIZE)
-                
+
         duration_matrix = create_duration_matrix(current_stops, combus_duration_dict)
         if duration_matrix is None:
             continue
@@ -119,7 +125,7 @@ def generate_combus_stop_sequence_list(
         if len(set(sequence)) != len(sequence):
             assert False, "重複したバス停が含まれています。"
         candidate_sequences_list.append(sequence)
-    
+
     return candidate_sequences_list
 
 
