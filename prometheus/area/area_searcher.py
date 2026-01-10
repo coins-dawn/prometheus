@@ -810,6 +810,28 @@ def calculate_route_pairs(
     ]
 
 
+def modify_org_dst_names(org_route_pairs: list[RoutePair], spot_name: str) -> None:
+    for route_pair in org_route_pairs:
+        # original
+        original_route = route_pair.original
+        original_route.from_point.name = spot_name
+        original_route.to_point.name = "目的地"
+        original_route.sections[0].from_point.name = spot_name
+        original_route.sections[-1].to_point.name = "目的地"
+        # with_combus
+        with_combus_route = route_pair.with_combus
+        with_combus_route.from_point.name = spot_name
+        with_combus_route.to_point.name = "目的地"
+        with_combus_route.sections[0].from_point.name = spot_name
+        with_combus_route.sections[0].to_point.name = with_combus_route.sections[
+            1
+        ].from_point.name
+        with_combus_route.sections[-1].to_point.name = "目的地"
+        with_combus_route.sections[-1].from_point.name = with_combus_route.sections[
+            -2
+        ].to_point.name
+
+
 def exec_single_spot_type(
     spot_type: SpotType,
     spot_list: dict,
@@ -880,6 +902,8 @@ def exec_single_spot_type(
         combus_route,
         start_time,
     )
+
+    modify_org_dst_names(route_pairs, spot_list[0]["name"])
 
     return AreaSearchResult(
         spots=result_spot_list, reachable=reachable_area, route_pairs=route_pairs
