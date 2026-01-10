@@ -69,7 +69,10 @@ def create_duration_matrix(stops, duration_dict):
 def load_combus_stops(input_combus_stops_file: str):
     with open(input_combus_stops_file, "r") as f:
         combus_stops_dict = json.load(f)
-    return [combus_stop["id"] for combus_stop in combus_stops_dict["combus-stops"]]
+    return [
+        {"id": combus_stop["id"], "near-spot-id": combus_stop.get("near-spot-id")}
+        for combus_stop in combus_stops_dict["combus-stops"]
+    ]
 
 
 def load_combus_duration_dict(input_combus_routes_file: str):
@@ -87,18 +90,36 @@ def load_spot_dict(input_spot_list_file: str):
 
 
 def generate_combus_stop_sequence_list(
-    combus_stops: list[str],
+    combus_stops: list[dict],
     combus_duration_dict: dict[tuple[str, str], int],
+    spot_id: str,
 ) -> list[list[str]]:
     candidate_sequences_list = []
+    # spot_idに対応するnear-spot-idを持つバス停を探す
+    near_stops = [stop["id"] for stop in combus_stops if stop["near-spot-id"] == spot_id]
+    all_stop_ids = [stop["id"] for stop in combus_stops]
+    
     while len(candidate_sequences_list) < TRYAL_NUM_PER_SETTING:
-        current_stops = random.sample(combus_stops, BUS_STOP_SEQUENCE_SIZE)
+        # near-spot-idが一致するバス停がある場合、1つ選んで必ず含める
+        if near_stops:
+            selected_near_stop = random.choice(near_stops)
+            # 残りのバス停からランダムに選ぶ
+            other_stops = [stop_id for stop_id in all_stop_ids if stop_id != selected_near_stop]
+            current_stops = [selected_near_stop] + random.sample(other_stops, BUS_STOP_SEQUENCE_SIZE - 1)
+        else:
+            # near-spot-idが一致するバス停がない場合は従来通りランダムに選ぶ
+            current_stops = random.sample(all_stop_ids, BUS_STOP_SEQUENCE_SIZE)
+                
         duration_matrix = create_duration_matrix(current_stops, combus_duration_dict)
         if duration_matrix is None:
             continue
         route, total_duration = solve_tsp(duration_matrix)
         sequence = [current_stops[i] for i in route[:-1]]
+        # sequence中の要素が重複していないか確認
+        if len(set(sequence)) != len(sequence):
+            assert False, "重複したバス停が含まれています。"
         candidate_sequences_list.append(sequence)
+    
     return candidate_sequences_list
 
 
@@ -134,6 +155,7 @@ def request_to_prometheus(
     if response.status_code != 200:
         print("prometheusから返却されたステータスコードが200以外です。")
         print(response.json())
+        print(request_body)
         return None
 
     return response.json()
@@ -141,7 +163,7 @@ def request_to_prometheus(
 
 def best_combus_stops(
     session: requests.Session,
-    combus_stops: list[str],
+    combus_stops: list[dict],
     combus_duration_dict: dict[tuple[str, str], int],
     spot_id: str,
     time_limit: int,
@@ -157,7 +179,7 @@ def best_combus_stops(
         list[tuple]: [(combus_stop_sequence, score), ...] の上位3つ
     """
     combus_stop_sequence_list = generate_combus_stop_sequence_list(
-        combus_stops, combus_duration_dict
+        combus_stops, combus_duration_dict, spot_id
     )
 
     results = []
@@ -262,6 +284,7 @@ def main(
 
     spot_list = [spot for spots in spot_dict.values() for spot in spots]
     time_limit_list = [time_m for time_m in range(30, 100, 10)]
+    time_limit_list = [30, 40, 50, 60]
     walk_distance_limit_list = [500, 1000]
     start_time_list = ["10:00", "13:00", "15:25"]
 

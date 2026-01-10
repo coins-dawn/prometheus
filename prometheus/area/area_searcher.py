@@ -389,9 +389,11 @@ def calculate_original_route(
     best_key_pair = None
     for spot in spot_list:
         spot_id = spot["id"]
-        duration_m, _ = spot_to_refpoint_dict.get((spot_id, ref_point_id, start_time))
-        if duration_m is None:
+        result = spot_to_refpoint_dict.get((spot_id, ref_point_id, start_time))
+        if result is None:
+            print(spot_id, ref_point_id, start_time)
             continue
+        duration_m, _ = result
         if duration_m < best_duration:
             best_duration = duration_m
             best_key_pair = (spot_id, ref_point_id)
@@ -996,7 +998,8 @@ def exec_area_search(
         search_input.start_time,
     )
 
-    output_visualize_data(area_search_result, spot_type, combus_route)
+    if search_input.visualize:
+        output_visualize_data(area_search_result, spot_type, combus_route)
 
     return AreaSearchOutput(
         area_search_result=area_search_result, combus_route=combus_route
@@ -1008,6 +1011,7 @@ def exec_area_search_all(data_accessor: DataAccessor) -> AllAreaSearchOutput:
     すべての上限時間・スポットタイプで到達圏探索を実行する。
     """
     time_limit_list = [time_m for time_m in range(30, 100, 10)]
+    time_limit_list = [30, 40, 50, 60]
     walk_distance_limit_list = [500, 1000]
     start_time_list = ["10:00", "13:00", "15:25"]
     result_list: list[AllAreaSearchResult] = []

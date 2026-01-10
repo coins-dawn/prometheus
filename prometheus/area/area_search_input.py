@@ -80,6 +80,12 @@ class AreaSearchInput:
                 )
             self.start_time = start_time_str.replace(":", "")
 
+        # visualize
+        if "visualize" in data:
+            self.visualize = bool(data["visualize"])
+        else:
+            self.visualize = False
+
     def to_cache_key(self) -> tuple:
         return (
             self.target_spot,

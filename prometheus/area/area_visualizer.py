@@ -175,14 +175,14 @@ def _save_route_pairs_kml(area_search_result: AreaSearchResult, base_dir: str):
             return
         from_pt = getattr(route, "from_point", None)
         to_pt = getattr(route, "to_point", None)
-        
+
         # 出発地にピンを追加（青）
         if from_pt and from_pt.coord:
             start_pin = kml.newpoint(name=f"出発地: {from_pt.name}")
             start_pin.coords = [(from_pt.coord.lon, from_pt.coord.lat)]
             start_pin.style.iconstyle.color = simplekml.Color.blue
             start_pin.style.iconstyle.scale = 1.2
-        
+
         # 目的地にピンを追加（赤）
         if to_pt and to_pt.coord:
             end_pin = kml.newpoint(name=f"目的地: {to_pt.name}")
