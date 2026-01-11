@@ -1077,11 +1077,12 @@
             "walk-distance-limit-m": 1000,
             "stop-sequence": [
                 "comstop1",
-                "comstop51",
-                "comstop37",
-                "comstop2",
-                "comstop6",
-                "comstop28",
+                "comstop29",
+                "comstop39",
+                "comstop35",
+                "comstop27",
+                "comstop11",
+                "comstop33",
                 "comstop14"
             ],
             "score": 11069,
