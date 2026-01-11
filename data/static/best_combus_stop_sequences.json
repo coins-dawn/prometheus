@@ -1085,7 +1085,8 @@
                 "comstop14"
             ],
             "score": 11069,
-            "start-time": "10:00"
+            "start-time": "10:00",
+            "man-made": true
         },
         {
             "spot": "sho1",
