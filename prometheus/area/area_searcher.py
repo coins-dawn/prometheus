@@ -703,7 +703,7 @@ def convert_route_summry_to_route(
 def _select_spread_route_pairs(
     route_pair_list: list[tuple[Route, WithCombusRouteSummary]], k: int = 3
 ) -> list[tuple[Route, WithCombusRouteSummary]]:
-    """ハバースイン距離に基づく最遠点優先でk件選ぶ。"""
+    """ハバースイン距離に基づく最遠点優先でk件選ぶ。加えて、original routeのsectionsサイズが大きいものを優先。"""
     if len(route_pair_list) <= k:
         return route_pair_list
 
@@ -723,7 +723,12 @@ def _select_spread_route_pairs(
     coords = [
         (rp[0].to_point.coord.lat, rp[0].to_point.coord.lon) for rp in route_pair_list
     ]
+    
+    # sectionsのサイズを取得
+    sections_sizes = [len(rp[0].sections) for rp in route_pair_list]
+    max_sections_size = max(sections_sizes) if sections_sizes else 1
 
+    # 平均距離を計算
     avg_dists = []
     for i, (lat_i, lon_i) in enumerate(coords):
         total = 0.0
@@ -733,22 +738,44 @@ def _select_spread_route_pairs(
             total += haversine_m(lat_i, lon_i, lat_j, lon_j)
         avg = total / max(1, len(coords) - 1)
         avg_dists.append((avg, i))
-    _, first_idx = max(avg_dists, key=lambda x: x[0])
+    
+    max_avg_dist = max(avg_dists, key=lambda x: x[0])[0] if avg_dists else 1.0
+    
+    # スコアを計算（距離の広がり + sectionsサイズ）
+    scores = []
+    for i, (avg_dist, idx) in enumerate(avg_dists):
+        # 距離スコア (0-1に正規化)
+        dist_score = avg_dist / max_avg_dist if max_avg_dist > 0 else 0
+        # sectionsサイズスコア (0-1に正規化)
+        sections_score = sections_sizes[idx] / max_sections_size if max_sections_size > 0 else 0
+        # 総合スコア（距離60%、sectionsサイズ40%の重み付け）
+        total_score = dist_score * 0.6 + sections_score * 0.4
+        scores.append((total_score, idx))
+    
+    _, first_idx = max(scores, key=lambda x: x[0])
 
     selected_indices = [first_idx]
     remaining_indices = [i for i in range(len(coords)) if i != first_idx]
 
     while len(selected_indices) < k and remaining_indices:
         best_idx = None
-        best_min_dist = -1.0
+        best_score = -1.0
         for idx in remaining_indices:
             lat_i, lon_i = coords[idx]
+            # 最近傍距離
             min_dist = min(
                 haversine_m(lat_i, lon_i, coords[s][0], coords[s][1])
                 for s in selected_indices
             )
-            if min_dist > best_min_dist:
-                best_min_dist = min_dist
+            # 距離スコアを正規化（最大平均距離を基準に）
+            dist_score = min_dist / max_avg_dist if max_avg_dist > 0 else 0
+            # sectionsサイズスコア
+            sections_score = sections_sizes[idx] / max_sections_size if max_sections_size > 0 else 0
+            # 総合スコア（距離60%、sectionsサイズ40%）
+            total_score = dist_score * 0.6 + sections_score * 0.4
+            
+            if total_score > best_score:
+                best_score = total_score
                 best_idx = idx
         selected_indices.append(best_idx)
         remaining_indices.remove(best_idx)
@@ -872,7 +899,6 @@ def exec_single_spot_type(
     """
     指定されたスポットタイプに対してエリア検索を実行する。
     """
-    score_max = sum(mesh["population"] for mesh in data_accessor.mesh_dict.values())
     original_reachable_geojson = calc_original_reachable_geojson(
         spot_list,
         target_max_limit,
