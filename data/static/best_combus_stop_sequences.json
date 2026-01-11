@@ -1077,13 +1077,12 @@
             "walk-distance-limit-m": 1000,
             "stop-sequence": [
                 "comstop1",
-                "comstop55",
-                "comstop18",
+                "comstop51",
+                "comstop37",
                 "comstop2",
-                "comstop29",
-                "comstop22",
-                "comstop11",
-                "comstop16"
+                "comstop6",
+                "comstop28",
+                "comstop14"
             ],
             "score": 11069,
             "start-time": "10:00"
