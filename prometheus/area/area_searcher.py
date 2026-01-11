@@ -1,5 +1,6 @@
 import polyline
 import math
+from datetime import datetime, timedelta
 from shapely.geometry import shape, Polygon
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely import make_valid
@@ -322,11 +323,13 @@ def convert_to_route(route_dict: dict) -> Route:
     from_point = RoutePoint(
         name=first_section["from"]["name"],
         coord=Coord(lat=first_section["from"]["lat"], lon=first_section["from"]["lon"]),
+        time="",
     )
 
     to_point = RoutePoint(
         name=last_section["to"]["name"],
         coord=Coord(lat=last_section["to"]["lat"], lon=last_section["to"]["lon"]),
+        time="",
     )
 
     # セクションのリストを作成
@@ -339,12 +342,14 @@ def convert_to_route(route_dict: dict) -> Route:
                 coord=Coord(
                     lat=section_dict["from"]["lat"], lon=section_dict["from"]["lon"]
                 ),
+                time="",
             ),
             to_point=RoutePoint(
                 name=section_dict["to"]["name"],
                 coord=Coord(
                     lat=section_dict["to"]["lat"], lon=section_dict["to"]["lon"]
                 ),
+                time="",
             ),
             duration_m=section_dict["duration_m"],
             distance_m=section_dict["distance_m"],
@@ -645,10 +650,12 @@ def convert_route_summry_to_route(
         from_point=RoutePoint(
             name=enter_combus_stop["name"],
             coord=Coord(lat=enter_combus_stop["lat"], lon=enter_combus_stop["lon"]),
+            time="",
         ),
         to_point=RoutePoint(
             name=exit_combus_stop["name"],
             coord=Coord(lat=exit_combus_stop["lat"], lon=exit_combus_stop["lon"]),
+            time="",
         ),
         duration_m=duration_m,
         distance_m=distance_m,
@@ -832,6 +839,26 @@ def modify_org_dst_names(org_route_pairs: list[RoutePair], spot_name: str) -> No
         ].to_point.name
 
 
+def update_org_dst_time(org_route_pairs: list[RoutePair], start_time: str) -> None:
+    def update_time_for_route(route: Route, start_time: str) -> None:
+        current_time = datetime.strptime(start_time, "%H%M")
+        route.from_point.time = current_time.strftime("%H:%M")
+        for section in route.sections:
+            section.from_point.time = current_time.strftime("%H:%M")
+            current_time += timedelta(minutes=section.duration_m)
+            section.to_point.time = current_time.strftime("%H:%M")
+        route.to_point.time = current_time.strftime("%H:%M")
+        # なぜか所要時間がズレていることがあるのでここで修正
+        # 所要時間のフィルタがちゃんと効かなくなるリスクはある...
+        route.duration_m = int(
+            (current_time - datetime.strptime(start_time, "%H%M")).total_seconds() / 60
+        )
+
+    for route_pair in org_route_pairs:
+        update_time_for_route(route_pair.original, start_time)
+        update_time_for_route(route_pair.with_combus, start_time)
+
+
 def exec_single_spot_type(
     spot_type: SpotType,
     spot_list: dict,
@@ -904,6 +931,8 @@ def exec_single_spot_type(
     )
 
     modify_org_dst_names(route_pairs, spot_list[0]["name"])
+
+    update_org_dst_time(route_pairs, start_time)
 
     return AreaSearchResult(
         spots=result_spot_list, reachable=reachable_area, route_pairs=route_pairs

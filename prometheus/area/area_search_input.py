@@ -67,7 +67,8 @@ class AreaSearchInput:
         if "use-cache" in data:
             self.use_cache = bool(data["use-cache"])
         else:
-            self.use_cache = True
+            # self.use_cache = True # 一時的にキャッシュを無効にする
+            self.use_cache = False
 
         # start_time
         if "start-time" not in data:

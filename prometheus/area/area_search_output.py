@@ -90,9 +90,10 @@ class ReachableArea:
 class RoutePoint:
     name: str
     coord: Coord
+    time: str
 
     def to_json(self) -> dict:
-        return {"name": self.name, "coord": self.coord.to_json()}
+        return {"name": self.name, "coord": self.coord.to_json(), "time": self.time}
 
 
 @dataclass
