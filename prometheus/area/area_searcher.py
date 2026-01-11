@@ -883,7 +883,7 @@ def exec_single_spot_type(
     original_score = calc_score(
         data_accessor, original_reachable_geojson.reachable_mesh_codes
     )
-    original_score_rate = int(original_score * 100 / score_max)
+    original_score_rate = 100
     with_combus_reachable_geojson = calc_with_combus_reachable_geojson(
         spot_list,
         target_max_limit,
@@ -901,7 +901,7 @@ def exec_single_spot_type(
         - original_reachable_geojson.reachable_mesh_codes
     )
     diff_score = calc_score(data_accessor, diff_reachable_meshes)
-    diff_score_rate = int(diff_score * 100 / score_max)
+    diff_score_rate = int((diff_score / original_score) * 100)
     reachable_area = ReachableArea(
         original=original_reachable_geojson.polygon,
         with_combus=diff_polygon,
